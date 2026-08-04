@@ -153,7 +153,7 @@ const CONTRATOS = [
     "inicio": null,
     "estado": "Negociando",
     "tipoCliente": "Empresa",
-    "obs": "11.4 UF (9.12 UF los primeros 3 meses)"
+    "obs": "11.4 UF (9.12 UF los primeros 3 meses). Cotizacion enviada hace tiempo; quedo pendiente el permiso de caza de conejos (en tramite, confirmado 04-ago-2026). No esta claro si se perdio el cliente por la demora."
   },
   {
     "id": 15,
@@ -208,7 +208,7 @@ const CONTRATOS = [
     "inicio": null,
     "estado": "Negociando",
     "tipoCliente": "Empresa",
-    "obs": "Cotizacion empresarial grande. Monto por confirmar."
+    "obs": "Cotizacion empresarial grande. Monto por confirmar. Cotizacion enviada hace tiempo; quedo pendiente el permiso de caza de conejos (en tramite, confirmado 04-ago-2026). No esta claro si se perdio el cliente por la demora."
   },
   {
     "id": 20,
@@ -230,6 +230,39 @@ const CONTRATOS = [
     "inicio": "2026-10-01",
     "estado": "Negociando",
     "tipoCliente": "Club deportivo",
-    "obs": "Monto ESTIMADO ~$800.000 netos/mes informado por el usuario (03-ago-2026), aun no cotizado en firme. Inicio esperado octubre 2026. Seria por lejos el contrato mas grande: 3,8x Fanadego. Ver escenario en la pestana Proyeccion."
+    "obs": "Monto ~$800.000 netos/mes, CONFIRMADO por el usuario (04-ago-2026) tras cruzar con Costos.xlsx (que traia un $458.000 de plantilla sin actualizar, descartado). La empresa que hoy los atiende cobra aprox $1.100.000/mes. Inicio esperado octubre 2026. Seria por lejos el contrato mas grande: 3,8x Fanadego. Ver escenario en la pestana Proyeccion."
+  },
+  {
+    "cliente": "Terrazas de la Reina",
+    "tipoServicio": "Servicio Integral",
+    "frecuencia": null,
+    "montoMensual": null,
+    "inicio": null,
+    "estado": "Negociando",
+    "tipoCliente": "Empresa",
+    "obs": "Nuevo, encontrado en Costos.xlsx (04-ago-2026). Costo directo modelado ~$77.186/mes. Sin ingreso cotizado registrado. Cotizacion enviada hace tiempo; quedo pendiente el permiso de caza de conejos (en tramite, confirmado 04-ago-2026). No esta claro si se perdio el cliente por la demora.",
+    "id": 22
+  },
+  {
+    "cliente": "Richard Kraus",
+    "tipoServicio": "Servicio Integral",
+    "frecuencia": null,
+    "montoMensual": null,
+    "inicio": null,
+    "estado": "Negociando",
+    "tipoCliente": "Casa",
+    "obs": "Nuevo, encontrado en Costos.xlsx (04-ago-2026). Costo directo modelado ~$41.330/mes. Sin ingreso cotizado registrado. Cotizacion enviada hace tiempo; quedo pendiente el permiso de caza de conejos (en tramite, confirmado 04-ago-2026). No esta claro si se perdio el cliente por la demora.",
+    "id": 23
+  },
+  {
+    "cliente": "Club de Padel Santa Maria",
+    "tipoServicio": "Servicio Integral",
+    "frecuencia": null,
+    "montoMensual": null,
+    "inicio": null,
+    "estado": "Negociando",
+    "tipoCliente": "Empresa",
+    "obs": "Nuevo, encontrado en Costos.xlsx (04-ago-2026). Costo directo modelado ~$40.434/mes. Sin ingreso cotizado registrado. Cotizacion enviada hace tiempo; quedo pendiente el permiso de caza de conejos (en tramite, confirmado 04-ago-2026). No esta claro si se perdio el cliente por la demora.",
+    "id": 24
   }
 ];

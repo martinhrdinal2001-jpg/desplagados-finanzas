@@ -1,6 +1,77 @@
 # Finanzas Desplagados
 
-Reemplaza el Excel de Google Drive. Los datos viven en `data/movimientos.js`, `data/contratos.js` y `data/proyeccion.js`; el dashboard (`index.html`) los lee y calcula todo en el momento — no hay fórmulas que se puedan romper.
+Reemplaza el Excel de Google Drive. Los datos viven en `data/*.js`; el dashboard (`index.html`)
+los lee y calcula todo en el momento — no hay fórmulas que se puedan romper.
+
+Navegación por sidebar oscura (izquierda), organizada en 4 grupos: Panorama, Plata, Comercial,
+Detalle y modelo.
+
+## Los 6 análisis pedidos (2026-08-03)
+
+| # | Qué | Dónde | Estado |
+|---|---|---|---|
+| ① | Ventas, margen y gastos fijos por mes | Inicio | **Real** — combo barras+línea |
+| ② | Ingresos recurrentes vs. puntuales | Inicio | **Real** |
+| ③ | Rentabilidad por cliente y contrato | Rentabilidad | **Estimado** — costo variable proporcional al ingreso, costo fijo repartido en partes iguales entre clientes (ver metodología en la pestaña) |
+| ④ | Flujo de caja a 13 semanas | Caja y flujo | **Confirmado + estimado** — compromisos con fecha + contratos activos (cobrados según el DSO real de cada cliente) + IVA + promedio histórico de gastos |
+| ⑤ | Embudo de cotizaciones | Contratos (Comercial) | **Parcial, honesto** — solo hay 2 estados reales (Negociando/Activo); no hay registro de prospectos ni cotizaciones perdidas |
+| ⑥ | Margen por visita (horas + insumos + traslado) | Rentabilidad | **Real** — construido el 2026-08-04 con el nuevo registro de Visitas + Inventario. Arranca vacío: no se inventaron visitas históricas. |
+
+Si en algún momento se empieza a registrar cotizaciones enviadas/perdidas, el punto ⑤ también se
+puede construir con datos reales en vez de la aproximación de 2 estados.
+
+## Visitas, Inventario y margen real (agregado 2026-08-04)
+
+Tres pestañas nuevas para poder medir — no solo estimar — la rentabilidad:
+
+- **Visitas** — formulario para registrar cada visita (cliente, tipo, persona, horas, traslado,
+  productos usados, ingreso asociado). Guarda en `localStorage` como "+ Agregar" movimiento;
+  clic en una fila propia la abre para editar. Usar los productos de una visita **descuenta el
+  inventario automáticamente** y calcula el costo de esa visita.
+- **Inventario** — productos, stock (siempre calculado en vivo desde los movimientos, nunca un
+  campo separado que se pueda desincronizar), compras/ajustes/pérdidas.
+- **Rentabilidad** → nuevo card de **parámetros de costo** (`data/costos.js`, arrancan en 0 —
+  hay que configurarlos) y el **gráfico ⑥ de margen real por visita**, con tabla clickeable y
+  clasificación Rentable / Revisar / Margen negativo / Información incompleta.
+
+El detalle de cliente ahora tiene 3 bloques nuevos además del estimado histórico (que se
+mantiene igual): **Inversión inicial**, **Operación mensual** y **Recuperación de inversión**
+(con gráfico de margen acumulado) — todos calculados solo de visitas reales, no estimados.
+
+La pestaña Proyección sumó un card de **"Costos corregidos por contrato"**: hace crecer el costo
+variable, la mano de obra y la inversión inicial a medida que aumentan los contratos (antes
+quedaban planos). Usa parámetros manuales o el promedio real de las visitas si hay 5 o más
+completas, y alerta si las horas requeridas superan la capacidad mensual definida de los socios.
+
+## Costeo de cotizaciones (agregado 2026-08-04, desde `Costos.xlsx`)
+
+El usuario subió su propio presupuestador (`Costos.xlsx`): una hoja por cliente/prospecto con el
+costo modelado ítem por ítem (categoría, cantidad, costo unitario → mensual/anual, por
+Sanitización/Desratización/Fumigación/Otros costos), más una hoja "Hoja 1" con la política real de
+márgenes objetivo por tamaño y distancia. Se agregó en **Comercial**, debajo de la tabla de
+Contratos:
+
+- **Costeo de cotizaciones** — las 12 hojas del Excel (`data/costeo.js`), cruzadas por nombre con
+  `CONTRATOS` cuando corresponde (3 confirmadas: Fanadego, Janssen Maquinaria, Ferrocentro; varias
+  "probables" sin confirmar; 3 prospectos nuevos que no estaban registrados). Clic en una fila
+  muestra el detalle ítem por ítem y, si el Excel trae ingreso cotizado, el margen resultante.
+- **Márgenes de referencia para cotizar** — la tabla de "Hoja 1" tal cual (25%–55% según tipo/tamaño/distancia).
+- En **Rentabilidad**, el detalle de cada cliente matcheado ahora muestra también el costo directo
+  *modelado* del presupuestador junto al estimado por prorrateo (el modelado es más confiable
+  porque es costo real ítem por ítem, no repartido). Verificado contra los 3 clientes con match
+  confirmado: los márgenes reales (Fanadego 50,5%, Janssen 49,1%, Ferrocentro 39,2%) caen dentro de
+  lo esperado según la propia tabla de referencia (Empresa Mediana/Grande = 45–55%).
+- Se agregaron 3 prospectos nuevos a `data/contratos.js` que aparecían en el Excel de costeo pero no
+  estaban registrados: **Terrazas de la Reina**, **Richard Kraus**, **Club de Padel Santa María**
+  (estado "Negociando", sin monto — no se inventó el ingreso).
+- Nueva hoja **"Costeo cotizaciones"** en el Excel descargable.
+
+> **Dato sin confirmar, pendiente de que el usuario responda:** "Club de Planeadores Vitacura",
+> "Club Manquehue" y "Stadio Italiano" tienen el mismo ingreso mensual ($458.000) escrito literal
+> (no fórmula) en la misma celda de las 3 hojas — huele a plantilla duplicada sin actualizar. Para
+> Club Manquehue en particular, ese número choca con el ~$800.000 que el usuario había estimado de
+> palabra y que está activo hoy en `proyeccion.js` → `prospectosGrandes`. No se tocó ese parámetro
+> hasta que el usuario confirme cuál es el correcto.
 
 ## Cómo compartirlo
 
@@ -14,9 +85,12 @@ Para compartir, generá la versión de un solo archivo:
 python generar_compartible.py
 ```
 
-Eso crea **`Dashboard_Finanzas_Desplagados.html`** (~495 KB) con todo adentro: datos, código y
+Eso crea **`Dashboard_Finanzas_Desplagados.html`** (~660 KB) con todo adentro: datos, código y
 logo embebidos. Ese archivo sí se puede mandar por correo o WhatsApp y se abre con doble clic en
 cualquier computador, sin internet y sin carpetas al lado.
+
+También está publicado en GitHub Pages (repo público): correr `.\publicar.ps1` regenera el
+compartible, hace commit y sube. El link queda siempre con la última versión.
 
 Hay que **volver a generarlo cada vez que se actualicen los datos**, porque la copia queda
 congelada con los datos del momento. El script aborta si detecta que el archivo quedaría roto.
@@ -104,6 +178,10 @@ finanzas/
     facturas.js         # facturas electrónicas emitidas (extraídas de los PDF del SII)
     bodega.js           # opciones de bodega en evaluación
     obligaciones.js     # config de IVA (F29) y deudas vigentes
+    visitas.js           # registro de visitas (vacío hasta que se cargue)
+    inventario.js         # productos y movimientos de inventario (vacío hasta que se cargue)
+    costos.js             # parámetros de costo por hora/km/administrativo (arrancan en 0)
+    costeo.js             # presupuestador por cliente/prospecto (desde Costos.xlsx) + tabla de márgenes de referencia
 ```
 
 > Los montos marcados `porCotizar: true` en `bodega.js` están en **0 a propósito**: no son

@@ -26,6 +26,19 @@ const PROYECCION_PARAMS = {
     },
   ],
 
+  // Costos operativos que trae CADA contrato (nuevo o existente) a la proyección, en base a
+  // visitas reales cuando hay suficientes (>=5 visitas con datos completos), y si no, a estos
+  // valores manuales. Arrancan en 0 a propósito: no se inventan promedios sin datos que los
+  // respalden. Ver el card "Costos corregidos por contrato" en la pestaña Proyección.
+  porContratoNuevo: {
+    visitasMensualesPromedio: 0,
+    horasPromedioPorVisita: 0,      // terreno + traslado
+    kmPromedioPorVisita: 0,
+    costoPromedioProductos: 0,       // $ por visita
+    inversionInicialPromedio: 0,     // $ único, solo para contratos NUEVOS ese mes
+    usarPromediosReales: false,      // si hay >=5 visitas completas, se puede activar
+  },
+
   servicioPuntual: {
     alta: 850000,   // Dic y Ene: fumigaciones casas de veraneo
     media: 400000,  // Jun, Jul, Nov

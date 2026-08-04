@@ -11,6 +11,10 @@
 <script src="./data/facturas.js"></script>
 <script src="./data/bodega.js"></script>
 <script src="./data/obligaciones.js"></script>
+<script src="./data/visitas.js"></script>
+<script src="./data/inventario.js"></script>
+<script src="./data/costos.js"></script>
+<script src="./data/costeo.js"></script>
 <script src="./vendor/xlsx-min.js"></script>
 <style>
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
@@ -34,16 +38,46 @@
 }
 *{font-variant-numeric:tabular-nums}
 body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',system-ui,sans-serif;background:var(--bg);color:var(--text);min-height:100vh;font-size:14px;-webkit-font-smoothing:antialiased}
-.wrap{max-width:1320px;margin:0 auto;padding:1.75rem 1.5rem 3.5rem}
-header{display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:.75rem;margin-bottom:1.25rem;padding:1rem 1.25rem;background:linear-gradient(100deg,var(--brand-deep) 0%,var(--brand) 55%,var(--brand2) 100%);border-radius:var(--radius);box-shadow:var(--shadow-md)}
-header h1{font-size:1.35rem;font-weight:700;color:#fff;letter-spacing:-.01em}
-header p{color:rgba(255,255,255,.72)}
-header .updated{color:rgba(255,255,255,.6)}
-header img{background:#fff;border-radius:10px;padding:.35rem}
-header p{color:var(--muted);font-size:.83rem;margin-top:.25rem;max-width:46ch}
-.updated{font-size:.74rem;color:var(--muted2)}
 
-/* ---- tabs: control segmentado, no subrayado ---- */
+/* ============================================================
+   SHELL: sidebar oscura + contenido, estilo panel BI
+   ============================================================ */
+.shell{display:flex;min-height:100vh}
+.sidebar{
+  flex:0 0 226px; width:226px; background:linear-gradient(175deg,#0a2818 0%,#0d3a20 55%,#0f4a29 100%);
+  color:#fff; display:flex; flex-direction:column; position:sticky; top:0; height:100vh; overflow-y:auto;
+  box-shadow:2px 0 12px rgba(0,0,0,.15); z-index:5;
+}
+.sidebar-brand{display:flex;align-items:center;gap:.6rem;padding:1.1rem 1rem;border-bottom:1px solid rgba(255,255,255,.1)}
+.sidebar-brand img{width:34px;height:34px;background:#fff;border-radius:8px;padding:.2rem;flex:0 0 auto}
+.sidebar-brand .nm{font-weight:800;font-size:.95rem;letter-spacing:-.01em;line-height:1.15}
+.sidebar-brand .sub{font-size:.68rem;color:rgba(255,255,255,.55);margin-top:.1rem}
+.sidebar-nav{flex:1;padding:.7rem .6rem}
+.sidebar-group{font-size:.63rem;text-transform:uppercase;letter-spacing:.07em;color:rgba(255,255,255,.4);font-weight:700;padding:.9rem .6rem .35rem}
+.sidebar-group:first-child{padding-top:.3rem}
+.side-btn{width:100%;display:flex;align-items:center;gap:.6rem;background:none;border:none;color:rgba(255,255,255,.78);font:inherit;font-size:.82rem;font-weight:600;text-align:left;padding:.55rem .65rem;border-radius:8px;cursor:pointer;margin-bottom:.1rem}
+.side-btn .ic{width:18px;text-align:center;flex:0 0 auto;font-size:.92rem}
+.side-btn:hover{background:rgba(255,255,255,.08);color:#fff}
+.side-btn.active{background:rgba(255,255,255,.14);color:#fff;box-shadow:inset 3px 0 0 var(--c1)}
+.sidebar-foot{padding:.9rem 1rem;border-top:1px solid rgba(255,255,255,.1);font-size:.68rem;color:rgba(255,255,255,.45)}
+
+.main{flex:1;min-width:0;display:flex;flex-direction:column}
+.topbar{display:flex;justify-content:space-between;align-items:center;gap:.75rem;flex-wrap:wrap;padding:.85rem 1.5rem;background:var(--card);border-bottom:1px solid var(--border);position:sticky;top:0;z-index:4}
+.topbar h1{font-size:1.05rem;font-weight:700;color:var(--ink)}
+.topbar .updated{font-size:.72rem;color:var(--muted2)}
+.wrap{max-width:1320px;width:100%;margin:0 auto;padding:1.5rem 1.5rem 3.5rem}
+
+@media(max-width:880px){
+  .shell{flex-direction:column}
+  .sidebar{position:static;height:auto;width:100%;flex-direction:row;overflow-x:auto;overflow-y:visible}
+  .sidebar-brand{border-bottom:none;border-right:1px solid rgba(255,255,255,.1);flex:0 0 auto}
+  .sidebar-nav{display:flex;padding:.5rem;gap:.2rem;flex:1}
+  .sidebar-group{display:none}
+  .side-btn{width:auto;white-space:nowrap}
+  .sidebar-foot{display:none}
+}
+
+/* ---- tabs viejas (siguen usadas en sub-navegación puntual, ya no como nav principal) ---- */
 .tabs{display:inline-flex;gap:.15rem;margin-bottom:1.5rem;background:var(--card2);border:1px solid var(--border);border-radius:10px;padding:.25rem;flex-wrap:wrap;max-width:100%;overflow-x:auto}
 .tab-btn{border:none;background:none;font:inherit;font-weight:600;font-size:.82rem;color:var(--muted);padding:.5rem .85rem;cursor:pointer;border-radius:7px;white-space:nowrap}
 .tab-btn:hover{color:var(--ink)}
@@ -129,6 +163,38 @@ select:focus,input:focus{outline:2px solid var(--brand2);outline-offset:1px}
 .chart-svg rect{transition:opacity .15s}
 .chart-svg rect:hover{opacity:.72}
 
+/* ---- gauge (semicírculo) ---- */
+.gauge-wrap{display:flex;flex-direction:column;align-items:center;gap:.3rem}
+.gauge-val{font-size:1.7rem;font-weight:800;color:var(--ink);margin-top:-2.2rem}
+.gauge-lbl{font-size:.76rem;color:var(--muted);text-align:center}
+
+/* ---- treemap ---- */
+.treemap{display:grid;gap:2px;width:100%}
+.treemap .cell{display:flex;flex-direction:column;justify-content:flex-end;padding:.5rem .6rem;color:#fff;border-radius:4px;overflow:hidden;position:relative;min-height:44px}
+.treemap .cell .nm{font-size:.74rem;font-weight:700;text-shadow:0 1px 2px rgba(0,0,0,.25)}
+.treemap .cell .vl{font-size:.68rem;opacity:.92}
+
+/* ---- embudo ---- */
+.funnel{display:flex;flex-direction:column;gap:.3rem;align-items:center;padding:.5rem 0}
+.funnel .stage{color:#fff;border-radius:6px;padding:.7rem 1rem;text-align:center;font-size:.85rem}
+.funnel .stage .n{font-size:1.15rem;font-weight:800}
+.funnel .stage .l{font-size:.72rem;opacity:.9}
+.funnel-arrow{font-size:.72rem;color:var(--muted);text-align:center}
+
+/* ---- rentabilidad clientes: cards clickeables ---- */
+.client-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:.7rem}
+.client-card{background:var(--card);border:1px solid var(--border);border-radius:var(--radius-sm);padding:.85rem .95rem;cursor:pointer;text-align:left;font:inherit;box-shadow:var(--shadow-sm)}
+.client-card:hover{border-color:var(--brand2)}
+.client-card.selected{border-color:var(--brand2);box-shadow:0 0 0 2px var(--brand-soft)}
+.client-card .nm{font-weight:700;font-size:.85rem;color:var(--ink);margin-bottom:.3rem}
+.client-card .ing{font-size:1.05rem;font-weight:800;color:var(--up-fg)}
+.client-card .sub{font-size:.71rem;color:var(--muted2);margin-top:.15rem}
+
+/* ---- filtros tipo panel BI (mes/trimestre/semestre) ---- */
+.filterbar{display:flex;gap:.6rem;flex-wrap:wrap;align-items:center}
+.filterbar .fitem{display:flex;flex-direction:column;gap:.2rem}
+.filterbar label{font-size:.66rem;text-transform:uppercase;letter-spacing:.04em;color:var(--muted);font-weight:700}
+
 /* ---- KPI con variación mes a mes ---- */
 .kpi .delta{font-size:.74rem;font-weight:600;margin-top:.3rem;display:flex;align-items:center;gap:.25rem}
 .kpi .delta.up{color:var(--up-fg)}
@@ -174,40 +240,89 @@ footer{text-align:center;color:var(--muted2);font-size:.74rem;padding:1.5rem 0 .
 </style>
 </head>
 <body>
-<div class="wrap">
-  <header>
-    <div style="display:flex;align-items:center;gap:.9rem">
-      <img src="./assets/logo.png" alt="Desplagados" style="height:52px;width:auto">
+<div class="shell">
+  <aside class="sidebar">
+    <div class="sidebar-brand">
+      <img src="./assets/logo.png" alt="Desplagados">
+      <div><div class="nm">Desplagados</div><div class="sub">Panel financiero</div></div>
+    </div>
+    <nav class="sidebar-nav" id="tabs">
+      <div class="sidebar-group">Panorama</div>
+      <button class="side-btn" data-tab="resumen"><span class="ic">🏠</span>Inicio</button>
+      <button class="side-btn" data-tab="resultados"><span class="ic">📊</span>Estado de Resultados</button>
+      <button class="side-btn" data-tab="rentabilidad"><span class="ic">🧮</span>Rentabilidad</button>
+      <div class="sidebar-group">Plata</div>
+      <button class="side-btn" data-tab="caja"><span class="ic">💰</span>Caja y flujo</button>
+      <button class="side-btn" data-tab="obligaciones"><span class="ic">🧾</span>Impuestos y deudas</button>
+      <button class="side-btn" data-tab="decisiones"><span class="ic">🎯</span>Decisiones</button>
+      <div class="sidebar-group">Comercial</div>
+      <button class="side-btn" data-tab="contratos"><span class="ic">🤝</span>Comercial</button>
+      <button class="side-btn" data-tab="facturacion"><span class="ic">📄</span>Facturación</button>
+      <div class="sidebar-group">Operación</div>
+      <button class="side-btn" data-tab="visitas"><span class="ic">🧰</span>Visitas</button>
+      <button class="side-btn" data-tab="inventario"><span class="ic">📦</span>Inventario</button>
+      <div class="sidebar-group">Detalle y modelo</div>
+      <button class="side-btn" data-tab="analisis"><span class="ic">📈</span>Análisis mensual</button>
+      <button class="side-btn" data-tab="proyeccion"><span class="ic">🔮</span>Proyección</button>
+      <button class="side-btn" data-tab="movimientos"><span class="ic">📋</span>Movimientos</button>
+      <button class="side-btn" data-tab="agregar"><span class="ic">➕</span>Agregar</button>
+    </nav>
+    <div class="sidebar-foot">Desplagados · dashboard local<br>sin conexión a Google Sheets</div>
+  </aside>
+
+  <div class="main">
+    <div class="topbar">
       <div>
         <h1>Finanzas · Desplagados</h1>
-        <p>Reemplaza el Excel de Google Drive. Se actualiza pidiéndole a Claude que registre cada gasto/ingreso, o agregando movimientos directo en la pestaña "+ Agregar".</p>
+        <div class="updated" id="lastUpdated"></div>
       </div>
-    </div>
-    <div style="display:flex;flex-direction:column;align-items:flex-end;gap:.4rem">
       <button id="btnExcel" style="text-decoration:none;background:var(--ink);color:#fff;padding:.55rem 1rem;border:none;border-radius:var(--radius-sm);font-weight:600;font-size:.82rem;font-family:inherit;cursor:pointer;box-shadow:var(--shadow-sm)">⬇ Descargar Excel</button>
-      <div class="updated" id="lastUpdated"></div>
     </div>
-  </header>
 
+<div class="wrap">
   <div id="warnBox"></div>
-
-  <nav class="tabs" id="tabs">
-    <button class="tab-btn" data-tab="resumen">Inicio</button>
-    <button class="tab-btn" data-tab="resultados">Estado de Resultados</button>
-    <button class="tab-btn" data-tab="caja">Caja y flujo</button>
-    <button class="tab-btn" data-tab="obligaciones">Impuestos y deudas</button>
-    <button class="tab-btn" data-tab="decisiones">Decisiones</button>
-    <button class="tab-btn" data-tab="analisis">Análisis mensual</button>
-    <button class="tab-btn" data-tab="proyeccion">Proyección</button>
-    <button class="tab-btn" data-tab="facturacion">Facturación</button>
-    <button class="tab-btn" data-tab="contratos">Contratos</button>
-    <button class="tab-btn" data-tab="movimientos">Movimientos</button>
-    <button class="tab-btn" data-tab="agregar">+ Agregar</button>
-  </nav>
 
   <!-- ===== INICIO ===== -->
   <section class="tab-panel" id="tab-resumen">
     <div class="kpis" id="kpis"></div>
+
+    <div class="grid2" style="grid-template-columns:2fr 1fr">
+      <div class="card">
+        <div class="card-head">
+          <div>
+            <h2>① Ventas, margen y gastos fijos por mes</h2>
+            <div class="desc">Datos reales. Barras = ventas y gastos fijos; línea = margen bruto ($). Clic en una barra para ver el detalle.</div>
+          </div>
+        </div>
+        <div id="chartVentasMargen"></div>
+      </div>
+      <div class="card" style="display:flex;flex-direction:column;align-items:center;justify-content:center">
+        <h2 style="align-self:flex-start">Margen operacional</h2>
+        <div class="desc" style="align-self:flex-start">Último mes cerrado</div>
+        <div id="gaugeMargen" style="margin-top:.4rem"></div>
+      </div>
+    </div>
+
+    <div class="grid2">
+      <div class="card">
+        <div class="card-head">
+          <div>
+            <h2>② Ingresos recurrentes vs puntuales</h2>
+            <div class="desc">Contratos mensuales vs. servicios puntuales/instalaciones. La base de contratos es lo que sostiene la empresa entre ventas nuevas.</div>
+          </div>
+        </div>
+        <div id="chartRecurrentePuntual"></div>
+      </div>
+      <div class="card">
+        <div class="card-head">
+          <div>
+            <h2>Facturación por comuna</h2>
+            <div class="desc">Dónde está la plata, según las facturas emitidas.</div>
+          </div>
+        </div>
+        <div class="treemap" id="treemapComuna"></div>
+      </div>
+    </div>
 
     <div class="grid2">
       <div class="card">
@@ -249,16 +364,6 @@ footer{text-align:center;color:var(--muted2);font-size:.74rem;padding:1.5rem 0 .
         </div>
         <div id="hallazgos"></div>
       </div>
-    </div>
-
-    <div class="card">
-      <div class="card-head">
-        <div>
-          <h2>Ir a…</h2>
-          <div class="desc">Cada sección del dashboard.</div>
-        </div>
-      </div>
-      <div class="navgrid" id="navGrid"></div>
     </div>
 
     <div class="grid2">
@@ -308,6 +413,67 @@ footer{text-align:center;color:var(--muted2);font-size:.74rem;padding:1.5rem 0 .
     </div>
   </section>
 
+  <!-- ===== RENTABILIDAD POR CLIENTE ===== -->
+  <section class="tab-panel" id="tab-rentabilidad">
+    <div class="warn-box">
+      <b>③ Rentabilidad por cliente y contrato — metodología:</b> el ingreso por cliente es un dato real
+      (facturas y movimientos). El <b>costo no se registra por cliente</b> — los insumos se compran en
+      lote y no queda anotado cuáles se usaron en cada visita. Por eso el margen que ves acá es una
+      <b>estimación</b>: el costo variable (insumos, combustible, instalación) se reparte proporcional
+      a lo que factura cada cliente; el costo fijo (arriendo, honorarios, sueldos) se reparte
+      <b>en partes iguales entre todos los clientes con ingreso</b> — por eso un cliente chico puede
+      salir con peor margen relativo que uno grande: el peso fijo pesa más sobre menos ingreso. Es un
+      punto de partida razonable, no una medición exacta.
+    </div>
+
+    <div class="kpis" id="rentKpis"></div>
+
+    <div class="grid2" style="grid-template-columns:1.1fr 1fr">
+      <div class="card">
+        <div class="card-head">
+          <div>
+            <h2>Clientes</h2>
+            <div class="desc">Ordenados por ingreso histórico. Clic para ver el detalle.</div>
+          </div>
+        </div>
+        <div class="client-grid" id="clientGrid"></div>
+      </div>
+      <div class="card">
+        <div class="card-head">
+          <div>
+            <h2 id="clientDetalleTitulo">Seleccioná un cliente</h2>
+            <div class="desc" id="clientDetalleDesc">Inversión inicial, ingreso mensual y margen estimado.</div>
+          </div>
+        </div>
+        <div id="clientDetalle"></div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-head">
+        <div>
+          <h2>Parámetros de costo por visita</h2>
+          <div class="desc">Arrancan en 0 a propósito — sin esto configurado, el costo de mano de obra sale subestimado. Misma lógica de edición que la pestaña Proyección.</div>
+        </div>
+        <button class="reset-btn" id="resetCostosParams">Restablecer valores guardados</button>
+      </div>
+      <div class="param-grid" id="costosParamGrid"></div>
+      <div id="costosAviso" style="margin-top:.6rem"></div>
+    </div>
+
+    <div class="card">
+      <div class="card-head">
+        <div>
+          <h2>⑥ Margen real por visita</h2>
+          <div class="desc">Costo de mano de obra + transporte + productos + otros, contra el ingreso de cada visita. Solo con visitas que tengan datos cargados en la pestaña Visitas.</div>
+        </div>
+      </div>
+      <div id="chartMargenVisita"></div>
+      <div class="table-scroll" id="margenVisitaTable" style="margin-top:1rem"></div>
+      <div id="detalleVisitaSeleccionada" style="margin-top:1rem"></div>
+    </div>
+  </section>
+
   <!-- ===== CAJA Y FLUJO ===== -->
   <section class="tab-panel" id="tab-caja">
     <div class="kpis" id="cajaKpis"></div>
@@ -334,6 +500,17 @@ footer{text-align:center;color:var(--muted2);font-size:.74rem;padding:1.5rem 0 .
         <div class="desc">Pagos y cobros con fecha ya confirmada.</div>
         <div class="table-scroll" id="compromisosTable"></div>
       </div>
+    </div>
+
+    <div class="card">
+      <div class="card-head">
+        <div>
+          <h2>④ Flujo de caja a 13 semanas</h2>
+          <div class="desc" id="flujo13Desc"></div>
+        </div>
+      </div>
+      <div class="table-scroll" id="flujo13Table"></div>
+      <div id="flujo13Nota" style="margin-top:.9rem"></div>
     </div>
   </section>
 
@@ -478,6 +655,27 @@ footer{text-align:center;color:var(--muted2);font-size:.74rem;padding:1.5rem 0 .
         <div class="table-scroll"><table class="milestone-table" id="milestoneTable"></table></div>
       </div>
     </div>
+
+    <div class="card">
+      <div class="card-head">
+        <div>
+          <h2>Costos corregidos por contrato</h2>
+          <div class="desc">
+            La tabla de arriba no hacía crecer los gastos variables al sumar contratos. Esto corrige eso:
+            cada contrato activo trae visitas, horas y productos, y se calculan con estos parámetros
+            (o con el promedio real de las visitas registradas, si hay suficientes).
+          </div>
+        </div>
+        <button class="reset-btn" id="resetCostosContrato">Restablecer valores guardados</button>
+      </div>
+      <label style="display:flex;align-items:center;gap:.5rem;font-size:.83rem;margin-bottom:.8rem" id="usarPromediosRealesWrap">
+        <input type="checkbox" id="usarPromediosReales"> Usar el promedio real de las visitas registradas en vez de estos valores manuales
+      </label>
+      <div class="param-grid" id="costoContratoGrid"></div>
+      <div class="kpis" id="proyCorregidaKpis" style="margin-top:1rem"></div>
+      <div id="proyCorregidaAlerta" style="margin-top:.7rem"></div>
+      <div class="table-scroll" id="proyCorregidaTable" style="margin-top:1rem"></div>
+    </div>
   </section>
 
   <!-- ===== FACTURACION ===== -->
@@ -517,6 +715,29 @@ footer{text-align:center;color:var(--muted2);font-size:.74rem;padding:1.5rem 0 .
 
   <!-- ===== CONTRATOS ===== -->
   <section class="tab-panel" id="tab-contratos">
+    <div class="warn-box">
+      <b>⑤ Embudo de cotizaciones — con lo que hay hoy.</b> Los <code>Contratos</code> solo registran
+      dos estados: <i>Negociando</i> y <i>Activo</i>. No hay un registro de cuántos prospectos o
+      cotizaciones se pierden antes de eso, así que no puedo mostrarte un embudo completo
+      (prospecto → cotizado → negociación → ganado/perdido) sin inventar esas etapas. Lo que sí es
+      real: cuánto vale lo que está en negociación y cuánto se ganó. La tasa de cierre (40-45%) es la
+      que informaste antes, no una medida de este embudo — sirve para estimar cuántas cotizaciones
+      hacen falta para sostener el pipeline.
+    </div>
+
+    <div class="grid2" style="grid-template-columns:1fr 1.3fr">
+      <div class="card">
+        <h2>Embudo</h2>
+        <div class="desc">Valor mensual equivalente en cada etapa.</div>
+        <div id="funnelBox"></div>
+      </div>
+      <div class="card">
+        <h2>Cotizaciones necesarias por mes</h2>
+        <div class="desc">Según la tasa de cierre informada y el ritmo de contratos nuevos que asume la Proyección.</div>
+        <div id="funnelCalc"></div>
+      </div>
+    </div>
+
     <div class="card">
       <div class="card-head">
         <div>
@@ -526,9 +747,207 @@ footer{text-align:center;color:var(--muted2);font-size:.74rem;padding:1.5rem 0 .
       </div>
       <div class="table-scroll" id="contratosTable"></div>
     </div>
+
+    <div class="card">
+      <div class="card-head">
+        <div>
+          <h2>Costeo de cotizaciones</h2>
+          <div class="desc">De tu propio presupuestador (<code>Costos.xlsx</code>, cargado 04-ago-2026). Costo directo modelado por cliente/prospecto, ítem por ítem.</div>
+        </div>
+      </div>
+      <div id="costeoAviso"></div>
+      <div class="table-scroll" id="costeoTable"></div>
+      <div id="costeoDetalle" style="margin-top:1rem"></div>
+    </div>
+
+    <div class="card">
+      <div class="card-head">
+        <div>
+          <h2>Márgenes de referencia para cotizar</h2>
+          <div class="desc">Tu política de precios real, por tamaño y distancia (hoja "Hoja 1" del mismo Excel).</div>
+        </div>
+      </div>
+      <div class="table-scroll" id="margenesTable"></div>
+    </div>
   </section>
 
-  <!-- ===== MOVIMIENTOS ===== -->
+  <!-- ===== VISITAS ===== -->
+  <section class="tab-panel" id="tab-visitas">
+    <div class="kpis" id="visitasKpis"></div>
+
+    <div class="card">
+      <div class="card-head">
+        <div>
+          <h2 id="formVisitaTitulo">Registrar visita</h2>
+          <div class="desc">Se guarda en este navegador y actualiza todo al instante. No se inventan visitas históricas — arranca vacío.</div>
+        </div>
+      </div>
+      <form id="formVisita">
+        <div class="param-grid">
+          <div class="param"><label>Fecha *</label><input type="date" id="vFecha" required></div>
+          <div class="param"><label>Cliente *</label><input type="text" id="vCliente" list="dlClientesVisita" required></div>
+          <div class="param"><label>Contrato asociado</label><select id="vContrato"><option value="">— sin contrato / puntual —</option></select></div>
+          <div class="param"><label>Tipo de servicio *</label>
+            <select id="vTipoServicio" required>
+              <option>Desratización</option><option>Desinsectación</option><option>Sanitización</option>
+              <option>Servicio integral</option><option>Otro</option>
+            </select>
+          </div>
+          <div class="param"><label>Tipo de visita *</label>
+            <select id="vTipoVisita" required>
+              <option>Instalación inicial</option><option>Mantención</option><option>Seguimiento</option>
+              <option>Emergencia</option><option>Garantía</option><option>Servicio puntual</option>
+            </select>
+          </div>
+          <div class="param"><label>Persona *</label>
+            <select id="vPersona" required>
+              <option>Martín del Río</option><option>Martín Hrdina</option><option>Técnico externo</option><option>Otro</option>
+            </select>
+          </div>
+          <div class="param-section-title">Tiempo y traslado</div>
+          <div class="param"><label>Horas en terreno</label><input type="number" id="vHorasTerreno" step="any" min="0"></div>
+          <div class="param"><label>Horas de traslado</label><input type="number" id="vHorasTraslado" step="any" min="0"></div>
+          <div class="param"><label>Kilómetros recorridos</label><input type="number" id="vKm" step="any" min="0"></div>
+          <div class="param"><label>TAG</label><input type="number" id="vTag" step="any" min="0"></div>
+          <div class="param"><label>Peajes</label><input type="number" id="vPeajes" step="any" min="0"></div>
+          <div class="param"><label>Estacionamiento</label><input type="number" id="vEstacionamiento" step="any" min="0"></div>
+          <div class="param-section-title">Materiales y otros costos</div>
+          <div class="param"><label>Cebaderas / trampas instaladas</label><input type="text" id="vCebaderas" placeholder="Ej: 4 cebaderas"></div>
+          <div class="param"><label>Otros materiales</label><input type="text" id="vMateriales"></div>
+          <div class="param"><label>Costo otros ($)</label><input type="number" id="vCostoOtros" step="any" min="0"></div>
+          <div class="param-section-title">Ingreso y factura</div>
+          <div class="param"><label>Ingreso neto asociado</label><input type="number" id="vIngreso" step="any" min="0" placeholder="Vacío si aún no se sabe"></div>
+          <div class="param"><label>Factura asociada</label><input type="text" id="vFactura" placeholder="N° folio, si existe"></div>
+        </div>
+
+        <div style="margin-top:.5rem">
+          <label style="font-size:.72rem;color:var(--muted);font-weight:600">Productos utilizados</label>
+          <div id="vProductosFilas" style="margin-top:.4rem"></div>
+          <button type="button" class="reset-btn" id="btnAgregarProductoVisita">+ Agregar producto</button>
+        </div>
+
+        <div class="param" style="max-width:100%;margin-top:.6rem"><label>Observaciones</label><input type="text" id="vObs" style="width:100%"></div>
+
+        <div id="clienteAutoInfo" style="margin-top:.6rem"></div>
+
+        <div style="margin-top:.9rem;display:flex;gap:.6rem;align-items:center">
+          <button type="submit" style="background:var(--brand2);color:#fff;border:none;padding:.6rem 1.1rem;border-radius:var(--radius-sm);font-weight:600;font-size:.85rem;cursor:pointer;font-family:inherit">Guardar visita</button>
+          <button type="button" id="btnCancelarEdicionVisita" class="reset-btn" style="display:none">Cancelar edición</button>
+          <span id="visitaOk" style="font-size:.82rem;color:var(--up-fg);font-weight:600"></span>
+        </div>
+      </form>
+      <datalist id="dlClientesVisita"></datalist>
+    </div>
+
+    <div class="card">
+      <div class="card-head">
+        <div>
+          <h2>Visitas registradas</h2>
+          <div class="desc">Clic en una fila para editarla (solo las agregadas en este navegador).</div>
+        </div>
+        <div style="display:flex;gap:.5rem;flex-wrap:wrap">
+          <select id="vfMes"></select>
+          <select id="vfCliente"><option value="">Todos los clientes</option></select>
+          <select id="vfTipoVisita"><option value="">Todos los tipos de visita</option></select>
+          <select id="vfServicio"><option value="">Todos los servicios</option></select>
+          <select id="vfPersona"><option value="">Todas las personas</option></select>
+          <select id="vfEstado"><option value="">Todos los estados</option><option value="Completa">Completa</option><option value="Incompleta">Incompleta</option></select>
+        </div>
+      </div>
+      <div class="table-scroll" id="visitasTable"></div>
+    </div>
+
+    <div class="card">
+      <div class="card-head">
+        <div>
+          <h2>Pendientes de sincronizar con Claude</h2>
+          <div class="desc">Visitas agregadas desde este navegador que todavía no están en <code>data/visitas.js</code>.</div>
+        </div>
+        <div style="display:flex;gap:.5rem">
+          <button id="btnCopiarPendientesVisitas" class="reset-btn" style="text-decoration:none;background:var(--card2);border:1px solid var(--border);padding:.4rem .8rem;border-radius:var(--radius-sm)">📋 Copiar para el chat</button>
+          <button id="btnVaciarPendientesVisitas" class="reset-btn" style="text-decoration:none;background:var(--card2);border:1px solid var(--border);padding:.4rem .8rem;border-radius:var(--radius-sm)">🗑 Ya las sincronicé, vaciar</button>
+        </div>
+      </div>
+      <div id="pendientesVisitasBox"></div>
+    </div>
+  </section>
+
+  <!-- ===== INVENTARIO ===== -->
+  <section class="tab-panel" id="tab-inventario">
+    <div class="kpis" id="invKpis"></div>
+
+    <div class="grid2">
+      <div class="card">
+        <h2>Agregar / ajustar producto</h2>
+        <div class="desc">El stock inicial se carga acá mismo, como primer movimiento.</div>
+        <form id="formProducto">
+          <div class="param-grid">
+            <div class="param"><label>Nombre *</label><input type="text" id="pNombre" required></div>
+            <div class="param"><label>Categoría</label><input type="text" id="pCategoria" list="dlCategoriasProducto"></div>
+            <div class="param"><label>Unidad de medida *</label><input type="text" id="pUnidad" required placeholder="Un, Lt, Kg..."></div>
+            <div class="param"><label>Tipo</label><select id="pTipo"><option value="Consumible">Consumible</option><option value="Reutilizable">Reutilizable</option></select></div>
+            <div class="param"><label>Stock físico inicial</label><input type="number" id="pStockInicial" step="any" min="0" value="0"></div>
+            <div class="param"><label>Costo unitario *</label><input type="number" id="pCosto" step="any" min="0" required></div>
+            <div class="param"><label>Stock mínimo</label><input type="number" id="pStockMinimo" step="any" min="0" value="0"></div>
+            <div class="param"><label>Vencimiento</label><input type="date" id="pVencimiento"></div>
+          </div>
+          <button type="submit" style="margin-top:.5rem;background:var(--brand2);color:#fff;border:none;padding:.55rem 1rem;border-radius:var(--radius-sm);font-weight:600;font-size:.83rem;cursor:pointer;font-family:inherit">+ Agregar producto</button>
+          <span id="productoOk" style="margin-left:.6rem;font-size:.8rem;color:var(--up-fg);font-weight:600"></span>
+        </form>
+        <datalist id="dlCategoriasProducto"></datalist>
+      </div>
+
+      <div class="card">
+        <h2>Movimiento de inventario</h2>
+        <div class="desc">Compra, ajuste manual o pérdida. El consumo en visita se registra solo desde el formulario de Visitas.</div>
+        <form id="formMovInventario">
+          <div class="param-grid">
+            <div class="param"><label>Fecha *</label><input type="date" id="miFecha" required></div>
+            <div class="param"><label>Producto *</label><select id="miProducto" required></select></div>
+            <div class="param"><label>Tipo *</label><select id="miTipo" required><option>Compra</option><option>Ajuste manual</option><option>Pérdida</option></select></div>
+            <div class="param"><label>Cantidad *</label><input type="number" id="miCantidad" step="any" required></div>
+            <div class="param"><label>Costo unitario</label><input type="number" id="miCostoUnitario" step="any" min="0" placeholder="Usa el del producto si se deja vacío"></div>
+            <div class="param"><label>Observaciones</label><input type="text" id="miObs"></div>
+          </div>
+          <button type="submit" style="margin-top:.5rem;background:var(--ink);color:#fff;border:none;padding:.55rem 1rem;border-radius:var(--radius-sm);font-weight:600;font-size:.83rem;cursor:pointer;font-family:inherit">+ Registrar movimiento</button>
+          <span id="movInvOk" style="margin-left:.6rem;font-size:.8rem;color:var(--up-fg);font-weight:600"></span>
+        </form>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-head">
+        <div>
+          <h2>Stock</h2>
+          <div class="desc">Valor total, bajo stock mínimo y próximos a vencer.</div>
+        </div>
+      </div>
+      <div class="table-scroll" id="stockTable"></div>
+    </div>
+
+    <div class="grid2">
+      <div class="card">
+        <h2>Consumo mensual</h2>
+        <div class="desc">Costo de productos consumidos en visitas, por mes.</div>
+        <div class="table-scroll" id="consumoMensualTable"></div>
+      </div>
+      <div class="card">
+        <h2>Costo de productos por cliente</h2>
+        <div class="desc">Solo cuenta lo consumido en visitas registradas.</div>
+        <div class="table-scroll" id="consumoClienteTable"></div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-head">
+        <div>
+          <h2>Movimientos de inventario</h2>
+        </div>
+      </div>
+      <div class="table-scroll" id="movInventarioTable"></div>
+    </div>
+  </section>
+
   <section class="tab-panel" id="tab-movimientos">
     <div class="card">
       <div class="card-head">
@@ -602,6 +1021,8 @@ footer{text-align:center;color:var(--muted2);font-size:.74rem;padding:1.5rem 0 .
 
   <footer>Desplagados · dashboard local, sin conexión a Google Sheets</footer>
 </div>
+  </div>
+</div>
 
 <script>
 const CLP = n => n == null ? '—' : '$' + Math.round(n).toLocaleString('es-CL');
@@ -638,7 +1059,7 @@ function initCellLinks(){
 }
 
 function initTabs(){
-  const btns = Array.from(document.querySelectorAll('.tab-btn'));
+  const btns = Array.from(document.querySelectorAll('.side-btn'));
   function activate(tab){
     btns.forEach(b => b.classList.toggle('active', b.dataset.tab === tab));
     document.querySelectorAll('.tab-panel').forEach(p => p.classList.toggle('active', p.id === 'tab-'+tab));
@@ -993,6 +1414,63 @@ function renderObligaciones(){
 }
 
 /* ============================================================
+   GAUGE (semicírculo) — para ratios tipo "margen operacional"
+   ============================================================ */
+function svgGauge(pct, opts){
+  opts = opts || {};
+  const size = opts.size || 150;
+  const W = size, H = size*0.62;
+  const cx = W/2, cy = H, R = W/2 - 10;
+  const clamped = Math.max(0, Math.min(1, pct));
+  const startAng = Math.PI, endAng = Math.PI - clamped*Math.PI;
+  const x1 = cx + R*Math.cos(startAng), y1 = cy + R*Math.sin(startAng);
+  const x2 = cx + R*Math.cos(endAng), y2 = cy + R*Math.sin(endAng);
+  const largeArc = clamped > 0.5 ? 1 : 0;
+  const color = opts.color || (pct >= 0 ? 'var(--up-fg)' : 'var(--dn-fg)');
+
+  let svg = '<svg viewBox="0 0 '+W+' '+H+'" width="'+size+'" height="'+H+'">';
+  // pista de fondo
+  svg += '<path d="M'+(cx-R)+','+cy+' A'+R+','+R+' 0 1 1 '+(cx+R)+','+cy+'" fill="none" stroke="var(--border2)" stroke-width="12" stroke-linecap="round"/>';
+  if(clamped > 0.002){
+    svg += '<path d="M'+x1+','+y1+' A'+R+','+R+' 0 '+largeArc+' 1 '+x2+','+y2+'" fill="none" stroke="'+color+'" stroke-width="12" stroke-linecap="round"/>';
+  }
+  svg += '</svg>';
+  return svg;
+}
+
+function renderGauge(targetId, pct, label, opts){
+  // El arco se clampea a [0,1] (no tiene sentido visual bajo 0 ni sobre 100%), pero el
+  // numero mostrado es el real: si el margen es -30%, el arco queda vacio y el texto
+  // igual dice "-30.0%" — nunca se muestra un 0% cuando el numero real es negativo.
+  const el = document.getElementById(targetId);
+  if(!el) return;
+  el.innerHTML = '<div class="gauge-wrap">' + svgGauge(pct, opts)
+    + '<div class="gauge-val" style="color:'+(pct<0?'var(--dn-fg)':'var(--ink)')+'">' + PCT(pct) + '</div>'
+    + '<div class="gauge-lbl">' + label + '</div></div>';
+}
+
+/* ============================================================
+   TREEMAP simple (grid proporcional, sin librerías)
+   ============================================================ */
+function renderTreemap(targetId, items, opts){
+  // items: [{label, value}], ordenados de mayor a menor
+  opts = opts || {};
+  const el = document.getElementById(targetId);
+  if(!el || !items.length){ if(el) el.innerHTML = '<div class="desc" style="margin:0">Sin datos.</div>'; return; }
+  const total = items.reduce((s,i)=>s+i.value,0) || 1;
+  const colores = opts.colores || PALETA_CAT.concat([COLOR_OTROS]);
+  // grid simple: 1 celda grande + resto en fila(s), tamaño proporcional via grid-template
+  const cols = Math.min(items.length, opts.cols || 4);
+  el.style.gridTemplateColumns = 'repeat(' + cols + ', 1fr)';
+  el.innerHTML = items.map((it,i) => {
+    const pct = it.value/total;
+    const rowSpan = i===0 && items.length>3 ? 2 : 1;
+    return '<div class="cell" data-idx="'+i+'" style="background:'+colores[i%colores.length]+';grid-row:span '+rowSpan+'">'
+      + '<div class="nm">' + it.label + '</div><div class="vl">' + CLP(it.value) + ' · ' + PCT(pct) + '</div></div>';
+  }).join('');
+}
+
+/* ============================================================
    DONUT DE GASTOS
    ============================================================ */
 const PALETA_CAT = ['var(--c1)','var(--c2)','var(--c3)','var(--c4)','var(--c5)','var(--c6)'];
@@ -1119,28 +1597,16 @@ function renderKPIs(){
   });
 }
 
-/* ============================================================
-   TARJETAS DE NAVEGACIÓN DE LA PORTADA
-   ============================================================ */
-const NAV_SECCIONES = [
-  {tab:'resultados',  t:'Estado de Resultados', d:'Ventas, costos y márgenes con análisis vertical, mes a mes.'},
-  {tab:'caja',        t:'Caja y flujo',         d:'Cuánta plata hay, qué está por cobrar y qué se viene.'},
-  {tab:'obligaciones',t:'Impuestos y deudas',   d:'IVA que le debes al SII y cuánto queda del furgón.'},
-  {tab:'decisiones',  t:'Decisiones',           d:'Bodega, crédito y pendientes por definir.'},
-  {tab:'analisis',    t:'Análisis mensual',     d:'Ingresos y gastos por categoría y mes.'},
-  {tab:'proyeccion',  t:'Proyección',           d:'Escenarios a 19 meses y punto de equilibrio.'},
-  {tab:'facturacion', t:'Facturación',          d:'Facturas emitidas al SII, por cliente y mes.'},
-  {tab:'contratos',   t:'Contratos',            d:'Clientes activos y pipeline en negociación.'},
-  {tab:'agregar',     t:'+ Agregar movimiento', d:'Cargar un gasto o ingreso nuevo al instante.'},
-];
-
-function renderNavGrid(){
-  document.getElementById('navGrid').innerHTML = NAV_SECCIONES.map(s =>
-    '<button class="navcard" data-nav="'+s.tab+'"><div class="t">'+s.t+'</div><div class="d">'+s.d+'</div></button>'
-  ).join('');
-  document.querySelectorAll('#navGrid .navcard').forEach(b => {
-    b.addEventListener('click', () => document.querySelector('[data-tab="'+b.dataset.nav+'"]').click());
-  });
+function renderGaugeMargen(){
+  const ms = mesesConDatos();
+  const hoy = new Date();
+  const mkHoy = hoy.getFullYear() + '-' + String(hoy.getMonth()+1).padStart(2,'0');
+  const cerrados = ms.filter(m => m !== mkHoy);
+  const mk = cerrados[cerrados.length-1];
+  if(!mk){ document.getElementById('gaugeMargen').innerHTML = '<div class="desc" style="margin:0">Sin meses cerrados todavía.</div>'; return; }
+  const pl = calcularPL(mk);
+  renderGauge('gaugeMargen', pl.margenOperacional, mesLabel(mk),
+    { color: pl.margenOperacional>=0 ? 'var(--up-fg)' : 'var(--dn-fg)' });
 }
 
 function renderAnalisis(){
@@ -1219,7 +1685,7 @@ function svgBarChart(opts){
       const x = startX + bi*barW;
       const y = padT + plotH - h;
       // extremo redondeado ancla a la base: radio solo arriba, sin panza en la unión con el eje
-      const dataAttrs = b.mes ? ' data-mes="'+b.mes+'" data-tipo="'+(b.tipo||'')+'"' : '';
+      const dataAttrs = (b.mes ? ' data-mes="'+b.mes+'" data-tipo="'+(b.tipo||'')+'"' : '') + (b.visitaId!=null ? ' data-visitaid="'+b.visitaId+'"' : '');
       svg += '<rect x="' + x + '" y="' + y + '" width="' + (barW-2) + '" height="' + Math.max(h,1.5) + '" fill="' + b.color + '" rx="2.5"' + dataAttrs + '>'
         + '<title>' + (b.title || '') + '</title></rect>';
     });
@@ -1228,6 +1694,110 @@ function svgBarChart(opts){
 
   svg += '</svg>';
   return svg;
+}
+
+/* ============================================================
+   ① VENTAS, MARGEN Y GASTOS FIJOS POR MES (combo: barras + línea)
+   ============================================================ */
+// "Fijo" por categoría (no por el campo fijoVariable de cada fila, que está incompleto/
+// inconsistente en ~15% de los registros). Mismo criterio estructural que usa Proyección.
+const CATS_GASTO_FIJO = ['Arriendo','Contabilidad','Honorarios','Cuota furgón','Sueldo'];
+
+function svgComboChart(datos, opts){
+  const W = opts.width, H = opts.height;
+  const padL = 58, padB = 34, padT = 16, padR = 14;
+  const plotW = W - padL - padR, plotH = H - padT - padB;
+  const maxVal = Math.max(1, ...datos.flatMap(d => [d.ventas, d.gastosFijos]));
+  const groupW = plotW / datos.length;
+  const barW = Math.min(16, groupW/3);
+
+  let svg = '<svg class="chart-svg" viewBox="0 0 '+W+' '+H+'" width="100%" style="max-width:100%;height:auto">';
+  svg += '<line x1="'+padL+'" y1="'+(H-padB)+'" x2="'+(W-padR)+'" y2="'+(H-padB)+'" stroke="var(--border)" stroke-width="1"/>';
+  for(let i=1;i<=3;i++){
+    const y = padT + plotH - (plotH*i/3);
+    svg += '<line x1="'+padL+'" y1="'+y+'" x2="'+(W-padR)+'" y2="'+y+'" stroke="var(--border2)" stroke-width="1" stroke-dasharray="2,2"/>';
+    svg += '<text x="'+(padL-8)+'" y="'+(y+3)+'" text-anchor="end">'+compactCLP(maxVal*i/3)+'</text>';
+  }
+
+  const puntos = [];
+  datos.forEach((d,i) => {
+    const gx = padL + i*groupW;
+    const startX = gx + (groupW - barW*2)/2;
+    const hV = Math.max(1.5, (d.ventas/maxVal)*plotH), yV = padT+plotH-hV;
+    const hG = Math.max(1.5, (d.gastosFijos/maxVal)*plotH), yG = padT+plotH-hG;
+    svg += '<rect x="'+startX+'" y="'+yV+'" width="'+(barW-2)+'" height="'+hV+'" fill="var(--up-fg)" rx="2" data-mes="'+d.mk+'" data-tipo="Ingreso" style="cursor:pointer"><title>'+mesLabel(d.mk)+' · Ventas: '+CLP(d.ventas)+'</title></rect>';
+    svg += '<rect x="'+(startX+barW)+'" y="'+yG+'" width="'+(barW-2)+'" height="'+hG+'" fill="var(--c4)" rx="2" data-mes="'+d.mk+'" data-tipo="Gasto" style="cursor:pointer"><title>'+mesLabel(d.mk)+' · Gastos fijos: '+CLP(d.gastosFijos)+'</title></rect>';
+    const yM = padT + plotH - Math.max(0,(d.margen/maxVal))*plotH;
+    puntos.push([gx+groupW/2, Math.min(Math.max(yM,padT),padT+plotH)]);
+    svg += '<text x="'+(gx+groupW/2)+'" y="'+(H-padB+15)+'" text-anchor="middle">'+mesLabel(d.mk)+'</text>';
+  });
+
+  const path = puntos.map((p,i) => (i===0?'M':'L')+p[0]+','+p[1]).join(' ');
+  svg += '<path d="'+path+'" fill="none" stroke="var(--c3)" stroke-width="2.5" stroke-linejoin="round"/>';
+  puntos.forEach((p,i) => {
+    svg += '<circle cx="'+p[0]+'" cy="'+p[1]+'" r="4" fill="var(--c3)" stroke="var(--card)" stroke-width="1.5"><title>'+mesLabel(datos[i].mk)+' · Margen bruto: '+CLP(datos[i].margen)+'</title></circle>';
+  });
+
+  svg += '</svg>';
+  return svg;
+}
+
+function renderChartVentasMargen(){
+  const ms = mesesConDatos();
+  const datos = ms.map(mk => {
+    const pl = calcularPL(mk);
+    const gastosFijosMes = validos.filter(m => m.tipo==='Gasto' && m.fecha && mesKey(m.fecha)===mk && CATS_GASTO_FIJO.includes(m.categoria))
+                                   .reduce((s,m)=>s+m.monto,0);
+    return { mk, ventas: pl.ventas, margen: pl.utilidadBruta, gastosFijos: gastosFijosMes };
+  });
+  const cont = document.getElementById('chartVentasMargen');
+  if(!cont) return;
+  cont.innerHTML =
+    '<div class="chart-legend"><span><i style="background:var(--up-fg)"></i>Ventas</span>'
+    + '<span><i style="background:var(--c4)"></i>Gastos fijos</span>'
+    + '<span><i style="background:var(--c3);border-radius:99px"></i>Margen bruto</span></div>'
+    + svgComboChart(datos, {width:640, height:230});
+  cont.querySelectorAll('rect[data-mes]').forEach(r => {
+    r.addEventListener('click', () => irAMovimientos({ mes:r.dataset.mes, tipo:r.dataset.tipo }));
+  });
+}
+
+/* ============================================================
+   ② INGRESOS RECURRENTES VS PUNTUALES
+   ============================================================ */
+function renderChartRecurrentePuntual(){
+  const ms = mesesConDatos();
+  const groups = ms.map(mk => {
+    const ingresosMes = validos.filter(m => m.tipo==='Ingreso' && m.fecha && mesKey(m.fecha)===mk);
+    const recurrente = ingresosMes.filter(m => m.categoria==='Contrato mensual').reduce((s,m)=>s+m.monto,0);
+    const puntual = ingresosMes.filter(m => m.categoria!=='Contrato mensual').reduce((s,m)=>s+m.monto,0);
+    return { label: mesLabel(mk), bars: [
+      { value: recurrente, color:'var(--brand2)', title: mesLabel(mk)+' · Recurrente: '+CLP(recurrente), mes:mk, tipo:'Ingreso' },
+      { value: puntual, color:'var(--c5)', title: mesLabel(mk)+' · Puntual: '+CLP(puntual), mes:mk, tipo:'Ingreso' },
+    ]};
+  });
+  const cont = document.getElementById('chartRecurrentePuntual');
+  if(!cont) return;
+  cont.innerHTML =
+    '<div class="chart-legend"><span><i style="background:var(--brand2)"></i>Recurrente (contratos)</span><span><i style="background:var(--c5)"></i>Puntual</span></div>'
+    + svgBarChart({ width:520, height:210, groups, barWidth:14 });
+  cont.querySelectorAll('rect[data-mes]').forEach(r => {
+    r.addEventListener('click', () => irAMovimientos({ mes:r.dataset.mes, tipo:r.dataset.tipo }));
+  });
+
+  const totRec = groups.reduce((s,g)=>s+g.bars[0].value,0);
+  const totPunt = groups.reduce((s,g)=>s+g.bars[1].value,0);
+  return { totRec, totPunt };
+}
+
+/* ============================================================
+   TREEMAP FACTURACIÓN POR COMUNA (Inicio)
+   ============================================================ */
+function renderTreemapComuna(){
+  const porComuna = {};
+  FACTURAS.forEach(f => { const c = f.comuna||'Sin dato'; porComuna[c] = (porComuna[c]||0)+f.neto; });
+  const items = Object.entries(porComuna).sort((a,b)=>b[1]-a[1]).map(([label,value]) => ({label,value}));
+  renderTreemap('treemapComuna', items, {cols:3});
 }
 
 function renderChartIngGas(targetId){
@@ -1458,6 +2028,577 @@ function initAgregar(){
   });
 }
 
+/* ============================================================
+   VISITAS + INVENTARIO (localStorage, mismo patrón que Agregar movimiento)
+   ============================================================ */
+const LS_KEY_VISITAS = 'desplagados_visitas_locales';
+const LS_KEY_PRODUCTOS = 'desplagados_productos_locales';
+const LS_KEY_MOVINV = 'desplagados_mov_inventario_locales';
+
+function cargarLS(key){ try { return JSON.parse(localStorage.getItem(key) || '[]'); } catch(e){ return []; } }
+function guardarLS(key, lista){ localStorage.setItem(key, JSON.stringify(lista)); }
+
+cargarLS(LS_KEY_VISITAS).forEach(v => VISITAS.push(v));
+cargarLS(LS_KEY_PRODUCTOS).forEach(p => PRODUCTOS.push(p));
+cargarLS(LS_KEY_MOVINV).forEach(m => MOVIMIENTOS_INVENTARIO.push(m));
+
+// ---- Stock e inventario: SIEMPRE calculado en vivo desde los movimientos, nunca un campo
+//      mutable aparte — así no hay forma de que quede desincronizado. ----
+function stockDe(productoId){
+  return MOVIMIENTOS_INVENTARIO.filter(m => m.productoId === productoId).reduce((s,m) => {
+    const signo = (m.tipo === 'Pérdida' || m.tipo === 'Consumo en visita') ? -1 : 1;
+    return s + signo * m.cantidad;
+  }, 0);
+}
+function valorInventario(){
+  return PRODUCTOS.reduce((s,p) => s + stockDe(p.id) * p.costoUnitario, 0);
+}
+
+// ---- Costo y margen por visita (fórmulas del punto 4) ----
+function costoManoObra(v){
+  const tarifa = v.persona === 'Martín del Río' ? COSTOS_PARAMS.costoHoraMartinDelRio
+    : v.persona === 'Martín Hrdina' ? COSTOS_PARAMS.costoHoraMartinHrdina
+    : v.persona === 'Técnico externo' ? COSTOS_PARAMS.costoHoraTecnicoExterno
+    : 0; // "Otro": sin tarifa definida
+  return ((v.horasTerreno||0) + (v.horasTraslado||0)) * tarifa;
+}
+function costoTransporte(v){
+  return (v.km||0) * COSTOS_PARAMS.costoKmFurgon + (v.tag||0) + (v.peajes||0) + (v.estacionamiento||0);
+}
+function costoProductosVisita(v){
+  return (v.productos||[]).reduce((s,p) => s + p.cantidad*p.costoUnitario, 0);
+}
+function visitaInfo(v){
+  const manoObra = costoManoObra(v), transporte = costoTransporte(v), productos = costoProductosVisita(v);
+  const otros = (v.costoOtros||0) + COSTOS_PARAMS.costoAdministrativoPorVisita;
+  const total = manoObra + transporte + productos + otros;
+  if(v.ingresoNeto == null) return { manoObra, transporte, productos, otros, total, margen:null, margenPct:null, estado:'Información incompleta' };
+  const margen = v.ingresoNeto - total;
+  const margenPct = v.ingresoNeto ? margen/v.ingresoNeto : 0;
+  const estado = margen < 0 ? 'Margen negativo' : (margenPct < COSTOS_PARAMS.margenMinimoEsperado ? 'Revisar' : 'Rentable');
+  return { manoObra, transporte, productos, otros, total, margen, margenPct, estado };
+}
+const ESTADO_VISITA_CLASE = { 'Rentable':'up-fg', 'Revisar':'warn', 'Margen negativo':'dn-fg', 'Información incompleta':'muted2' };
+
+// ---- Consumo de inventario ligado a una visita ----
+function aplicarConsumoVisita(v){
+  (v.productos||[]).forEach(pr => {
+    if(!pr.productoId || !pr.cantidad) return;
+    MOVIMIENTOS_INVENTARIO.push({
+      id: Date.now()+Math.random(), fecha: v.fecha, productoId: pr.productoId,
+      tipo: 'Consumo en visita', cantidad: pr.cantidad, costoUnitario: pr.costoUnitario,
+      visitaId: v.id, obs: 'Auto: visita ' + v.cliente + ' (' + v.fecha + ')', local: true,
+    });
+  });
+}
+function revertirConsumoVisita(visitaId){
+  for(let i=MOVIMIENTOS_INVENTARIO.length-1; i>=0; i--){
+    if(MOVIMIENTOS_INVENTARIO[i].visitaId === visitaId) MOVIMIENTOS_INVENTARIO.splice(i,1);
+  }
+}
+function guardarLocalesVisitasInventario(){
+  guardarLS(LS_KEY_VISITAS, VISITAS.filter(v => v.local));
+  guardarLS(LS_KEY_PRODUCTOS, PRODUCTOS.filter(p => p.local));
+  guardarLS(LS_KEY_MOVINV, MOVIMIENTOS_INVENTARIO.filter(m => m.local));
+}
+
+// ---- Formulario de visita: filas de productos dinámicas ----
+let formVisitaProductosTmp = [];
+let visitaEnEdicion = null;
+
+function renderFilasProductoVisita(){
+  const cont = document.getElementById('vProductosFilas');
+  cont.innerHTML = formVisitaProductosTmp.length ? formVisitaProductosTmp.map((row,i) =>
+    '<div style="display:flex;gap:.4rem;align-items:center;margin-bottom:.35rem">'
+    + '<select data-i="'+i+'" class="selProductoVisita" style="flex:2;border:1px solid var(--border);border-radius:6px;padding:.35rem .5rem;font:inherit">'
+      + '<option value="">Elegir producto…</option>'
+      + PRODUCTOS.map(p => '<option value="'+p.id+'"'+(row.productoId===p.id?' selected':'')+'>'+p.nombre+' (stock '+stockDe(p.id)+' '+p.unidad+')</option>').join('')
+    + '</select>'
+    + '<input type="number" class="cantProductoVisita" data-i="'+i+'" value="'+(row.cantidad||'')+'" placeholder="Cantidad" step="any" style="flex:1;border:1px solid var(--border);border-radius:6px;padding:.35rem .5rem;font:inherit">'
+    + '<button type="button" class="reset-btn" data-remove="'+i+'">✕</button></div>'
+  ).join('') : '<div class="desc" style="margin:0">Sin productos agregados a esta visita.</div>';
+
+  cont.querySelectorAll('.selProductoVisita').forEach(sel => sel.addEventListener('change', e => { formVisitaProductosTmp[+e.target.dataset.i].productoId = e.target.value; }));
+  cont.querySelectorAll('.cantProductoVisita').forEach(inp => inp.addEventListener('input', e => { formVisitaProductosTmp[+e.target.dataset.i].cantidad = parseFloat(e.target.value) || 0; }));
+  cont.querySelectorAll('[data-remove]').forEach(btn => btn.addEventListener('click', () => { formVisitaProductosTmp.splice(+btn.dataset.remove,1); renderFilasProductoVisita(); }));
+}
+
+function poblarSelectsVisita(){
+  document.getElementById('dlClientesVisita').innerHTML = listaClientesConocidos().map(n => '<option value="'+n+'">').join('');
+  const selContrato = document.getElementById('vContrato');
+  const valActual = selContrato.value;
+  selContrato.innerHTML = '<option value="">— sin contrato / puntual —</option>'
+    + CONTRATOS.map(c => '<option value="'+c.id+'">'+c.cliente+'</option>').join('');
+  selContrato.value = valActual;
+}
+
+function resetFormVisita(){
+  document.getElementById('formVisita').reset();
+  document.getElementById('vFecha').value = new Date().toISOString().slice(0,10);
+  formVisitaProductosTmp = [];
+  visitaEnEdicion = null;
+  document.getElementById('formVisitaTitulo').textContent = 'Registrar visita';
+  document.getElementById('btnCancelarEdicionVisita').style.display = 'none';
+  document.getElementById('clienteAutoInfo').innerHTML = '';
+  renderFilasProductoVisita();
+}
+
+function mostrarInfoAutoCliente(){
+  const nombre = document.getElementById('vCliente').value.trim();
+  const box = document.getElementById('clienteAutoInfo');
+  if(!nombre){ box.innerHTML=''; return; }
+  const fact = FACTURAS.find(f => f.cliente.toLowerCase() === nombre.toLowerCase());
+  const contrato = matchContrato(nombre);
+  if(!fact && !contrato){ box.innerHTML = ''; return; }
+  box.innerHTML = '<div class="diag-box" style="padding:.6rem .8rem;font-size:.78rem">'
+    + (fact && fact.comuna ? '<b>Comuna:</b> ' + fact.comuna + '. ' : '')
+    + (contrato ? '<b>Contrato:</b> ' + contrato.estado + (contrato.montoMensual?', '+CLP(contrato.montoMensual)+'/mes':'') + '. ' : '')
+    + (contrato && contrato.tipoServicio ? '<b>Servicio habitual:</b> ' + contrato.tipoServicio : '')
+    + '</div>';
+}
+
+function guardarVisita(e){
+  e.preventDefault();
+  const productos = formVisitaProductosTmp.filter(r => r.productoId && r.cantidad>0).map(r => {
+    const p = PRODUCTOS.find(x => x.id === r.productoId);
+    return { productoId: r.productoId, nombre: p?p.nombre:'?', cantidad:r.cantidad, costoUnitario: p?p.costoUnitario:0 };
+  });
+  const ingresoRaw = document.getElementById('vIngreso').value;
+  const datos = {
+    fecha: document.getElementById('vFecha').value || null,
+    cliente: document.getElementById('vCliente').value.trim(),
+    contratoId: document.getElementById('vContrato').value || null,
+    tipoServicio: document.getElementById('vTipoServicio').value,
+    tipoVisita: document.getElementById('vTipoVisita').value,
+    persona: document.getElementById('vPersona').value,
+    horasTerreno: parseFloat(document.getElementById('vHorasTerreno').value) || 0,
+    horasTraslado: parseFloat(document.getElementById('vHorasTraslado').value) || 0,
+    km: parseFloat(document.getElementById('vKm').value) || 0,
+    tag: parseFloat(document.getElementById('vTag').value) || 0,
+    peajes: parseFloat(document.getElementById('vPeajes').value) || 0,
+    estacionamiento: parseFloat(document.getElementById('vEstacionamiento').value) || 0,
+    productos,
+    cebaderas: document.getElementById('vCebaderas').value.trim() || null,
+    materialesOtros: document.getElementById('vMateriales').value.trim() || null,
+    costoOtros: parseFloat(document.getElementById('vCostoOtros').value) || 0,
+    ingresoNeto: ingresoRaw === '' ? null : parseFloat(ingresoRaw),
+    factura: document.getElementById('vFactura').value.trim() || null,
+    obs: document.getElementById('vObs').value.trim() || null,
+    local: true,
+  };
+  if(!datos.fecha || !datos.cliente) return;
+
+  if(visitaEnEdicion){
+    revertirConsumoVisita(visitaEnEdicion);
+    datos.id = visitaEnEdicion;
+    const idx = VISITAS.findIndex(v => v.id === visitaEnEdicion);
+    if(idx>=0) VISITAS[idx] = datos; else VISITAS.push(datos);
+  } else {
+    datos.id = Date.now();
+    VISITAS.push(datos);
+  }
+  aplicarConsumoVisita(datos);
+  guardarLocalesVisitasInventario();
+
+  const ok = document.getElementById('visitaOk');
+  ok.textContent = '✓ Visita guardada';
+  setTimeout(()=>{ ok.textContent=''; }, 3000);
+  resetFormVisita();
+  rerenderAll();
+}
+
+function editarVisita(id){
+  const v = VISITAS.find(x => x.id === id);
+  if(!v || !v.local) return;
+  visitaEnEdicion = id;
+  document.getElementById('vFecha').value = v.fecha || '';
+  document.getElementById('vCliente').value = v.cliente || '';
+  poblarSelectsVisita();
+  document.getElementById('vContrato').value = v.contratoId || '';
+  document.getElementById('vTipoServicio').value = v.tipoServicio;
+  document.getElementById('vTipoVisita').value = v.tipoVisita;
+  document.getElementById('vPersona').value = v.persona;
+  document.getElementById('vHorasTerreno').value = v.horasTerreno || '';
+  document.getElementById('vHorasTraslado').value = v.horasTraslado || '';
+  document.getElementById('vKm').value = v.km || '';
+  document.getElementById('vTag').value = v.tag || '';
+  document.getElementById('vPeajes').value = v.peajes || '';
+  document.getElementById('vEstacionamiento').value = v.estacionamiento || '';
+  document.getElementById('vCebaderas').value = v.cebaderas || '';
+  document.getElementById('vMateriales').value = v.materialesOtros || '';
+  document.getElementById('vCostoOtros').value = v.costoOtros || '';
+  document.getElementById('vIngreso').value = v.ingresoNeto == null ? '' : v.ingresoNeto;
+  document.getElementById('vFactura').value = v.factura || '';
+  document.getElementById('vObs').value = v.obs || '';
+  formVisitaProductosTmp = (v.productos||[]).map(p => ({productoId:p.productoId, cantidad:p.cantidad}));
+  renderFilasProductoVisita();
+  document.getElementById('formVisitaTitulo').textContent = 'Editando visita — ' + v.cliente + ' (' + v.fecha + ')';
+  document.getElementById('btnCancelarEdicionVisita').style.display = 'inline';
+  document.querySelector('#tab-visitas .card').scrollIntoView({block:'start'});
+}
+
+function poblarFiltrosVisitas(){
+  const meses = Array.from(new Set(VISITAS.filter(v=>v.fecha).map(v=>mesKey(v.fecha)))).sort();
+  document.getElementById('vfMes').innerHTML = '<option value="">Todos los meses</option>' + meses.map(m=>'<option value="'+m+'">'+mesLabel(m)+'</option>').join('');
+  const clientes = Array.from(new Set(VISITAS.map(v=>v.cliente))).sort();
+  document.getElementById('vfCliente').innerHTML = '<option value="">Todos los clientes</option>' + clientes.map(c=>'<option value="'+c+'">'+c+'</option>').join('');
+}
+
+function renderVisitas(){
+  poblarSelectsVisita();
+  poblarFiltrosVisitas();
+
+  const fMes = document.getElementById('vfMes').value;
+  const fCliente = document.getElementById('vfCliente').value;
+  const fTipoVisita = document.getElementById('vfTipoVisita').value;
+  const fServicio = document.getElementById('vfServicio').value;
+  const fPersona = document.getElementById('vfPersona').value;
+  const fEstado = document.getElementById('vfEstado').value;
+
+  let lista = VISITAS.slice().sort((a,b) => (b.fecha||'').localeCompare(a.fecha||'') || b.id-a.id);
+  if(fMes) lista = lista.filter(v => v.fecha && mesKey(v.fecha)===fMes);
+  if(fCliente) lista = lista.filter(v => v.cliente===fCliente);
+  if(fTipoVisita) lista = lista.filter(v => v.tipoVisita===fTipoVisita);
+  if(fServicio) lista = lista.filter(v => v.tipoServicio===fServicio);
+  if(fPersona) lista = lista.filter(v => v.persona===fPersona);
+  if(fEstado) lista = lista.filter(v => (visitaInfo(v).estado==='Información incompleta') === (fEstado==='Incompleta'));
+
+  const kpis = [
+    {label:'Visitas registradas', value: VISITAS.length},
+    {label:'Con información completa', value: VISITAS.filter(v=>visitaInfo(v).estado!=='Información incompleta').length},
+    {label:'Margen total medido', value: (()=>{ const c=VISITAS.map(visitaInfo).filter(i=>i.margen!=null); return c.length?CLP(c.reduce((s,i)=>s+i.margen,0)):'—'; })()},
+    {label:'Horas en terreno (total)', value: VISITAS.reduce((s,v)=>s+(v.horasTerreno||0),0).toFixed(1)+' h'},
+  ];
+  document.getElementById('visitasKpis').innerHTML = kpis.map(k=>'<div class="kpi"><div class="label">'+k.label+'</div><div class="value">'+k.value+'</div></div>').join('');
+
+  let html = '<table><thead><tr><th>Fecha</th><th>Cliente</th><th>Servicio</th><th>Tipo visita</th><th>Persona</th>'
+    + '<th>Horas</th><th>Ingreso</th><th>Costo total</th><th>Margen</th><th>Estado</th></tr></thead><tbody>';
+  lista.forEach(v => {
+    const info = visitaInfo(v);
+    const cls = 'color:var(--' + ESTADO_VISITA_CLASE[info.estado] + ')';
+    html += '<tr'+(v.local?' style="cursor:pointer" data-editvisita="'+v.id+'"':'')+'>'
+      + '<td>'+(v.fecha||'—')+'</td><td style="text-align:left">'+v.cliente+(v.local?' <span class="pill" style="background:var(--flat-bg);color:var(--info)">Local</span>':'')+'</td>'
+      + '<td>'+v.tipoServicio+'</td><td>'+v.tipoVisita+'</td><td>'+v.persona+'</td>'
+      + '<td>'+(((v.horasTerreno||0)+(v.horasTraslado||0)).toFixed(1))+' h</td>'
+      + '<td>'+(v.ingresoNeto==null?'—':CLP(v.ingresoNeto))+'</td>'
+      + '<td>'+CLP(info.total)+'</td>'
+      + '<td>'+(info.margen==null?'—':CLP(info.margen))+'</td>'
+      + '<td style="'+cls+';font-weight:600">'+info.estado+'</td></tr>';
+  });
+  html += '</tbody></table>';
+  document.getElementById('visitasTable').innerHTML = html;
+  document.querySelectorAll('#visitasTable [data-editvisita]').forEach(tr => {
+    tr.addEventListener('click', () => editarVisita(+tr.dataset.editvisita));
+  });
+
+  renderPendientesVisitas();
+}
+
+function renderPendientesVisitas(){
+  const locales = VISITAS.filter(v => v.local);
+  document.getElementById('pendientesVisitasBox').innerHTML = locales.length
+    ? '<table><thead><tr><th>Fecha</th><th>Cliente</th><th>Tipo</th></tr></thead><tbody>'
+      + locales.map(v=>'<tr><td>'+(v.fecha||'—')+'</td><td style="text-align:left">'+v.cliente+'</td><td>'+v.tipoVisita+'</td></tr>').join('')
+      + '</tbody></table>'
+    : '<div class="desc" style="margin:0">No hay visitas pendientes de sincronizar.</div>';
+}
+
+function textoPendientesVisitasParaChat(){
+  const locales = VISITAS.filter(v => v.local);
+  if(!locales.length) return '';
+  const lineas = locales.map(v => {
+    const prod = (v.productos||[]).map(p=>p.nombre+' x'+p.cantidad).join(', ') || 'sin productos';
+    return '- '+v.fecha+' | '+v.cliente+' | '+v.tipoServicio+'/'+v.tipoVisita+' | '+v.persona
+      +' | horas terreno '+v.horasTerreno+' traslado '+v.horasTraslado+' | km '+v.km
+      +' | productos: '+prod+' | ingreso '+(v.ingresoNeto==null?'sin dato':CLP(v.ingresoNeto))
+      +(v.obs?' | obs: '+v.obs:'');
+  });
+  return 'Agrega estas visitas que cargué desde el dashboard (después puedo vaciar la lista local):\n' + lineas.join('\n');
+}
+
+function copiarTexto(texto, btn){
+  if(!texto) return;
+  const orig = btn.textContent;
+  const marcar = () => { btn.textContent='✓ Copiado'; setTimeout(()=>{btn.textContent=orig;},2000); };
+  function fallback(){
+    const ta = document.createElement('textarea'); ta.value = texto; ta.style.position='fixed'; ta.style.opacity='0';
+    document.body.appendChild(ta); ta.select();
+    try { document.execCommand('copy'); marcar(); } catch(e){ alert('Copiá manualmente:\n\n'+texto); }
+    document.body.removeChild(ta);
+  }
+  if(navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(texto).then(marcar).catch(fallback);
+  else fallback();
+}
+
+function initVisitas(){
+  document.getElementById('vFecha').value = new Date().toISOString().slice(0,10);
+  renderFilasProductoVisita();
+  document.getElementById('formVisita').addEventListener('submit', guardarVisita);
+  document.getElementById('btnAgregarProductoVisita').addEventListener('click', () => { formVisitaProductosTmp.push({productoId:'',cantidad:0}); renderFilasProductoVisita(); });
+  document.getElementById('vCliente').addEventListener('input', mostrarInfoAutoCliente);
+  document.getElementById('btnCancelarEdicionVisita').addEventListener('click', resetFormVisita);
+  ['vfMes','vfCliente','vfTipoVisita','vfServicio','vfPersona','vfEstado'].forEach(id => document.getElementById(id).addEventListener('change', renderVisitas));
+  document.getElementById('btnCopiarPendientesVisitas').addEventListener('click', (e) => copiarTexto(textoPendientesVisitasParaChat(), e.target));
+  document.getElementById('btnVaciarPendientesVisitas').addEventListener('click', () => {
+    if(!confirm('¿Ya sincronizaste estas visitas con Claude? Esto las saca de la lista local.')) return;
+    const idsLocales = new Set(VISITAS.filter(v=>v.local).map(v=>v.id));
+    for(let i=VISITAS.length-1;i>=0;i--) if(idsLocales.has(VISITAS[i].id)) VISITAS.splice(i,1);
+    for(let i=MOVIMIENTOS_INVENTARIO.length-1;i>=0;i--) if(idsLocales.has(MOVIMIENTOS_INVENTARIO[i].visitaId)) MOVIMIENTOS_INVENTARIO.splice(i,1);
+    guardarLocalesVisitasInventario();
+    rerenderAll();
+  });
+}
+
+/* ============================================================
+   INVENTARIO
+   ============================================================ */
+function poblarSelectsInventario(){
+  document.getElementById('dlCategoriasProducto').innerHTML = Array.from(new Set(PRODUCTOS.map(p=>p.categoria).filter(Boolean))).map(c=>'<option value="'+c+'">').join('');
+  const sel = document.getElementById('miProducto');
+  const val = sel.value;
+  sel.innerHTML = '<option value="">Elegir producto…</option>' + PRODUCTOS.map(p=>'<option value="'+p.id+'">'+p.nombre+'</option>').join('');
+  sel.value = val;
+}
+
+function guardarProducto(e){
+  e.preventDefault();
+  const nombre = document.getElementById('pNombre').value.trim();
+  const costo = parseFloat(document.getElementById('pCosto').value);
+  if(!nombre || isNaN(costo)) return;
+  const producto = {
+    id: 'p'+Date.now(), nombre,
+    categoria: document.getElementById('pCategoria').value.trim() || null,
+    unidad: document.getElementById('pUnidad').value.trim() || 'Un',
+    tipo: document.getElementById('pTipo').value,
+    costoUnitario: costo,
+    stockMinimo: parseFloat(document.getElementById('pStockMinimo').value) || 0,
+    fechaVencimiento: document.getElementById('pVencimiento').value || null,
+    local: true,
+  };
+  PRODUCTOS.push(producto);
+  const stockInicial = parseFloat(document.getElementById('pStockInicial').value) || 0;
+  if(stockInicial !== 0){
+    MOVIMIENTOS_INVENTARIO.push({ id:Date.now()+Math.random(), fecha:new Date().toISOString().slice(0,10), productoId:producto.id,
+      tipo:'Ajuste manual', cantidad:stockInicial, costoUnitario:costo, visitaId:null, obs:'Stock físico inicial', local:true });
+  }
+  guardarLocalesVisitasInventario();
+  document.getElementById('formProducto').reset();
+  const ok = document.getElementById('productoOk'); ok.textContent='✓ Agregado'; setTimeout(()=>{ok.textContent='';},2500);
+  rerenderAll();
+}
+
+function guardarMovInventario(e){
+  e.preventDefault();
+  const productoId = document.getElementById('miProducto').value;
+  const cantidad = parseFloat(document.getElementById('miCantidad').value);
+  if(!productoId || !cantidad) return;
+  const p = PRODUCTOS.find(x=>x.id===productoId);
+  const costoUnitario = document.getElementById('miCostoUnitario').value ? parseFloat(document.getElementById('miCostoUnitario').value) : (p?p.costoUnitario:0);
+  MOVIMIENTOS_INVENTARIO.push({
+    id: Date.now()+Math.random(), fecha: document.getElementById('miFecha').value, productoId,
+    tipo: document.getElementById('miTipo').value, cantidad, costoUnitario, visitaId:null,
+    obs: document.getElementById('miObs').value.trim() || null, local:true,
+  });
+  guardarLocalesVisitasInventario();
+  document.getElementById('formMovInventario').reset();
+  document.getElementById('miFecha').value = new Date().toISOString().slice(0,10);
+  const ok = document.getElementById('movInvOk'); ok.textContent='✓ Registrado'; setTimeout(()=>{ok.textContent='';},2500);
+  rerenderAll();
+}
+
+function renderInventario(){
+  poblarSelectsInventario();
+
+  const valorTotal = valorInventario();
+  const bajoMinimo = PRODUCTOS.filter(p => stockDe(p.id) < p.stockMinimo);
+  const hoy = new Date().toISOString().slice(0,10);
+  const en30dias = new Date(); en30dias.setDate(en30dias.getDate()+30);
+  const porVencer = PRODUCTOS.filter(p => p.fechaVencimiento && p.fechaVencimiento <= en30dias.toISOString().slice(0,10) && p.fechaVencimiento >= hoy);
+  const consumoMes = (() => {
+    const mk = new Date().toISOString().slice(0,7);
+    return MOVIMIENTOS_INVENTARIO.filter(m=>m.tipo==='Consumo en visita' && m.fecha && mesKey(m.fecha)===mk)
+      .reduce((s,m)=>s+m.cantidad*m.costoUnitario,0);
+  })();
+
+  document.getElementById('invKpis').innerHTML = [
+    {label:'Valor total inventario', value: CLP(valorTotal)},
+    {label:'Bajo stock mínimo', value: bajoMinimo.length, cls: bajoMinimo.length?'warn':''},
+    {label:'Próximos a vencer (30d)', value: porVencer.length, cls: porVencer.length?'warn':''},
+    {label:'Consumo este mes', value: CLP(consumoMes)},
+  ].map(k=>'<div class="kpi '+(k.cls||'')+'"><div class="label">'+k.label+'</div><div class="value">'+k.value+'</div></div>').join('');
+
+  if(!PRODUCTOS.length){
+    document.getElementById('stockTable').innerHTML = '<div class="desc" style="margin:0">Sin productos cargados todavía.</div>';
+  } else {
+    let html = '<table><thead><tr><th>Producto</th><th>Categoría</th><th>Tipo</th><th>Stock</th><th>Mínimo</th><th>Costo unitario</th><th>Valor</th><th>Vence</th></tr></thead><tbody>';
+    PRODUCTOS.forEach(p => {
+      const stock = stockDe(p.id);
+      const bajo = stock < p.stockMinimo;
+      const vence = p.fechaVencimiento && porVencer.includes(p);
+      html += '<tr><td style="text-align:left">'+p.nombre+'</td><td>'+(p.categoria||'—')+'</td><td>'+p.tipo+'</td>'
+        + '<td class="'+(bajo?'saldo-neg':'')+'">'+stock+' '+p.unidad+'</td><td class="muted">'+p.stockMinimo+'</td>'
+        + '<td>'+CLP(p.costoUnitario)+'</td><td>'+CLP(stock*p.costoUnitario)+'</td>'
+        + '<td class="'+(vence?'saldo-bajo':'')+'">'+(p.fechaVencimiento||'—')+'</td></tr>';
+    });
+    html += '</tbody></table>';
+    document.getElementById('stockTable').innerHTML = html;
+  }
+
+  // Consumo mensual
+  const consumos = MOVIMIENTOS_INVENTARIO.filter(m=>m.tipo==='Consumo en visita' && m.fecha);
+  const porMes = {};
+  consumos.forEach(m => { const mk=mesKey(m.fecha); porMes[mk]=(porMes[mk]||0)+m.cantidad*m.costoUnitario; });
+  const mesesConsumo = Object.keys(porMes).sort();
+  document.getElementById('consumoMensualTable').innerHTML = mesesConsumo.length
+    ? '<table><thead><tr><th>Mes</th><th>Costo consumido</th></tr></thead><tbody>'
+      + mesesConsumo.map(mk=>'<tr><td>'+mesLabel(mk)+'</td><td>'+CLP(porMes[mk])+'</td></tr>').join('')
+      + '</tbody></table>'
+    : '<div class="desc" style="margin:0">Sin consumo registrado todavía (se genera solo al guardar visitas con productos).</div>';
+
+  // Costo de productos por cliente
+  const porCliente = {};
+  consumos.forEach(m => {
+    const v = VISITAS.find(x=>x.id===m.visitaId);
+    if(!v) return;
+    porCliente[v.cliente] = (porCliente[v.cliente]||0) + m.cantidad*m.costoUnitario;
+  });
+  const clientesConsumo = Object.entries(porCliente).sort((a,b)=>b[1]-a[1]);
+  document.getElementById('consumoClienteTable').innerHTML = clientesConsumo.length
+    ? '<table><thead><tr><th>Cliente</th><th>Costo de productos</th></tr></thead><tbody>'
+      + clientesConsumo.map(([c,v])=>'<tr><td style="text-align:left">'+c+'</td><td>'+CLP(v)+'</td></tr>').join('')
+      + '</tbody></table>'
+    : '<div class="desc" style="margin:0">Sin datos todavía.</div>';
+
+  // Movimientos
+  const movs = MOVIMIENTOS_INVENTARIO.slice().sort((a,b)=>(b.fecha||'').localeCompare(a.fecha||''));
+  document.getElementById('movInventarioTable').innerHTML = movs.length
+    ? '<table><thead><tr><th>Fecha</th><th>Producto</th><th>Tipo</th><th>Cantidad</th><th>Costo unitario</th><th>Obs</th></tr></thead><tbody>'
+      + movs.map(m => { const p=PRODUCTOS.find(x=>x.id===m.productoId); return '<tr><td>'+(m.fecha||'—')+'</td><td style="text-align:left">'+(p?p.nombre:'?')+'</td>'
+        + '<td>'+m.tipo+'</td><td>'+m.cantidad+'</td><td>'+CLP(m.costoUnitario)+'</td><td style="text-align:left" class="muted">'+(m.obs||'')+'</td></tr>'; }).join('')
+      + '</tbody></table>'
+    : '<div class="desc" style="margin:0">Sin movimientos todavía.</div>';
+}
+
+/* ============================================================
+   PARÁMETROS DE COSTO (misma lógica de edición que Proyección)
+   ============================================================ */
+// Copia congelada de los valores del archivo, ANTES de que cualquier edición en pantalla
+// mute COSTOS_PARAMS (visitaInfo() lo lee como global, así que el "live preview" edita el
+// objeto real directamente) — si no se guarda esta copia aparte, el botón "Restablecer"
+// terminaría copiando los valores ya editados sobre sí mismos, sin resetear nada.
+const COSTOS_PARAMS_ORIGINAL = JSON.parse(JSON.stringify(COSTOS_PARAMS));
+let liveCostosParams = JSON.parse(JSON.stringify(COSTOS_PARAMS));
+
+const COSTOS_PARAM_FIELDS = [
+  { key:'costoHoraMartinDelRio', label:'Costo/hora Martín del Río' },
+  { key:'costoHoraMartinHrdina', label:'Costo/hora Martín Hrdina' },
+  { key:'costoHoraTecnicoExterno', label:'Costo/hora técnico externo' },
+  { key:'costoKmFurgon', label:'Costo por km (furgón)' },
+  { key:'costoAdministrativoPorVisita', label:'Costo administrativo/visita' },
+  { key:'margenMinimoEsperado', label:'Margen mínimo esperado (0-1)' },
+  { key:'margenCritico', label:'Margen crítico (0-1)' },
+  { key:'capacidadHorasMensualSocios', label:'Capacidad horas/mes (socios)' },
+];
+
+function renderCostosParamGrid(){
+  document.getElementById('costosParamGrid').innerHTML = COSTOS_PARAM_FIELDS.map(f =>
+    '<div class="param"><label>'+f.label+'</label><input type="number" data-costokey="'+f.key+'" value="'+liveCostosParams[f.key]+'" step="any"></div>'
+  ).join('');
+  document.querySelectorAll('#costosParamGrid input').forEach(inp => {
+    inp.addEventListener('input', () => {
+      liveCostosParams[inp.dataset.costokey] = parseFloat(inp.value) || 0;
+      Object.assign(COSTOS_PARAMS, liveCostosParams); // visitaInfo() lee COSTOS_PARAMS directo
+      renderMargenVisita();
+    });
+  });
+
+  const sinConfigurar = ['costoHoraMartinDelRio','costoHoraMartinHrdina','costoHoraTecnicoExterno'].filter(k => !liveCostosParams[k]);
+  document.getElementById('costosAviso').innerHTML = sinConfigurar.length
+    ? '<div class="warn-box" style="margin:0">Sin configurar: ' + sinConfigurar.map(k=>COSTOS_PARAM_FIELDS.find(f=>f.key===k).label).join(', ')
+      + '. Mientras estén en 0, esas visitas van a mostrar mano de obra $0 (costo subestimado, no un margen real).</div>'
+    : '';
+}
+
+/* ============================================================
+   ⑥ MARGEN REAL POR VISITA
+   ============================================================ */
+let visitaSeleccionadaDetalle = null;
+
+function renderMargenVisita(){
+  const visitas = VISITAS.slice().sort((a,b) => (a.fecha||'').localeCompare(b.fecha||''));
+  const conDatos = visitas.filter(v => v.fecha);
+
+  if(!conDatos.length){
+    document.getElementById('chartMargenVisita').innerHTML = '<div class="desc" style="margin:0">Sin visitas registradas todavía. Cargalas en la pestaña Visitas.</div>';
+    document.getElementById('margenVisitaTable').innerHTML = '';
+    document.getElementById('detalleVisitaSeleccionada').innerHTML = '';
+    return;
+  }
+
+  const COLOR_ESTADO = { 'Rentable':'var(--up-fg)', 'Revisar':'var(--warn)', 'Margen negativo':'var(--dn-fg)', 'Información incompleta':'var(--muted2)' };
+  const groups = conDatos.map(v => {
+    const info = visitaInfo(v);
+    const val = info.margen == null ? 0 : info.margen;
+    return { label: v.fecha.slice(5), bars: [{ value: Math.max(val, 0), color: COLOR_ESTADO[info.estado], title: v.fecha+' · '+v.cliente+' · '+info.estado+': '+(info.margen==null?'sin ingreso':CLP(info.margen)), visitaId: v.id }] };
+  });
+  document.getElementById('chartMargenVisita').innerHTML =
+    '<div class="chart-legend"><span><i style="background:var(--up-fg)"></i>Rentable</span><span><i style="background:var(--warn)"></i>Revisar</span>'
+    + '<span><i style="background:var(--dn-fg)"></i>Negativo</span><span><i style="background:var(--muted2)"></i>Incompleta</span></div>'
+    + svgBarChart({ width:640, height:200, groups, barWidth:14 });
+
+  let html = '<table><thead><tr><th>Fecha</th><th>Cliente</th><th>Tipo</th><th>Ingreso</th><th>Mano obra</th>'
+    + '<th>Transporte</th><th>Productos</th><th>Otros</th><th>Costo total</th><th>Margen</th><th>%</th><th>Estado</th></tr></thead><tbody>';
+  conDatos.slice().reverse().forEach(v => {
+    const info = visitaInfo(v);
+    const cls = info.estado==='Rentable'?'pos':(info.estado==='Margen negativo'?'neg':(info.estado==='Revisar'?'':'muted'));
+    html += '<tr style="cursor:pointer" data-detalle="'+v.id+'"><td>'+v.fecha+'</td><td style="text-align:left">'+v.cliente+'</td><td>'+v.tipoVisita+'</td>'
+      + '<td>'+(v.ingresoNeto==null?'—':CLP(v.ingresoNeto))+'</td>'
+      + '<td class="muted">'+CLP(info.manoObra)+'</td><td class="muted">'+CLP(info.transporte)+'</td>'
+      + '<td class="muted">'+CLP(info.productos)+'</td><td class="muted">'+CLP(info.otros)+'</td>'
+      + '<td><b>'+CLP(info.total)+'</b></td>'
+      + '<td class="'+cls+'">'+(info.margen==null?'—':CLP(info.margen))+'</td>'
+      + '<td class="'+cls+'">'+(info.margenPct==null?'—':PCT(info.margenPct))+'</td>'
+      + '<td style="color:'+COLOR_ESTADO[info.estado]+';font-weight:600">'+info.estado+'</td></tr>';
+  });
+  html += '</tbody></table>';
+  document.getElementById('margenVisitaTable').innerHTML = html;
+
+  document.querySelectorAll('[data-detalle]').forEach(tr => tr.addEventListener('click', () => {
+    visitaSeleccionadaDetalle = +tr.dataset.detalle;
+    renderDetalleVisitaSeleccionada();
+  }));
+  document.querySelectorAll('#chartMargenVisita rect[data-visitaid]').forEach(r => r.addEventListener('click', () => {
+    visitaSeleccionadaDetalle = +r.dataset.visitaid; renderDetalleVisitaSeleccionada();
+  }));
+  if(visitaSeleccionadaDetalle) renderDetalleVisitaSeleccionada();
+}
+
+function renderDetalleVisitaSeleccionada(){
+  const v = VISITAS.find(x => x.id === visitaSeleccionadaDetalle);
+  const box = document.getElementById('detalleVisitaSeleccionada');
+  if(!v){ box.innerHTML=''; return; }
+  const info = visitaInfo(v);
+  const tarifa = v.persona==='Martín del Río'?COSTOS_PARAMS.costoHoraMartinDelRio: v.persona==='Martín Hrdina'?COSTOS_PARAMS.costoHoraMartinHrdina
+    : v.persona==='Técnico externo'?COSTOS_PARAMS.costoHoraTecnicoExterno : 0;
+  let html = '<div class="diag-box"><b>'+v.fecha+' · '+v.cliente+' · '+v.tipoVisita+'</b><br><br>'
+    + '<b>Mano de obra:</b> ('+ (v.horasTerreno||0) +'h terreno + '+(v.horasTraslado||0)+'h traslado) × '+CLP(tarifa)+'/h = <b>'+CLP(info.manoObra)+'</b><br>'
+    + '<b>Transporte:</b> '+(v.km||0)+'km × '+CLP(COSTOS_PARAMS.costoKmFurgon)+' + TAG '+CLP(v.tag||0)+' + peajes '+CLP(v.peajes||0)+' + estacionamiento '+CLP(v.estacionamiento||0)+' = <b>'+CLP(info.transporte)+'</b><br>'
+    + '<b>Productos:</b> ' + ((v.productos||[]).length ? (v.productos||[]).map(p=>p.nombre+' × '+p.cantidad+' ('+CLP(p.cantidad*p.costoUnitario)+')').join(', ') : 'ninguno') + ' = <b>'+CLP(info.productos)+'</b><br>'
+    + '<b>Otros:</b> costo directo '+CLP(v.costoOtros||0)+' + administrativo '+CLP(COSTOS_PARAMS.costoAdministrativoPorVisita)+' = <b>'+CLP(info.otros)+'</b><br><br>'
+    + '<b>Costo total: '+CLP(info.total)+'</b><br>'
+    + '<b>Ingreso: '+(v.ingresoNeto==null?'sin dato':CLP(v.ingresoNeto))+'</b><br>'
+    + '<b>Margen: '+(info.margen==null?'—':CLP(info.margen)+' ('+PCT(info.margenPct)+')')+'</b>'
+    + (v.obs ? '<br><br><span class="muted">Obs: '+v.obs+'</span>' : '')
+    + '</div>';
+  box.innerHTML = html;
+}
+
+function initInventario(){
+  document.getElementById('formProducto').addEventListener('submit', guardarProducto);
+  document.getElementById('miFecha').value = new Date().toISOString().slice(0,10);
+  document.getElementById('formMovInventario').addEventListener('submit', guardarMovInventario);
+}
+
 function rerenderAll(){
   recomputeDerivados();
   renderWarnBox();
@@ -1469,14 +2610,26 @@ function rerenderAll(){
   renderAnalisis();
   renderChartIngGas('chartIngGas');
   renderChartIngGas('chartIngGasInicio');
+  renderChartVentasMargen();
+  renderChartRecurrentePuntual();
+  renderTreemapComuna();
+  renderGaugeMargen();
   renderDonutGastos();
   renderPL();
   renderPLResumenInicio();
+  renderRentabilidadClientes();
+  renderFunnel();
+  renderCosteo();
+  renderMargenesReferencia();
+  renderFlujo13Semanas();
   renderContratos();
   poblarFiltros();
   poblarCategoriasDatalist();
   renderMovimientos();
   renderPendientesLocal();
+  renderVisitas();
+  renderInventario();
+  renderMargenVisita();
 }
 
 /* ============================================================
@@ -1676,6 +2829,123 @@ function renderProyeccion(){
   renderMilestones(rows);
   renderChartTemporada();
   renderPresupuestoVsReal(rows);
+  renderCostoContratoGrid();
+  renderProyeccionCorregida();
+}
+
+/* ============================================================
+   COSTOS CORREGIDOS POR CONTRATO (punto 7 — no reconstruye la tabla existente,
+   agrega un cálculo paralelo que sí hace crecer el costo variable con los contratos)
+   ============================================================ */
+const UMBRAL_VISITAS_PROMEDIO_REAL = 5; // visitas completas mínimas para confiar en el promedio real
+
+function visitasCompletasGlobal(){
+  return VISITAS.filter(v => visitaInfo(v).estado !== 'Información incompleta');
+}
+
+function promediosPorContrato(){
+  const manual = liveParams.porContratoNuevo;
+  const completas = visitasCompletasGlobal();
+  const hayDatosReales = completas.length >= UMBRAL_VISITAS_PROMEDIO_REAL;
+
+  if(manual.usarPromediosReales && hayDatosReales){
+    const nMeses = Math.max(1, new Set(completas.map(v=>mesKey(v.fecha))).size);
+    return {
+      visitasMensualesPromedio: completas.length / nMeses,
+      horasPromedioPorVisita: completas.reduce((s,v)=>s+(v.horasTerreno||0)+(v.horasTraslado||0),0) / completas.length,
+      kmPromedioPorVisita: completas.reduce((s,v)=>s+(v.km||0),0) / completas.length,
+      costoPromedioProductos: completas.reduce((s,v)=>s+costoProductosVisita(v),0) / completas.length,
+      inversionInicialPromedio: manual.inversionInicialPromedio, // no hay suficientes instalaciones medidas todavía, se mantiene manual
+      origen: 'real',
+    };
+  }
+  return { ...manual, origen: 'manual' };
+}
+
+function costoHoraPromedioSocios(){
+  const tarifas = [COSTOS_PARAMS.costoHoraMartinDelRio, COSTOS_PARAMS.costoHoraMartinHrdina].filter(t=>t>0);
+  return tarifas.length ? tarifas.reduce((a,b)=>a+b,0)/tarifas.length : 0;
+}
+
+function calcularProyeccionCorregida(){
+  const { rows } = calcularProyeccion(liveParams);
+  const prom = promediosPorContrato();
+  const costoHora = costoHoraPromedioSocios();
+  const capacidad = COSTOS_PARAMS.capacidadHorasMensualSocios;
+
+  let primerMesSuperaCapacidad = null;
+  const filas = rows.map(r => {
+    const visitasReq = r.contratosActivos * prom.visitasMensualesPromedio;
+    const horasReq = visitasReq * prom.horasPromedioPorVisita;
+    const costoManoObra = horasReq * costoHora;
+    const costoTransporte = visitasReq * prom.kmPromedioPorVisita * COSTOS_PARAMS.costoKmFurgon;
+    const costoProductos = visitasReq * prom.costoPromedioProductos;
+    const inversionNueva = liveParams.nuevosContratosPorMes * prom.inversionInicialPromedio;
+    const costoVariableCorregido = costoManoObra + costoTransporte + costoProductos + inversionNueva;
+    const margenCorregido = r.totalIngresos - costoVariableCorregido - r.gastosFijos;
+
+    if(capacidad > 0 && primerMesSuperaCapacidad === null && horasReq > capacidad) primerMesSuperaCapacidad = r.mesKey;
+
+    return { mesKey:r.mesKey, contratosActivos:r.contratosActivos, visitasReq, horasReq, costoVariableCorregido, margenCorregido };
+  });
+
+  return { filas, prom, costoHora, capacidad, primerMesSuperaCapacidad };
+}
+
+const COSTO_CONTRATO_FIELDS = [
+  { key:'visitasMensualesPromedio', label:'Visitas mensuales / contrato' },
+  { key:'horasPromedioPorVisita', label:'Horas promedio / visita' },
+  { key:'kmPromedioPorVisita', label:'Km promedio / visita' },
+  { key:'costoPromedioProductos', label:'Costo productos / visita ($)' },
+  { key:'inversionInicialPromedio', label:'Inversión inicial / contrato nuevo ($)' },
+];
+
+function renderCostoContratoGrid(){
+  const p = liveParams.porContratoNuevo;
+  document.getElementById('usarPromediosReales').checked = !!p.usarPromediosReales;
+  const completas = visitasCompletasGlobal().length;
+  document.getElementById('usarPromediosRealesWrap').title = completas + ' visitas completas registradas (hacen falta ' + UMBRAL_VISITAS_PROMEDIO_REAL + ' para habilitar esto)';
+  document.getElementById('usarPromediosReales').disabled = completas < UMBRAL_VISITAS_PROMEDIO_REAL;
+
+  document.getElementById('costoContratoGrid').innerHTML = COSTO_CONTRATO_FIELDS.map(f =>
+    '<div class="param"><label>'+f.label+'</label><input type="number" data-cckey="'+f.key+'" value="'+p[f.key]+'" step="any"'
+    + (p.usarPromediosReales && completas>=UMBRAL_VISITAS_PROMEDIO_REAL && f.key!=='inversionInicialPromedio' ? ' disabled' : '') + '></div>'
+  ).join('');
+  document.querySelectorAll('#costoContratoGrid input').forEach(inp => {
+    inp.addEventListener('input', () => { liveParams.porContratoNuevo[inp.dataset.cckey] = parseFloat(inp.value)||0; renderProyeccionCorregida(); });
+  });
+}
+
+function renderProyeccionCorregida(){
+  const { filas, prom, costoHora, capacidad, primerMesSuperaCapacidad } = calcularProyeccionCorregida();
+  const ultima = filas[filas.length-1];
+
+  document.getElementById('proyCorregidaKpis').innerHTML = [
+    { label:'Costo variable corregido · ' + mesLabel(ultima.mesKey), value: CLP(ultima.costoVariableCorregido) },
+    { label:'Margen corregido · ' + mesLabel(ultima.mesKey), value: CLP(ultima.margenCorregido), cls: ultima.margenCorregido>=0?'pos':'neg' },
+    { label:'Visitas/mes requeridas · ' + mesLabel(ultima.mesKey), value: ultima.visitasReq.toFixed(1) },
+    { label:'Horas/mes requeridas · ' + mesLabel(ultima.mesKey), value: ultima.horasReq.toFixed(1) + 'h' },
+  ].map(k=>'<div class="kpi '+(k.cls||'')+'"><div class="label">'+k.label+'</div><div class="value">'+k.value+'</div></div>').join('');
+
+  const origenTxt = prom.origen==='real' ? 'promedio REAL de las visitas registradas' : 'valores manuales configurados arriba';
+  let alertaHtml = '<div class="desc" style="margin:0 0 .6rem">Usando '+origenTxt+'. Costo/hora de mano de obra (promedio de los 2 socios): '+CLP(costoHora)+'.</div>';
+  if(capacidad > 0 && primerMesSuperaCapacidad){
+    alertaHtml += '<div class="warn-box" style="margin:0">Las horas requeridas superan la capacidad mensual definida ('+capacidad+'h) a partir de <b>'+mesLabel(primerMesSuperaCapacidad)+'</b>. Con el ritmo de crecimiento actual, en algún momento los socios solos no dan abasto.</div>';
+  } else if(!capacidad){
+    alertaHtml += '<div class="desc" style="margin:0">Configurá "Capacidad horas/mes (socios)" en Rentabilidad → Parámetros de costo para activar esta alerta.</div>';
+  }
+  document.getElementById('proyCorregidaAlerta').innerHTML = alertaHtml;
+
+  let html = '<table><thead><tr><th>Mes</th><th>Contratos activos</th><th>Visitas req.</th><th>Horas req.</th><th>Costo variable corregido</th><th>Margen corregido</th></tr></thead><tbody>';
+  filas.forEach(f => {
+    const alerta = capacidad>0 && f.horasReq>capacidad;
+    html += '<tr><td>'+mesLabel(f.mesKey)+'</td><td>'+f.contratosActivos+'</td><td>'+f.visitasReq.toFixed(1)+'</td>'
+      + '<td class="'+(alerta?'saldo-neg':'')+'">'+f.horasReq.toFixed(1)+'h</td>'
+      + '<td>'+CLP(f.costoVariableCorregido)+'</td>'
+      + '<td class="'+(f.margenCorregido>=0?'pos':'neg')+'">'+CLP(f.margenCorregido)+'</td></tr>';
+  });
+  html += '</tbody></table>';
+  document.getElementById('proyCorregidaTable').innerHTML = html;
 }
 
 function renderPresupuestoVsReal(rows){
@@ -2157,6 +3427,524 @@ function renderDSO(){
 }
 
 /* ============================================================
+   ③ RENTABILIDAD POR CLIENTE — estimada por prorrateo de costos
+   (el ingreso es real; el costo NO se registra por cliente, así que se
+   reparte el costo total de la empresa proporcional a lo que factura cada uno)
+   ============================================================ */
+function extraerCliente(descripcion){
+  if(!descripcion) return 'Sin identificar';
+  const partes = descripcion.split('—');
+  return (partes.length > 1 ? partes[partes.length-1] : descripcion).trim();
+}
+
+function listaClientesConocidos(){
+  const s = new Set();
+  FACTURAS.forEach(f => s.add(f.cliente));
+  CONTRATOS.forEach(c => s.add(c.cliente));
+  MOVIMIENTOS.filter(m => m.categoria === 'Instalación inicial' && m.tipo === 'Ingreso').forEach(m => s.add(extraerCliente(m.descripcion)));
+  return Array.from(s);
+}
+
+function matchContrato(nombre){
+  const n = nombre.toLowerCase();
+  return CONTRATOS.find(c => {
+    const cn = c.cliente.toLowerCase();
+    return cn === n || cn.includes(n.split(' ')[0]) || n.includes(cn.split(' (')[0]);
+  });
+}
+
+function calcularRentabilidadClientes(){
+  const clientesFacturados = new Set(FACTURAS.map(f => f.cliente));
+  const porCliente = {};
+
+  FACTURAS.forEach(f => {
+    porCliente[f.cliente] = porCliente[f.cliente] || { nombre: f.cliente, historico: 0, instalacion: 0 };
+    porCliente[f.cliente].historico += f.neto;
+  });
+
+  // Clientes sin factura formal (Irma Dupont, instalaciones puntuales, etc): se suman desde
+  // movimientos, buscando el nombre dentro de la descripción.
+  listaClientesConocidos().filter(n => !clientesFacturados.has(n)).forEach(nombre => {
+    const suma = validos.filter(m => m.tipo === 'Ingreso' && (m.descripcion||'').toLowerCase().includes(nombre.toLowerCase()))
+                        .reduce((s,m) => s+m.monto, 0);
+    if(suma > 0){
+      porCliente[nombre] = porCliente[nombre] || { nombre, historico: 0, instalacion: 0 };
+      porCliente[nombre].historico += suma;
+    }
+  });
+
+  // Inversión inicial cobrada, mostrada aparte (ya está incluida en "historico" arriba).
+  const nombresConocidos = Object.keys(porCliente);
+  MOVIMIENTOS.filter(m => m.categoria === 'Instalación inicial' && m.tipo === 'Ingreso' && m.monto != null).forEach(m => {
+    const nombre = nombresConocidos.find(n => (m.descripcion||'').toLowerCase().includes(n.toLowerCase())) || extraerCliente(m.descripcion);
+    porCliente[nombre] = porCliente[nombre] || { nombre, historico: 0, instalacion: 0 };
+    porCliente[nombre].instalacion += m.monto;
+  });
+
+  const acum = calcularPL(null);
+  const ingresoTotalEmpresa = acum.ventas || 1;
+  const clientesConIngreso = Object.values(porCliente).filter(c => c.historico > 0).length || 1;
+
+  // El costo variable (insumos/combustible/instalación) se reparte proporcional al ingreso —
+  // asume que trabajar más para un cliente consume más insumos, razonable. El costo fijo
+  // (arriendo, honorarios, sueldos, etc.) se reparte EN PARTES IGUALES entre clientes: es la
+  // única forma de que el % de margen difiera entre clientes grandes y chicos — repartido
+  // 100% proporcional al ingreso, todos dan exactamente el mismo % (no distingue nada).
+  const costoFijoPorCliente = acum.opex / clientesConIngreso;
+
+  return Object.values(porCliente).map(c => {
+    const contrato = matchContrato(c.nombre);
+    const costoVariableAsignado = (c.historico / ingresoTotalEmpresa) * acum.costo;
+    const costoAsignado = costoVariableAsignado + (c.historico > 0 ? costoFijoPorCliente : 0);
+
+    // B. Rentabilidad REAL medida — solo con visitas que tengan datos completos. No reemplaza
+    // la estimada de arriba: conviven, y se muestra cuál es cuál (punto 5 del pedido).
+    const visitas = visitasDeCliente(c.nombre);
+    const visitasCompletas = visitas.filter(v => visitaInfo(v).estado !== 'Información incompleta');
+    const margenReal = visitasCompletas.length ? visitasCompletas.reduce((s,v)=>s+visitaInfo(v).margen,0) : null;
+
+    return {
+      ...c, contrato,
+      montoMensual: contrato ? contrato.montoMensual : null,
+      estadoContrato: contrato ? contrato.estado : null,
+      costoAsignado,
+      margenEstimado: c.historico - costoAsignado,
+      margenPct: c.historico ? (c.historico - costoAsignado)/c.historico : null,
+      nVisitas: visitas.length,
+      nVisitasCompletas: visitasCompletas.length,
+      pctVisitasCompletas: visitas.length ? visitasCompletas.length/visitas.length : null,
+      margenReal,
+    };
+  }).sort((a,b) => b.historico - a.historico);
+}
+
+// Empareja visitas con clientes por nombre (mismo criterio flexible que matchContrato).
+function visitasDeCliente(nombre){
+  const n = nombre.toLowerCase();
+  return VISITAS.filter(v => {
+    const vn = (v.cliente||'').toLowerCase();
+    return vn === n || vn.includes(n) || n.includes(vn);
+  });
+}
+
+let clienteSeleccionado = null;
+
+function renderRentabilidadClientes(){
+  const lista = calcularRentabilidadClientes();
+  const totalIngreso = lista.reduce((s,c)=>s+c.historico,0);
+  const totalMargen = lista.reduce((s,c)=>s+c.margenEstimado,0);
+
+  document.getElementById('rentKpis').innerHTML = [
+    {label:'Clientes con ingreso', value: lista.length, cls:''},
+    {label:'Ingreso histórico total', value: CLP(totalIngreso), cls:''},
+    {label:'Margen estimado total', value: CLP(totalMargen), cls: totalMargen>=0?'pos':'neg', sub:'prorrateado, no medido'},
+    {label:'Contratos activos', value: CONTRATOS.filter(c=>c.estado==='Activo').length, cls:''},
+  ].map(k => '<div class="kpi '+k.cls+'"><div class="label">'+k.label+'</div><div class="value">'+k.value+'</div>'
+    + (k.sub?'<div class="sub">'+k.sub+'</div>':'') + '</div>').join('');
+
+  document.getElementById('clientGrid').innerHTML = lista.map((c,i) =>
+    '<button class="client-card' + (clienteSeleccionado===c.nombre?' selected':'') + '" data-idx="'+i+'">'
+    + '<div class="nm">'+c.nombre+'</div>'
+    + '<div class="ing">'+CLP(c.historico)+'</div>'
+    + '<div class="sub">'+(c.estadoContrato ? c.estadoContrato + (c.montoMensual?' · '+CLP(c.montoMensual)+'/mes':'') : 'sin contrato activo')+'</div>'
+    + '<div class="sub" style="margin-top:.3rem;padding-top:.3rem;border-top:1px solid var(--border2)">'
+      + 'Estimado: <b class="'+(c.margenEstimado>=0?'pos':'neg')+'">'+CLP(c.margenEstimado)+'</b>'
+      + (c.margenReal != null
+          ? '<br>Real: <b class="'+(c.margenReal>=0?'pos':'neg')+'">'+CLP(c.margenReal)+'</b> ('+c.nVisitasCompletas+' visita'+(c.nVisitasCompletas===1?'':'s')+')'
+          : (c.nVisitas ? '<br><span class="muted">'+c.nVisitas+' visita(s), sin datos suficientes</span>' : ''))
+    + '</div>'
+    + '</button>'
+  ).join('');
+
+  document.querySelectorAll('#clientGrid .client-card').forEach(btn => {
+    btn.addEventListener('click', () => {
+      clienteSeleccionado = lista[+btn.dataset.idx].nombre;
+      renderRentabilidadClientes();
+    });
+  });
+
+  const sel = lista.find(x => x.nombre === clienteSeleccionado) || null;
+  if(sel) renderClientDetalle(sel);
+}
+
+function renderClientDetalle(c){
+  document.getElementById('clientDetalleTitulo').textContent = c.nombre;
+  document.getElementById('clientDetalleDesc').textContent = c.estadoContrato ? 'Contrato ' + c.estadoContrato : 'Sin contrato formal registrado';
+
+  // ---- Rentabilidad estimada histórica (metodología existente, sin tocar) ----
+  let html = '<div class="param-section-title" style="margin-top:0">Estimada (histórico, prorrateo)</div><table><tbody>';
+  html += '<tr><td>Ingreso histórico</td><td class="pos"><b>'+CLP(c.historico)+'</b></td></tr>';
+  if(c.instalacion) html += '<tr><td>Inversión inicial cobrada</td><td>'+CLP(c.instalacion)+'</td></tr>';
+  if(c.montoMensual) html += '<tr><td>Ingreso mensual (contrato)</td><td>'+CLP(c.montoMensual)+'</td></tr>';
+  html += '<tr><td class="muted">Costo asignado (prorrateo por ingreso)</td><td class="muted">−'+CLP(c.costoAsignado)+'</td></tr>';
+  html += '<tr class="total-row"><td>Margen estimado</td><td class="'+(c.margenEstimado>=0?'pos':'neg')+'"><b>'+CLP(c.margenEstimado)+'</b>'
+    + (c.margenPct!=null?' ('+PCT(c.margenPct)+')':'') + '</td></tr>';
+  html += '</tbody></table>';
+
+  // Cruce con el costeo real (Costos.xlsx) si existe para este cliente: mejor que el
+  // prorrateo cuando está disponible, porque es un costo modelado ITEM POR ITEM, no repartido.
+  const costeo = costeoDeCliente(c.nombre);
+  if(costeo){
+    const margenModelado = c.montoMensual != null ? c.montoMensual - costeo.costoDirectoMensual : null;
+    html += '<div class="diag-box" style="margin-top:.6rem">'
+      + '<b>Del presupuestador ("'+costeo.nombreHoja+'"):</b> costo directo modelado <b>'+CLP(costeo.costoDirectoMensual)+'/mes</b>'
+      + (margenModelado != null ? ', margen modelado <b class="'+(margenModelado>=0?'pos':'neg')+'">'+CLP(margenModelado)+'</b> ('+PCT(margenModelado/c.montoMensual)+')' : '')
+      + '. <span class="muted">Esto es más confiable que el prorrateo de arriba porque es costo real ítem por ítem, no repartido — ver el detalle en la pestaña Comercial.</span></div>';
+  }
+
+  const visitasCliente = visitasDeCliente(c.nombre);
+
+  // A. INVERSIÓN INICIAL — visitas marcadas "Instalación inicial"
+  const visitasInstalacion = visitasCliente.filter(v => v.tipoVisita === 'Instalación inicial');
+  html += '<div class="param-section-title">A. Inversión inicial</div>';
+  if(!visitasInstalacion.length){
+    html += '<div class="desc" style="margin:0">Sin visitas de "Instalación inicial" registradas para este cliente.</div>';
+  } else {
+    let ingIni=0, costoIni=0;
+    html += '<table><tbody>';
+    visitasInstalacion.forEach(v => {
+      const info = visitaInfo(v);
+      ingIni += v.ingresoNeto||0; costoIni += info.total;
+      html += '<tr><td style="text-align:left">'+v.fecha+' — '+(v.cebaderas||'sin detalle de cebaderas')+'</td>'
+        + '<td>ingreso '+(v.ingresoNeto==null?'—':CLP(v.ingresoNeto))+' · costo '+CLP(info.total)+'</td></tr>';
+    });
+    html += '<tr class="total-row"><td>Margen inicial</td><td class="'+((ingIni-costoIni)>=0?'pos':'neg')+'"><b>'+CLP(ingIni-costoIni)+'</b></td></tr>';
+    html += '</tbody></table>';
+  }
+
+  // B. OPERACIÓN MENSUAL — visitas que no son instalación inicial, agrupadas por mes
+  const visitasOperacion = visitasCliente.filter(v => v.tipoVisita !== 'Instalación inicial' && v.fecha);
+  html += '<div class="param-section-title">B. Operación mensual</div>';
+  if(!visitasOperacion.length){
+    html += '<div class="desc" style="margin:0">Sin visitas de operación (no instalación) registradas todavía.</div>';
+  } else {
+    const porMes = {};
+    visitasOperacion.forEach(v => {
+      const mk = mesKey(v.fecha); const info = visitaInfo(v);
+      porMes[mk] = porMes[mk] || { ingreso:0, n:0, manoObra:0, productos:0, transporte:0, otros:0, total:0 };
+      porMes[mk].ingreso += v.ingresoNeto||0; porMes[mk].n++;
+      porMes[mk].manoObra += info.manoObra; porMes[mk].productos += info.productos;
+      porMes[mk].transporte += info.transporte; porMes[mk].otros += info.otros; porMes[mk].total += info.total;
+    });
+    html += '<table><thead><tr><th>Mes</th><th>Visitas</th><th>Ingreso</th><th>Costo total</th><th>Margen</th></tr></thead><tbody>';
+    Object.keys(porMes).sort().forEach(mk => {
+      const m = porMes[mk]; const margen = m.ingreso - m.total;
+      html += '<tr><td>'+mesLabel(mk)+'</td><td>'+m.n+'</td><td>'+CLP(m.ingreso)+'</td><td class="muted">'+CLP(m.total)+'</td>'
+        + '<td class="'+(margen>=0?'pos':'neg')+'">'+CLP(margen)+'</td></tr>';
+    });
+    html += '</tbody></table>';
+  }
+
+  // C. RECUPERACIÓN DE INVERSIÓN — margen acumulado vs inversión inicial neta
+  html += '<div class="param-section-title">C. Recuperación de inversión</div>';
+  if(!visitasInstalacion.length || !visitasOperacion.length){
+    html += '<div class="desc" style="margin:0">Hace falta la visita de instalación inicial y al menos una visita de operación posterior para calcular esto.</div>';
+  } else {
+    const ingIni = visitasInstalacion.reduce((s,v)=>s+(v.ingresoNeto||0),0);
+    const costoIni = visitasInstalacion.reduce((s,v)=>s+visitaInfo(v).total,0);
+    const inversionNeta = costoIni - ingIni; // puede ser negativa: el ingreso de instalación ya cubrió el costo
+
+    const porMes = {};
+    visitasOperacion.forEach(v => { const mk=mesKey(v.fecha); const info=visitaInfo(v); porMes[mk]=(porMes[mk]||0)+((v.ingresoNeto||0)-info.total); });
+    const mesesOrd = Object.keys(porMes).sort();
+    let acumulado = 0, mesRecupera = null;
+    const puntos = mesesOrd.map(mk => { acumulado += porMes[mk]; if(mesRecupera===null && acumulado >= inversionNeta) mesRecupera = mk; return { mk, margenMes: porMes[mk], acumulado }; });
+
+    html += '<table><thead><tr><th>Mes</th><th>Margen del mes</th><th>Acumulado</th></tr></thead><tbody>';
+    puntos.forEach(p => html += '<tr><td>'+mesLabel(p.mk)+'</td><td class="'+(p.margenMes>=0?'pos':'neg')+'">'+CLP(p.margenMes)+'</td>'
+      + '<td class="'+(p.acumulado>=inversionNeta?'pos':'')+'">'+CLP(p.acumulado)+'</td></tr>');
+    html += '</tbody></table>';
+    html += svgLineChart(puntos.map(p=>({label:mesLabel(p.mk), valor:p.acumulado})), Math.max(0,inversionNeta));
+
+    if(inversionNeta <= 0){
+      html += '<div class="diag-box" style="margin-top:.6rem">El ingreso de la instalación inicial ('+CLP(ingIni)+') ya cubrió su propio costo ('+CLP(costoIni)+'). '
+        + 'No queda inversión neta por recuperar de los meses siguientes.</div>';
+    } else {
+      html += '<div class="diag-box" style="margin-top:.6rem">Inversión neta a recuperar: <b>'+CLP(inversionNeta)+'</b>. '
+        + (mesRecupera ? 'Se recupera en <b>'+mesLabel(mesRecupera)+'</b>.' : '<b>Aún no recuperada.</b>') + '</div>';
+    }
+  }
+
+  html += '<button class="reset-btn" id="btnVerMovsCliente" style="margin-top:.8rem">Ver movimientos de '+c.nombre+' →</button>'
+    + ' &nbsp; <button class="reset-btn" id="btnVerVisitasCliente">Ver visitas de '+c.nombre+' →</button>';
+  document.getElementById('clientDetalle').innerHTML = html;
+  document.getElementById('btnVerMovsCliente').addEventListener('click', () => irAMovimientos({ buscar: c.nombre }));
+  document.getElementById('btnVerVisitasCliente').addEventListener('click', () => {
+    document.querySelector('[data-tab="visitas"]').click();
+    document.getElementById('vfCliente').value = c.nombre;
+    renderVisitas();
+  });
+}
+
+// Línea simple (para "margen acumulado" del cliente): un solo trazo + referencia horizontal
+// de la inversión a recuperar.
+function svgLineChart(puntos, lineaReferencia){
+  const W=460, H=150, padL=54, padB=26, padT=12, padR=12;
+  const plotW=W-padL-padR, plotH=H-padT-padB;
+  const valores = puntos.map(p=>p.valor).concat([lineaReferencia||0,0]);
+  const maxV = Math.max(...valores), minV = Math.min(...valores);
+  const rango = (maxV-minV)||1;
+  const x = i => padL + (puntos.length>1 ? i*(plotW/(puntos.length-1)) : plotW/2);
+  const y = v => padT + plotH - ((v-minV)/rango)*plotH;
+
+  let svg = '<svg class="chart-svg" viewBox="0 0 '+W+' '+H+'" width="100%" style="max-width:100%;height:auto;margin-top:.5rem">';
+  if(lineaReferencia != null){
+    svg += '<line x1="'+padL+'" y1="'+y(lineaReferencia)+'" x2="'+(W-padR)+'" y2="'+y(lineaReferencia)+'" stroke="var(--c4)" stroke-width="1.5" stroke-dasharray="3,3"/>';
+    svg += '<text x="'+(W-padR)+'" y="'+(y(lineaReferencia)-4)+'" text-anchor="end" fill="var(--c4)">inversión a recuperar</text>';
+  }
+  svg += '<line x1="'+padL+'" y1="'+(H-padB)+'" x2="'+(W-padR)+'" y2="'+(H-padB)+'" stroke="var(--border)" stroke-width="1"/>';
+  const path = puntos.map((p,i) => (i===0?'M':'L')+x(i)+','+y(p.valor)).join(' ');
+  svg += '<path d="'+path+'" fill="none" stroke="var(--brand2)" stroke-width="2.5"/>';
+  puntos.forEach((p,i) => {
+    svg += '<circle cx="'+x(i)+'" cy="'+y(p.valor)+'" r="3.5" fill="var(--brand2)"><title>'+p.label+': '+CLP(p.valor)+'</title></circle>';
+    svg += '<text x="'+x(i)+'" y="'+(H-padB+13)+'" text-anchor="middle">'+p.label+'</text>';
+  });
+  svg += '</svg>';
+  return svg;
+}
+
+/* ============================================================
+   ④ FLUJO DE CAJA A 13 SEMANAS (confirmado + estimado)
+   ============================================================ */
+function calcularFlujo13Semanas(){
+  const HOY = new Date(CAJA.fechaSaldo + 'T00:00:00');
+  const semanas = [];
+  for(let i=0;i<13;i++){
+    const inicio = new Date(HOY); inicio.setDate(inicio.getDate() + i*7);
+    semanas.push({ inicio, ingresos:[], egresos:[] });
+  }
+  const finHorizonte = new Date(HOY); finHorizonte.setDate(finHorizonte.getDate() + 13*7);
+  function semanaDe(fecha){
+    const idx = Math.floor((fecha - HOY) / (7*86400000));
+    return (idx>=0 && idx<13) ? semanas[idx] : null;
+  }
+
+  // 1. Compromisos ya confirmados (caja.js)
+  CAJA.compromisos.forEach(c => {
+    const f = new Date(c.fecha+'T00:00:00');
+    const s = semanaDe(f);
+    if(s){
+      const efectivo = (c.tipo==='Ingreso'?1:-1) * conIva(c.monto, c.iva);
+      (efectivo>=0 ? s.ingresos : s.egresos).push({concepto:c.concepto, monto:Math.abs(efectivo), tipo:'confirmado'});
+    }
+  });
+
+  // 2. Contratos activos: 1 cobro/mes, con el dia offset por el DSO promedio real del cliente
+  const dsoPorCliente = {};
+  emparejarFacturas().forEach(p => {
+    if(p.dias != null){
+      (dsoPorCliente[p.factura.cliente] = dsoPorCliente[p.factura.cliente] || []).push(p.dias);
+    }
+  });
+  const dsoProm = nombre => {
+    const arr = dsoPorCliente[nombre];
+    return arr && arr.length ? Math.round(arr.reduce((a,b)=>a+b,0)/arr.length) : 20;
+  };
+  const activos = CONTRATOS.filter(c => c.estado==='Activo' && c.montoMensual);
+  let mCursor = new Date(HOY.getFullYear(), HOY.getMonth(), 1);
+  while(mCursor <= finHorizonte){
+    activos.forEach(c => {
+      const fCobro = new Date(mCursor); fCobro.setDate(fCobro.getDate() + dsoProm(c.cliente));
+      const s = semanaDe(fCobro);
+      if(s) s.ingresos.push({concepto:c.cliente, monto: c.montoMensual*(1+IVA_CONFIG.tasa), tipo:'estimado'});
+    });
+    mCursor = new Date(mCursor.getFullYear(), mCursor.getMonth()+1, 1);
+  }
+
+  // 3. Cuota furgón (dia 15, si quedan cuotas)
+  const furgon = DEUDAS.find(d => d.id==='furgon');
+  if(furgon && calcularDeuda(furgon).restantes > 0){
+    let mf = new Date(HOY.getFullYear(), HOY.getMonth(), 15);
+    if(mf < HOY) mf = new Date(mf.getFullYear(), mf.getMonth()+1, 15);
+    while(mf <= finHorizonte){
+      const s = semanaDe(mf);
+      if(s) s.egresos.push({concepto:'Cuota furgón', monto: furgon.cuotaMensual, tipo:'confirmado'});
+      mf = new Date(mf.getFullYear(), mf.getMonth()+1, 15);
+    }
+  }
+
+  // 4. IVA (F29), dia 20, repite el ultimo monto conocido — es una estimacion
+  const ivaUlt = ivaVigente();
+  if(ivaUlt && ivaUlt.aPagar > 0){
+    let mi = new Date(HOY.getFullYear(), HOY.getMonth(), 20);
+    if(mi < HOY) mi = new Date(mi.getFullYear(), mi.getMonth()+1, 20);
+    while(mi <= finHorizonte){
+      const s = semanaDe(mi);
+      if(s) s.egresos.push({concepto:'IVA (F29, estimado)', monto: ivaUlt.aPagar, tipo:'estimado'});
+      mi = new Date(mi.getFullYear(), mi.getMonth()+1, 20);
+    }
+  }
+
+  // 5. Gastos operativos variables: promedio semanal historico (para no dejar la proyeccion
+  //    en cero fuera de lo ya modelado arriba)
+  const gv = liveParams.gastosVariables;
+  const gastoVarSemanal = (gv.insumosProductos + gv.otrosGastos + gv.marketing + gv.combustible + gv.mantencionAuto + gv.capacitacion) / 4.345;
+  semanas.forEach(s => s.egresos.push({concepto:'Gastos operativos (promedio histórico)', monto: gastoVarSemanal, tipo:'estimado'}));
+
+  let saldo = CAJA.saldoActual;
+  semanas.forEach(s => {
+    s.ingresoTotal = s.ingresos.reduce((a,b)=>a+b.monto,0);
+    s.egresoTotal = s.egresos.reduce((a,b)=>a+b.monto,0);
+    s.neto = s.ingresoTotal - s.egresoTotal;
+    saldo += s.neto;
+    s.saldo = saldo;
+  });
+  return semanas;
+}
+
+function renderFlujo13Semanas(){
+  const semanas = calcularFlujo13Semanas();
+  document.getElementById('flujo13Desc').textContent =
+    'Combina lo confirmado (compromisos con fecha) con estimaciones: contratos activos cobrados según el '
+    + 'promedio de días de cobro real de cada cliente, cuota del furgón, IVA estimado (repite el último monto '
+    + 'conocido) y el promedio histórico de gastos operativos por semana.';
+
+  let html = '<table><thead><tr><th>Semana</th><th>Ingresos</th><th>Egresos</th><th>Neto</th><th>Saldo proyectado</th></tr></thead><tbody>';
+  semanas.forEach((s,i) => {
+    const cls = s.saldo < 0 ? 'saldo-neg' : (s.saldo < CAJA.colchonMinimo ? 'saldo-bajo' : '');
+    html += '<tr><td>Sem '+(i+1)+' · '+s.inicio.toISOString().slice(0,10)+'</td>'
+      + '<td class="pos">'+CLP(s.ingresoTotal)+'</td>'
+      + '<td class="neg">'+CLP(s.egresoTotal)+'</td>'
+      + '<td class="'+(s.neto>=0?'pos':'neg')+'">'+(s.neto>=0?'+':'')+CLP(s.neto)+'</td>'
+      + '<td class="'+cls+'"><b>'+CLP(s.saldo)+'</b></td></tr>';
+  });
+  html += '</tbody></table>';
+  document.getElementById('flujo13Table').innerHTML = html;
+
+  const peor = semanas.reduce((min,s) => s.saldo<min.saldo?s:min, semanas[0]);
+  const primerNeg = semanas.find(s => s.saldo < 0);
+  document.getElementById('flujo13Nota').innerHTML = primerNeg
+    ? '<div class="warn-box">La proyección a 13 semanas muestra caja negativa desde la semana '+(semanas.indexOf(primerNeg)+1)
+      +' ('+primerNeg.inicio.toISOString().slice(0,10)+'), con un mínimo de '+CLP(peor.saldo)+'.</div>'
+    : '<div class="diag-box">La proyección a 13 semanas no muestra caja negativa. El punto más ajustado es '+CLP(peor.saldo)+'.</div>';
+}
+
+/* ============================================================
+   ⑤ EMBUDO COMERCIAL — versión honesta con lo que hay hoy
+   ============================================================ */
+function renderFunnel(){
+  const activos = CONTRATOS.filter(c => c.estado === 'Activo');
+  const negociando = CONTRATOS.filter(c => c.estado === 'Negociando');
+  const valorActivos = activos.reduce((s,c)=>s+(c.montoMensual||0),0);
+  const valorNegociando = negociando.reduce((s,c)=>s+(c.montoMensual||0),0);
+  const sinMonto = negociando.filter(c=>!c.montoMensual).length;
+
+  const maxN = Math.max(negociando.length, activos.length, 1);
+  const wNeg = Math.round(40 + 55*(negociando.length/maxN));
+  const wAct = Math.round(40 + 55*(activos.length/maxN));
+
+  document.getElementById('funnelBox').innerHTML =
+    '<div class="funnel">'
+    + '<div class="stage" style="background:var(--c5);width:'+wNeg+'%">'
+      + '<div class="n">'+negociando.length+' en negociación</div>'
+      + '<div class="l">'+CLP(valorNegociando)+'/mes potencial'+(sinMonto?' ('+sinMonto+' sin monto aún)':'')+'</div></div>'
+    + '<div class="funnel-arrow">↓ tasa de cierre informada: '+PCT(PROYECCION_PARAMS.tasaCierreCotizaciones)+'</div>'
+    + '<div class="stage" style="background:var(--brand2);width:'+wAct+'%">'
+      + '<div class="n">'+activos.length+' ganados (activos)</div>'
+      + '<div class="l">'+CLP(valorActivos)+'/mes real</div></div>'
+    + '</div>';
+
+  const nuevosPorMes = liveParams.nuevosContratosPorMes;
+  const cotizNecesarias = nuevosPorMes / PROYECCION_PARAMS.tasaCierreCotizaciones;
+  document.getElementById('funnelCalc').innerHTML =
+    '<div class="diag-box">Para sostener <b>'+nuevosPorMes+' contratos nuevos/mes</b> (supuesto de la Proyección) con una tasa de cierre de '
+    + '<b>'+PCT(PROYECCION_PARAMS.tasaCierreCotizaciones)+'</b>, hacen falta aproximadamente <b>'+cotizNecesarias.toFixed(1)+' cotizaciones por mes</b>.<br><br>'
+    + '<span class="muted">Si empiezan a registrar cuántas cotizaciones se envían y cuántas se pierden (no solo las que llegan a "Negociando"), '
+    + 'se puede construir el embudo completo con datos reales en vez de esta aproximación de 2 etapas.</span></div>';
+}
+
+/* ============================================================
+   COSTEO DE COTIZACIONES (del Costos.xlsx del usuario, cargado 04-ago-2026)
+   ============================================================ */
+// Clientes donde la misma celda "Ingreso mensual" ($458.000) se repite literal en las 3 hojas —
+// huele a valor de plantilla sin actualizar. El usuario confirmó Club Manquehue (04-ago-2026): el
+// 458.000 era, como se sospechaba, el valor viejo de plantilla — el real es ~$800.000, que ya
+// estaba correcto en Proyección. Los otros 2 quedan sin confirmar, pero el usuario dijo que no
+// importa mientras no haya contrato firmado, así que se muestran solo como nota, no como pregunta.
+const COSTEO_INGRESO_SIN_CONFIRMAR = ['CLUB DE PLANEADORES VITACURA', 'STADIO ITALIANO'];
+
+let costeoSeleccionado = null;
+
+function costeoDeCliente(nombreReal){
+  // busca por match confirmado o por nombre de hoja parecido
+  return COSTEO_CLIENTES.find(c => c.matchContrato === nombreReal)
+      || COSTEO_CLIENTES.find(c => c.nombreHoja.toLowerCase().includes(nombreReal.toLowerCase()) || nombreReal.toLowerCase().includes(c.nombreHoja.toLowerCase()));
+}
+
+function renderCosteo(){
+  const sinConfirmar = COSTEO_CLIENTES.filter(c => COSTEO_INGRESO_SIN_CONFIRMAR.includes(c.nombreHoja));
+  document.getElementById('costeoAviso').innerHTML =
+    '<div class="diag-box"><b>Club Manquehue confirmado (04-ago-2026):</b> el ingreso real objetivo es <b>~$800.000/mes</b> '
+    + '(el $458.000 de esta hoja era, como se sospechaba, un valor de plantilla sin actualizar). La empresa que hoy los atiende '
+    + 'cobra aprox. <b>$1.100.000/mes</b>, así que Desplagados entraría bajo ese precio. Ya estaba así en Proyección, no se tocó nada.</div>'
+    + '<div class="warn-box" style="margin-top:.5rem"><b>Sin confirmar (no urgente):</b> "'+sinConfirmar.map(c=>c.nombreHoja).join('" y "')+'" '
+    + 'siguen mostrando el mismo $458.000 de plantilla. Según el usuario no importa por ahora: se les mandó cotización hace un tiempo pero '
+    + 'se necesitaba el permiso de caza de conejos (en trámite, 04-ago-2026) y no está claro si se perdieron esos clientes. No se toca este '
+    + 'costo hasta que haya un contrato confirmado.</div>';
+
+  let html = '<table><thead><tr><th>Cliente / prospecto (hoja)</th><th>¿Es en Contratos?</th><th>Costo directo/mes</th>'
+    + '<th>Ingreso/mes (si hay)</th><th>Utilidad/mes (si hay)</th></tr></thead><tbody>';
+  COSTEO_CLIENTES.forEach((c,i) => {
+    const sospechoso = COSTEO_INGRESO_SIN_CONFIRMAR.includes(c.nombreHoja);
+    html += '<tr style="cursor:pointer" data-costeo="'+i+'"><td style="text-align:left">'+c.nombreHoja+'</td>'
+      + '<td class="muted" style="text-align:left">'+(c.matchContrato ? c.matchContrato + (c.certezaMatch==='confirmado'?' ✓':' (¿?)') : 'nuevo, no estaba')+'</td>'
+      + '<td>'+CLP(c.costoDirectoMensual)+'</td>'
+      + '<td'+(sospechoso?' class="saldo-bajo"':'')+'>'+(c.ingresoMensual==null?'—':CLP(c.ingresoMensual)+(sospechoso?' ⚠':''))+'</td>'
+      + '<td>'+(c.utilidadMensual==null?'—':CLP(c.utilidadMensual))+'</td></tr>';
+  });
+  html += '</tbody></table>';
+  document.getElementById('costeoTable').innerHTML = html;
+
+  document.querySelectorAll('#costeoTable [data-costeo]').forEach(tr => tr.addEventListener('click', () => {
+    costeoSeleccionado = +tr.dataset.costeo;
+    renderCosteoDetalle();
+  }));
+  if(costeoSeleccionado != null) renderCosteoDetalle();
+}
+
+function renderCosteoDetalle(){
+  const c = COSTEO_CLIENTES[costeoSeleccionado];
+  const box = document.getElementById('costeoDetalle');
+  if(!c){ box.innerHTML=''; return; }
+
+  function tablaItems(items, titulo){
+    if(!items.length) return '';
+    let h = '<div class="param-section-title">'+titulo+'</div><table><thead><tr><th>Categoría</th><th>Ítem</th><th>Cantidad</th><th>Costo unit.</th><th>Mensual</th></tr></thead><tbody>';
+    items.forEach(it => h += '<tr><td class="muted">'+(it.categoria||'—')+'</td><td style="text-align:left">'+it.item+'</td>'
+      + '<td>'+(it.cantidad==null?'—':it.cantidad)+'</td><td>'+(it.costoUnitario==null?'—':CLP(it.costoUnitario))+'</td>'
+      + '<td>'+(it.mensual==null?'—':CLP(it.mensual))+'</td></tr>');
+    h += '</tbody></table>';
+    return h;
+  }
+
+  let html = '<div class="diag-box"><b>'+c.nombreHoja+'</b>'+(c.matchContrato?' · en Contratos como "'+c.matchContrato+'"':' · prospecto nuevo')+'</div>';
+  html += tablaItems(c.items, 'Costo mensual recurrente');
+  html += '<div class="pl-table" style="margin-top:.3rem"><table><tbody><tr class="total-row"><td>Costo directo mensual</td><td style="text-align:right"><b>'+CLP(c.costoDirectoMensual)+'</b></td></tr></tbody></table></div>';
+  if(c.itemsInstalacion && c.itemsInstalacion.length){
+    html += tablaItems(c.itemsInstalacion, 'Instalación (único)');
+    html += '<div class="pl-table"><table><tbody><tr class="total-row"><td>Costo instalación</td><td style="text-align:right"><b>'+CLP(c.costoInstalacionMensual)+'</b></td></tr></tbody></table></div>';
+  }
+  if(c.ingresoMensual != null){
+    const margen = c.ingresoMensual - c.costoDirectoMensual;
+    html += '<div class="param-section-title">Cotización</div><table><tbody>'
+      + '<tr><td>Ingreso mensual</td><td>'+CLP(c.ingresoMensual)+'</td></tr>'
+      + '<tr class="total-row"><td>Margen</td><td class="'+(margen>=0?'pos':'neg')+'"><b>'+CLP(margen)+'</b> ('+PCT(margen/c.ingresoMensual)+')</td></tr>'
+      + '</tbody></table>';
+  }
+  document.getElementById('costeoDetalle').innerHTML = html;
+}
+
+function renderMargenesReferencia(){
+  let html = '<table><thead><tr><th>Tipo</th><th>Tamaño</th><th>Estaciones</th><th>Distancia</th><th>Margen objetivo</th></tr></thead><tbody>';
+  TABLA_MARGENES.forEach(m => {
+    html += '<tr><td style="text-align:left">'+(m.tipo||'')+'</td><td>'+(m.tamano||'')+'</td><td class="muted">'+(m.estaciones||'—')+'</td>'
+      + '<td>'+(m.ubicacion||'')+'</td><td><b>'+PCT(m.margen)+'</b></td></tr>';
+  });
+  html += '</tbody></table>';
+  document.getElementById('margenesTable').innerHTML = html;
+}
+
+/* ============================================================
    MOTOR DE HALLAZGOS
    ============================================================ */
 function generarHallazgos(){
@@ -2543,9 +4331,15 @@ function hojaDiasCobro(){
   return { nombre:'Días de cobro', encabezados: enc, filas };
 }
 
+function hojaCosteo(){
+  const enc = ['Cliente/hoja','¿Match en Contratos?','Costo directo/mes','Ingreso/mes','Utilidad/mes'];
+  const filas = COSTEO_CLIENTES.map(c => [c.nombreHoja, c.matchContrato||'nuevo', c.costoDirectoMensual, c.ingresoMensual, c.utilidadMensual]);
+  return { nombre:'Costeo cotizaciones', encabezados: enc, filas };
+}
+
 function descargarExcel(){
   const hojas = [hojaEstadoResultados(), hojaMovimientos(), hojaContratos(), hojaFacturas(),
-                 hojaDiasCobro(), hojaObligaciones(), hojaAnalisis(), hojaProyeccion(), hojaCaja()];
+                 hojaDiasCobro(), hojaObligaciones(), hojaCosteo(), hojaAnalisis(), hojaProyeccion(), hojaCaja()];
   const blob = XlsxMin.crear(hojas);
   const fecha = new Date().toISOString().slice(0,10);
   XlsxMin.descargar('Finanzas_Desplagados_' + fecha + '.xlsx', blob);
@@ -2569,16 +4363,36 @@ renderTamanos();
 renderAnalisis();
 renderChartIngGas('chartIngGas');
 renderChartIngGas('chartIngGasInicio');
+renderChartVentasMargen();
+renderChartRecurrentePuntual();
+renderTreemapComuna();
+renderGaugeMargen();
 renderDonutGastos();
 renderPL();
 renderPLResumenInicio();
-renderNavGrid();
+renderRentabilidadClientes();
+renderFunnel();
+renderCosteo();
+renderMargenesReferencia();
+renderFlujo13Semanas();
 renderContratos();
 poblarFiltros();
 poblarCategoriasDatalist();
 renderMovimientos();
 renderPendientesLocal();
 initAgregar();
+initVisitas();
+initInventario();
+renderVisitas();
+renderInventario();
+renderCostosParamGrid();
+renderMargenVisita();
+document.getElementById('resetCostosParams').addEventListener('click', () => {
+  liveCostosParams = JSON.parse(JSON.stringify(COSTOS_PARAMS_ORIGINAL));
+  Object.assign(COSTOS_PARAMS, liveCostosParams);
+  renderCostosParamGrid();
+  renderMargenVisita();
+});
 renderParamGrid();
 renderProyeccion();
 ['fMes','fTipo','fCategoria','fEstado'].forEach(id => document.getElementById(id).addEventListener('change', renderMovimientos));
@@ -2589,6 +4403,16 @@ document.getElementById('resetParams').addEventListener('click', () => {
   liveParams = JSON.parse(JSON.stringify(PROYECCION_PARAMS));
   renderParamGrid();
   renderProyeccion();
+});
+document.getElementById('usarPromediosReales').addEventListener('change', (e) => {
+  liveParams.porContratoNuevo.usarPromediosReales = e.target.checked;
+  renderCostoContratoGrid();
+  renderProyeccionCorregida();
+});
+document.getElementById('resetCostosContrato').addEventListener('click', () => {
+  liveParams.porContratoNuevo = JSON.parse(JSON.stringify(PROYECCION_PARAMS.porContratoNuevo));
+  renderCostoContratoGrid();
+  renderProyeccionCorregida();
 });
 </script>
 </body>
