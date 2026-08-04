@@ -1,0 +1,2595 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Finanzas · Desplagados</title>
+<script src="./data/movimientos.js"></script>
+<script src="./data/contratos.js"></script>
+<script src="./data/proyeccion.js"></script>
+<script src="./data/caja.js"></script>
+<script src="./data/facturas.js"></script>
+<script src="./data/bodega.js"></script>
+<script src="./data/obligaciones.js"></script>
+<script src="./vendor/xlsx-min.js"></script>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  /* Fondo verde muy tenue (marca Desplagados) con tarjetas blancas — da el contraste
+     de "panel" tipo Power BI sin cansar la vista ni romper el export a Excel. */
+  --bg:#eef4f0; --card:#fff; --card2:#f6faf8; --border:#dde7e2; --border2:#eaf1ed;
+  --text:#14181f; --ink:#1f2937; --muted:#667085; --muted2:#98a1ae;
+  --brand:#166534; --brand2:#0e8a5b; --brand-soft:#eaf6f0; --brand-deep:#0b3d26;
+  /* Paleta categórica validada con el validador de dataviz (6 slots, pasa CVD en modo claro).
+     "Otros" usa gris neutro a propósito: no compite como categoría y va siempre rotulado. */
+  --c1:#0e8a5b; --c2:#c2410c; --c3:#2a78d6; --c4:#b45309; --c5:#7c3aed; --c6:#0891b2; --c7:#9ca3af;
+  /* Par ingreso/gasto validado contra daltonismo (deuteranopia) con el validador de paleta —
+     verde-teal / naranja-rojo en vez de verde-rojo puro, que falla la separación CVD. */
+  --up-bg:#e1f5ec; --up-fg:#0e8a5b; --dn-bg:#fbe4d5; --dn-fg:#c2410c;
+  --flat-bg:#f1f2f4; --flat-fg:#667085;
+  --crit:#c2410c; --warn:#b45309; --info:#2a5fa5; --good:#0e8a5b;
+  --shadow-sm:0 1px 2px rgba(20,24,31,.04), 0 1px 3px rgba(20,24,31,.06);
+  --shadow-md:0 2px 4px rgba(20,24,31,.05), 0 4px 10px rgba(20,24,31,.06);
+  --radius:12px; --radius-sm:8px;
+}
+*{font-variant-numeric:tabular-nums}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',system-ui,sans-serif;background:var(--bg);color:var(--text);min-height:100vh;font-size:14px;-webkit-font-smoothing:antialiased}
+.wrap{max-width:1320px;margin:0 auto;padding:1.75rem 1.5rem 3.5rem}
+header{display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:.75rem;margin-bottom:1.25rem;padding:1rem 1.25rem;background:linear-gradient(100deg,var(--brand-deep) 0%,var(--brand) 55%,var(--brand2) 100%);border-radius:var(--radius);box-shadow:var(--shadow-md)}
+header h1{font-size:1.35rem;font-weight:700;color:#fff;letter-spacing:-.01em}
+header p{color:rgba(255,255,255,.72)}
+header .updated{color:rgba(255,255,255,.6)}
+header img{background:#fff;border-radius:10px;padding:.35rem}
+header p{color:var(--muted);font-size:.83rem;margin-top:.25rem;max-width:46ch}
+.updated{font-size:.74rem;color:var(--muted2)}
+
+/* ---- tabs: control segmentado, no subrayado ---- */
+.tabs{display:inline-flex;gap:.15rem;margin-bottom:1.5rem;background:var(--card2);border:1px solid var(--border);border-radius:10px;padding:.25rem;flex-wrap:wrap;max-width:100%;overflow-x:auto}
+.tab-btn{border:none;background:none;font:inherit;font-weight:600;font-size:.82rem;color:var(--muted);padding:.5rem .85rem;cursor:pointer;border-radius:7px;white-space:nowrap}
+.tab-btn:hover{color:var(--ink)}
+.tab-btn.active{color:var(--ink);background:var(--card);box-shadow:var(--shadow-sm)}
+.tab-panel{display:none}
+.tab-panel.active{display:block}
+
+.kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(168px,1fr));gap:.8rem;margin-bottom:1.4rem}
+@media(max-width:700px){.kpis{grid-template-columns:repeat(2,1fr)}}
+.kpi{background:var(--card);border:1px solid var(--border);border-left:3px solid var(--border);border-radius:var(--radius);padding:.95rem 1.1rem;box-shadow:var(--shadow-sm)}
+.kpi .label{font-size:.7rem;text-transform:uppercase;letter-spacing:.045em;color:var(--muted);font-weight:600}
+.kpi .value{font-size:1.32rem;font-weight:700;margin-top:.35rem;color:var(--ink)}
+.kpi .sub{font-size:.75rem;color:var(--muted2);margin-top:.15rem}
+.kpi.pos{border-left-color:var(--good)}
+.kpi.neg{border-left-color:var(--crit)}
+.kpi.warn{border-left-color:var(--warn)}
+
+.grid2{display:grid;grid-template-columns:1.3fr 1fr;gap:1.25rem}
+@media(max-width:900px){.grid2{grid-template-columns:1fr}}
+
+.card{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:1.2rem 1.3rem;margin-bottom:1.25rem;box-shadow:var(--shadow-sm)}
+.card h2{font-size:.98rem;font-weight:700;margin-bottom:.15rem;color:var(--ink);letter-spacing:-.005em}
+.card .desc{font-size:.79rem;color:var(--muted);margin-bottom:.9rem;line-height:1.5}
+.card-head{display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:.6rem;margin-bottom:.9rem}
+
+table{width:100%;border-collapse:collapse;font-size:.81rem}
+th,td{padding:.5rem .6rem;text-align:right;border-bottom:1px solid var(--border2);white-space:nowrap}
+th:first-child,td:first-child{text-align:left;white-space:normal}
+thead th{color:var(--muted);font-weight:600;font-size:.7rem;text-transform:uppercase;letter-spacing:.035em;background:var(--card2);position:sticky;top:0}
+tbody tr:hover{background:var(--card2)}
+tr.total-row td{font-weight:700;border-top:1.5px solid var(--border);background:var(--card2)}
+tr.section-row td{font-weight:700;color:var(--brand2);background:var(--brand-soft);padding-top:.6rem}
+.table-scroll{overflow-x:auto}
+.neg{color:var(--dn-fg)}
+.pos{color:var(--up-fg)}
+.muted{color:var(--muted2)}
+
+.pill{display:inline-block;padding:.15rem .55rem;border-radius:99px;font-size:.71rem;font-weight:600}
+.pill.pagado,.pill.activo{background:var(--up-bg);color:var(--up-fg)}
+.pill.porcobrar,.pill.negociando{background:var(--flat-bg);color:var(--flat-fg)}
+.pill.incompleto{background:var(--dn-bg);color:var(--dn-fg)}
+
+select,input[type=text],input[type=number]{border:1px solid var(--border);border-radius:var(--radius-sm);padding:.4rem .6rem;font-size:.81rem;background:var(--card);font-family:inherit;color:var(--text)}
+select:focus,input:focus{outline:2px solid var(--brand2);outline-offset:1px}
+
+.warn-box{background:#fffbeb;border:1px solid #fde68a;border-radius:var(--radius-sm);padding:.8rem 1rem;font-size:.8rem;color:#92400e;margin-bottom:1.25rem}
+.warn-box b{color:#78350f}
+.warn-box ul{margin:.4rem 0 0 1.1rem}
+.warn-box.toggle-body{display:none}
+
+.diag-box{background:#eff6ff;border:1px solid #bfdbfe;border-radius:var(--radius-sm);padding:.9rem 1rem;font-size:.83rem;color:#1e3a5f;line-height:1.55}
+.diag-box b{color:#1e40af}
+
+.param-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:.7rem .9rem;margin-bottom:1rem}
+.param{display:flex;flex-direction:column;gap:.2rem}
+.param label{font-size:.72rem;color:var(--muted);font-weight:600}
+.param input{width:100%}
+.param-section-title{grid-column:1/-1;font-size:.72rem;font-weight:700;color:var(--brand2);text-transform:uppercase;letter-spacing:.04em;margin-top:.5rem;padding-top:.4rem;border-top:1px solid var(--border2)}
+.param-section-title:first-child{border-top:none;padding-top:0;margin-top:0}
+
+/* ---- hallazgos ---- */
+.hallazgo{display:flex;gap:.85rem;padding:.9rem 0;border-bottom:1px solid var(--border2)}
+.hallazgo:last-child{border-bottom:none}
+.hallazgo .icon{flex:0 0 auto;width:28px;height:28px;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:.9rem;font-weight:700}
+.hallazgo .body{flex:1;min-width:0}
+.hallazgo .titulo{font-weight:600;font-size:.86rem;margin-bottom:.2rem;color:var(--ink)}
+.hallazgo .detalle{font-size:.81rem;color:var(--muted);line-height:1.6}
+.hallazgo .detalle b{color:var(--text);font-weight:600}
+.h-critico .icon{background:var(--dn-bg);color:var(--crit)}
+.h-alerta .icon{background:#fdf0e1;color:var(--warn)}
+.h-oportunidad .icon{background:var(--up-bg);color:var(--up-fg)}
+.h-info .icon{background:#e9eff8;color:var(--info)}
+
+.saldo-neg{color:var(--crit);font-weight:700}
+.saldo-bajo{color:var(--warn);font-weight:700}
+
+/* ---- charts ---- */
+.chart-legend{display:flex;gap:1.1rem;font-size:.75rem;color:var(--muted);margin-bottom:.7rem}
+.chart-legend span{display:inline-flex;align-items:center;gap:.4rem}
+.chart-legend i{width:9px;height:9px;border-radius:99px;display:inline-block}
+.chart-svg text{font-family:inherit;fill:var(--muted2);font-size:9px}
+.chart-svg .val-label{fill:var(--text);font-weight:600}
+.chart-svg rect{transition:opacity .15s}
+.chart-svg rect:hover{opacity:.72}
+
+/* ---- KPI con variación mes a mes ---- */
+.kpi .delta{font-size:.74rem;font-weight:600;margin-top:.3rem;display:flex;align-items:center;gap:.25rem}
+.kpi .delta.up{color:var(--up-fg)}
+.kpi .delta.down{color:var(--dn-fg)}
+.kpi .delta.flat{color:var(--muted2)}
+.kpi .delta .ref{color:var(--muted2);font-weight:500}
+
+/* ---- tarjetas de navegación de la portada ---- */
+.navgrid{display:grid;grid-template-columns:repeat(4,1fr);gap:.9rem}
+@media(max-width:980px){.navgrid{grid-template-columns:repeat(2,1fr)}}
+.navcard{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:.95rem 1rem;text-align:left;cursor:pointer;font:inherit;box-shadow:var(--shadow-sm);border-top:3px solid var(--brand2);transition:transform .12s, box-shadow .12s}
+.navcard:hover{transform:translateY(-2px);box-shadow:var(--shadow-md)}
+.navcard .t{font-weight:700;font-size:.87rem;color:var(--ink);margin-bottom:.2rem}
+.navcard .d{font-size:.75rem;color:var(--muted);line-height:1.45}
+
+/* ---- estado de resultados (P&L) ---- */
+.pl-table td.pl-cuenta{padding-left:1.4rem}
+.pl-table tr.pl-sub td{color:var(--muted)}
+.pl-table tr.pl-titulo td{font-weight:700;color:var(--brand);background:var(--brand-soft);text-transform:uppercase;font-size:.72rem;letter-spacing:.04em}
+.pl-table tr.pl-resultado td{font-weight:700;background:var(--card2);border-top:1.5px solid var(--border);border-bottom:1.5px solid var(--border)}
+.pl-bar{display:inline-block;height:7px;border-radius:99px;background:var(--brand2);vertical-align:middle;min-width:1px}
+.pl-bar-wrap{display:flex;align-items:center;gap:.45rem;justify-content:flex-end}
+
+/* ---- donut ---- */
+.donut-wrap{display:flex;gap:1.1rem;align-items:center;flex-wrap:wrap}
+.donut-legend{flex:1;min-width:180px;font-size:.79rem}
+.donut-legend .row{display:flex;align-items:center;gap:.5rem;padding:.22rem 0;cursor:pointer;border-radius:4px}
+.donut-legend .row:hover{background:var(--card2)}
+.donut-legend i{width:9px;height:9px;border-radius:2px;flex:0 0 auto}
+.donut-legend .nm{flex:1;color:var(--ink)}
+.donut-legend .vl{color:var(--muted);font-variant-numeric:tabular-nums}
+.donut-legend .pc{font-weight:700;color:var(--ink);min-width:42px;text-align:right}
+
+/* ---- celdas "anexadas": llevan a los movimientos que las componen ---- */
+.cell-link{font:inherit;font-variant-numeric:tabular-nums;background:none;border:none;padding:0;cursor:pointer;color:var(--text);text-decoration:underline;text-decoration-color:var(--border);text-underline-offset:2px}
+.cell-link:hover{color:var(--info);text-decoration-color:var(--info)}
+.kpi-link{display:block;text-align:left;width:100%;background:none;border:none;padding:0;cursor:pointer;font:inherit;color:inherit}
+
+.milestone-table td:nth-child(1){text-align:left}
+.reset-btn{font-size:.74rem;color:var(--info);background:none;border:none;cursor:pointer;text-decoration:underline;font-family:inherit;text-underline-offset:2px}
+
+footer{text-align:center;color:var(--muted2);font-size:.74rem;padding:1.5rem 0 .5rem}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div style="display:flex;align-items:center;gap:.9rem">
+      <img src="./assets/logo.png" alt="Desplagados" style="height:52px;width:auto">
+      <div>
+        <h1>Finanzas · Desplagados</h1>
+        <p>Reemplaza el Excel de Google Drive. Se actualiza pidiéndole a Claude que registre cada gasto/ingreso, o agregando movimientos directo en la pestaña "+ Agregar".</p>
+      </div>
+    </div>
+    <div style="display:flex;flex-direction:column;align-items:flex-end;gap:.4rem">
+      <button id="btnExcel" style="text-decoration:none;background:var(--ink);color:#fff;padding:.55rem 1rem;border:none;border-radius:var(--radius-sm);font-weight:600;font-size:.82rem;font-family:inherit;cursor:pointer;box-shadow:var(--shadow-sm)">⬇ Descargar Excel</button>
+      <div class="updated" id="lastUpdated"></div>
+    </div>
+  </header>
+
+  <div id="warnBox"></div>
+
+  <nav class="tabs" id="tabs">
+    <button class="tab-btn" data-tab="resumen">Inicio</button>
+    <button class="tab-btn" data-tab="resultados">Estado de Resultados</button>
+    <button class="tab-btn" data-tab="caja">Caja y flujo</button>
+    <button class="tab-btn" data-tab="obligaciones">Impuestos y deudas</button>
+    <button class="tab-btn" data-tab="decisiones">Decisiones</button>
+    <button class="tab-btn" data-tab="analisis">Análisis mensual</button>
+    <button class="tab-btn" data-tab="proyeccion">Proyección</button>
+    <button class="tab-btn" data-tab="facturacion">Facturación</button>
+    <button class="tab-btn" data-tab="contratos">Contratos</button>
+    <button class="tab-btn" data-tab="movimientos">Movimientos</button>
+    <button class="tab-btn" data-tab="agregar">+ Agregar</button>
+  </nav>
+
+  <!-- ===== INICIO ===== -->
+  <section class="tab-panel" id="tab-resumen">
+    <div class="kpis" id="kpis"></div>
+
+    <div class="grid2">
+      <div class="card">
+        <div class="card-head">
+          <div>
+            <h2>Ingresos vs gastos por mes</h2>
+            <div class="desc">Datos reales registrados. Hacé clic en cualquier mes para ver el detalle.</div>
+          </div>
+        </div>
+        <div id="chartIngGasInicio"></div>
+      </div>
+      <div class="card">
+        <div class="card-head">
+          <div>
+            <h2>¿En qué se va la plata?</h2>
+            <div class="desc" id="donutDesc">Distribución de gastos por categoría.</div>
+          </div>
+        </div>
+        <div id="donutGastos"></div>
+      </div>
+    </div>
+
+    <div class="grid2">
+      <div class="card">
+        <div class="card-head">
+          <div>
+            <h2>Estado de Resultados — acumulado</h2>
+            <div class="desc">Resumen. El detalle mes a mes está en la pestaña Estado de Resultados.</div>
+          </div>
+        </div>
+        <div class="table-scroll" id="plResumenInicio"></div>
+      </div>
+      <div class="card">
+        <div class="card-head">
+          <div>
+            <h2>Hallazgos</h2>
+            <div class="desc">Se recalculan solos con cada dato nuevo.</div>
+          </div>
+        </div>
+        <div id="hallazgos"></div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-head">
+        <div>
+          <h2>Ir a…</h2>
+          <div class="desc">Cada sección del dashboard.</div>
+        </div>
+      </div>
+      <div class="navgrid" id="navGrid"></div>
+    </div>
+
+    <div class="grid2">
+      <div class="card">
+        <h2>Diagnóstico: ¿dónde está el cuello de botella?</h2>
+        <div class="desc">Basado en el análisis previo del negocio, cruzado con los datos reales de este dashboard.</div>
+        <div class="diag-box" id="diagBox"></div>
+      </div>
+      <div class="card">
+        <h2>Tamaños de servicio de referencia</h2>
+        <div class="desc">Para cotizar rápido comparando contra casos ya atendidos.</div>
+        <div class="table-scroll" id="tamanosTable"></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===== ESTADO DE RESULTADOS ===== -->
+  <section class="tab-panel" id="tab-resultados">
+    <div class="kpis" id="plKpis"></div>
+
+    <div class="card">
+      <div class="card-head">
+        <div>
+          <h2 id="plTitulo">Estado de Resultados</h2>
+          <div class="desc">
+            Costo del servicio = Insumos/productos, Combustible e Instalación inicial (lo que escala con cada trabajo).
+            Todo lo demás es gasto operacional. La columna <b>% Vert.</b> muestra cuánto pesa cada línea sobre las ventas.
+            Cualquier monto es clickeable y te lleva a los movimientos que lo componen.
+          </div>
+        </div>
+        <div style="display:flex;gap:.5rem;align-items:center">
+          <label style="font-size:.75rem;color:var(--muted);font-weight:600">Período</label>
+          <select id="plPeriodo"></select>
+        </div>
+      </div>
+      <div class="table-scroll" id="plTable"></div>
+    </div>
+
+    <div class="card">
+      <div class="card-head">
+        <div>
+          <h2>Evolución del margen</h2>
+          <div class="desc">Margen bruto y operacional mes a mes, en % sobre las ventas del mes.</div>
+        </div>
+      </div>
+      <div class="table-scroll" id="plMargenTable"></div>
+    </div>
+  </section>
+
+  <!-- ===== CAJA Y FLUJO ===== -->
+  <section class="tab-panel" id="tab-caja">
+    <div class="kpis" id="cajaKpis"></div>
+
+    <div class="card">
+      <div class="card-head">
+        <div>
+          <h2>Proyección de caja</h2>
+          <div class="desc" id="cajaFuente"></div>
+        </div>
+      </div>
+      <div class="table-scroll" id="flujoTable"></div>
+      <div id="flujoAlerta" style="margin-top:.9rem"></div>
+    </div>
+
+    <div class="grid2">
+      <div class="card">
+        <h2>Cuentas por cobrar</h2>
+        <div class="desc">Lo que está facturado o comprometido y todavía no entra a caja.</div>
+        <div class="table-scroll" id="cxcTable"></div>
+      </div>
+      <div class="card">
+        <h2>Compromisos conocidos</h2>
+        <div class="desc">Pagos y cobros con fecha ya confirmada.</div>
+        <div class="table-scroll" id="compromisosTable"></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===== IMPUESTOS Y DEUDAS ===== -->
+  <section class="tab-panel" id="tab-obligaciones">
+    <div class="kpis" id="oblKpis"></div>
+
+    <div class="card">
+      <div class="card-head">
+        <div>
+          <h2>IVA mes a mes (estimación del F29)</h2>
+          <div class="desc" id="ivaDesc"></div>
+        </div>
+      </div>
+      <div class="table-scroll" id="ivaTable"></div>
+      <div id="ivaAviso" style="margin-top:.9rem"></div>
+    </div>
+
+    <div class="card">
+      <div class="card-head">
+        <div>
+          <h2>Deudas vigentes</h2>
+          <div class="desc">Cuánto queda por pagar y hasta cuándo.</div>
+        </div>
+      </div>
+      <div class="table-scroll" id="deudasTable"></div>
+      <div id="deudasDetalle" style="margin-top:1rem"></div>
+    </div>
+  </section>
+
+  <!-- ===== DECISIONES ===== -->
+  <section class="tab-panel" id="tab-decisiones">
+    <div class="card">
+      <div class="card-head">
+        <div>
+          <h2>Salir de la bodega</h2>
+          <div class="desc">Es el gasto fijo más grande de la empresa. Completá el arriendo de las opciones que coticés y el comparador calcula el resto.</div>
+        </div>
+      </div>
+      <div class="table-scroll" id="bodegaTable"></div>
+      <div id="bodegaInsight" style="margin-top:1rem"></div>
+    </div>
+
+    <div class="grid2">
+      <div class="card">
+        <h2>¿Dónde está la plata hoy?</h2>
+        <div class="desc">Facturación recurrente por comuna, según las facturas reales. Define dónde tiene sentido tener bodega.</div>
+        <div class="table-scroll" id="geoTable"></div>
+        <div id="geoInsight" style="margin-top:.9rem"></div>
+      </div>
+      <div class="card">
+        <div class="card-head">
+          <div>
+            <h2>Escenario: crédito bancario</h2>
+            <div class="desc">Hipótesis en evaluación, no un hecho. Sirve para ver el efecto en la caja.</div>
+          </div>
+        </div>
+        <div class="param-grid" style="margin-bottom:.8rem">
+          <div class="param"><label>Monto del crédito</label><input type="number" id="credMonto" step="any"></div>
+          <div class="param"><label>Fecha de ingreso</label><input type="text" id="credFecha"></div>
+        </div>
+        <label style="font-size:.83rem;display:flex;gap:.5rem;align-items:center;cursor:pointer">
+          <input type="checkbox" id="credActivo"> Incluirlo en la proyección de caja
+        </label>
+        <div id="credInsight" style="margin-top:.9rem;font-size:.83rem;line-height:1.6"></div>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2>Pendientes de definir</h2>
+      <div class="desc">Cosas que se sabe que hay que hacer o pagar, pero sin fecha ni monto cerrado.</div>
+      <div id="pendientesBox"></div>
+    </div>
+  </section>
+
+  <!-- ===== ANALISIS ===== -->
+  <section class="tab-panel" id="tab-analisis">
+    <div class="grid2">
+      <div class="card">
+        <h2>Ingresos vs gastos por mes</h2>
+        <div class="desc">Datos reales registrados. Así se ve la tendencia mes a mes.</div>
+        <div id="chartIngGas"></div>
+      </div>
+      <div class="card">
+        <h2>Estacionalidad proyectada del año</h2>
+        <div class="desc">Servicios puntuales por mes calendario, según los supuestos de temporada de la Proyección (verano = temporada alta por casas de veraneo).</div>
+        <div id="chartTemporada"></div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-head">
+        <div>
+          <h2>Resultado por mes y categoría</h2>
+          <div class="desc">Equivalente a la hoja "Análisis" del Excel — pero calculado en el momento, sin fórmulas que se puedan romper.</div>
+        </div>
+      </div>
+      <div class="table-scroll" id="analisisTable"></div>
+    </div>
+  </section>
+
+  <!-- ===== PROYECCION ===== -->
+  <section class="tab-panel" id="tab-proyeccion">
+    <div class="card">
+      <div class="card-head">
+        <div>
+          <h2>Parámetros — editá y todo se recalcula</h2>
+          <div class="desc">Estos son valores de prueba en pantalla. Para dejarlos guardados de forma permanente, pedile a Claude que actualice <code>data/proyeccion.js</code>.</div>
+        </div>
+        <button class="reset-btn" id="resetParams">Restablecer valores guardados</button>
+      </div>
+      <div id="prospectosBox" style="margin-bottom:1rem"></div>
+      <div class="param-grid" id="paramGrid"></div>
+    </div>
+
+    <div class="card">
+      <h2 id="proyTitulo">Proyección</h2>
+      <div class="desc" id="proySupuestos"></div>
+      <div class="table-scroll" id="proyeccionTable"></div>
+    </div>
+
+    <div class="card">
+      <div class="card-head">
+        <div>
+          <h2>Presupuesto vs real</h2>
+          <div class="desc">Compara lo que decía la proyección contra lo que efectivamente pasó, para ver si los supuestos le están achuntando.</div>
+        </div>
+      </div>
+      <div class="table-scroll" id="presupuestoTable"></div>
+      <div id="presupuestoNota" style="margin-top:.9rem"></div>
+    </div>
+
+    <div class="grid2">
+      <div class="card">
+        <h2>Punto de equilibrio</h2>
+        <div class="desc">Calculado en vivo a partir de la proyección de arriba.</div>
+        <div id="breakevenBox" style="font-size:.85rem;line-height:1.7"></div>
+      </div>
+      <div class="card">
+        <h2>¿Cuántos contratos para pagarnos?</h2>
+        <div class="desc">Primer mes de la proyección en que el resultado operacional alcanza cada meta de sueldo.</div>
+        <div class="table-scroll"><table class="milestone-table" id="milestoneTable"></table></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===== FACTURACION ===== -->
+  <section class="tab-panel" id="tab-facturacion">
+    <div class="kpis" id="factKpis"></div>
+
+    <div class="card">
+      <div class="card-head">
+        <div>
+          <h2>Facturación por cliente y mes</h2>
+          <div class="desc">Montos netos según las facturas electrónicas del SII. Permite ver de un vistazo quién dejó de facturar.</div>
+        </div>
+      </div>
+      <div class="table-scroll" id="factPorClienteTable"></div>
+    </div>
+
+    <div class="card">
+      <div class="card-head">
+        <div>
+          <h2>Días de cobro por cliente</h2>
+          <div class="desc" id="dsoDesc">Cuánto se demora cada cliente en pagar, desde la fecha de la factura hasta que entró la plata.</div>
+        </div>
+      </div>
+      <div class="table-scroll" id="dsoTable"></div>
+    </div>
+
+    <div class="card">
+      <div class="card-head">
+        <div>
+          <h2>Facturas emitidas</h2>
+          <div class="desc" id="factDesc"></div>
+        </div>
+      </div>
+      <div class="table-scroll" id="facturasTable"></div>
+    </div>
+  </section>
+
+  <!-- ===== CONTRATOS ===== -->
+  <section class="tab-panel" id="tab-contratos">
+    <div class="card">
+      <div class="card-head">
+        <div>
+          <h2>Contratos</h2>
+          <div class="desc">Ingreso recurrente mensual equivalente por cliente.</div>
+        </div>
+      </div>
+      <div class="table-scroll" id="contratosTable"></div>
+    </div>
+  </section>
+
+  <!-- ===== MOVIMIENTOS ===== -->
+  <section class="tab-panel" id="tab-movimientos">
+    <div class="card">
+      <div class="card-head">
+        <div>
+          <h2>Movimientos</h2>
+          <div class="desc">Todos los registros. Filtra por mes, tipo o categoría.</div>
+        </div>
+        <div style="display:flex;gap:.5rem;flex-wrap:wrap">
+          <select id="fMes"></select>
+          <select id="fTipo"><option value="">Todos los tipos</option><option value="Ingreso">Ingreso</option><option value="Gasto">Gasto</option></select>
+          <select id="fCategoria"></select>
+          <select id="fEstado"><option value="">Todos los estados</option><option value="Pagado">Pagado</option><option value="Por cobrar">Por cobrar</option><option value="Incompleto">Incompleto</option></select>
+          <input type="text" id="fBuscar" placeholder="Buscar descripción...">
+        </div>
+      </div>
+      <div class="table-scroll" id="movimientosTable"></div>
+    </div>
+  </section>
+
+  <!-- ===== AGREGAR ===== -->
+  <section class="tab-panel" id="tab-agregar">
+    <div class="card">
+      <h2>Registrar nuevo movimiento</h2>
+      <div class="desc">
+        Se guarda en este navegador y actualiza todo el dashboard al instante — no hace falta pasar por el chat.
+        <b>Ojo:</b> vive solo en este computador/navegador hasta que lo sincronices con Claude (abajo), que es lo que
+        lo deja guardado de forma permanente en <code>data/movimientos.js</code>.
+      </div>
+      <form id="formAgregar">
+        <div class="param-grid">
+          <div class="param"><label>Fecha *</label><input type="date" id="nFecha" required></div>
+          <div class="param"><label>Tipo *</label>
+            <select id="nTipo" required><option value="Ingreso">Ingreso</option><option value="Gasto">Gasto</option></select>
+          </div>
+          <div class="param"><label>Categoría *</label>
+            <input type="text" id="nCategoria" list="dlCategorias" required placeholder="Ej: Insumos/productos">
+            <datalist id="dlCategorias"></datalist>
+          </div>
+          <div class="param"><label>Descripción *</label><input type="text" id="nDescripcion" required placeholder="Ej: 2 trampas de moscas"></div>
+          <div class="param"><label>Monto neto *</label><input type="number" id="nMonto" required step="any" placeholder="0"></div>
+          <div class="param"><label>Estado</label>
+            <select id="nEstado"><option value="Pagado">Pagado</option><option value="Por cobrar">Por cobrar</option></select>
+          </div>
+          <div class="param"><label>Fijo / Variable</label>
+            <select id="nFijoVariable"><option value="">—</option><option value="Fijo">Fijo</option><option value="Variable">Variable</option></select>
+          </div>
+          <div class="param"><label>Medio de pago</label>
+            <select id="nMedioPago"><option value="">—</option><option value="Transferencia">Transferencia</option><option value="Efectivo">Efectivo</option><option value="Tarjeta">Tarjeta</option></select>
+          </div>
+          <div class="param"><label>Observaciones</label><input type="text" id="nObs" placeholder="Opcional"></div>
+        </div>
+        <button type="submit" style="background:var(--brand2);color:#fff;border:none;padding:.6rem 1.1rem;border-radius:var(--radius-sm);font-weight:600;font-size:.85rem;cursor:pointer;font-family:inherit">+ Agregar movimiento</button>
+        <span id="agregarOk" style="margin-left:.8rem;font-size:.82rem;color:var(--up-fg);font-weight:600"></span>
+      </form>
+    </div>
+
+    <div class="card">
+      <div class="card-head">
+        <div>
+          <h2>Pendientes de sincronizar con Claude</h2>
+          <div class="desc">Movimientos agregados desde este navegador que todavía no están guardados de forma permanente.</div>
+        </div>
+        <div style="display:flex;gap:.5rem">
+          <button id="btnCopiarPendientes" class="reset-btn" style="text-decoration:none;background:var(--card2);border:1px solid var(--border);padding:.4rem .8rem;border-radius:var(--radius-sm)">📋 Copiar para el chat</button>
+          <button id="btnVaciarPendientes" class="reset-btn" style="text-decoration:none;background:var(--card2);border:1px solid var(--border);padding:.4rem .8rem;border-radius:var(--radius-sm)">🗑 Ya los sincronicé, vaciar</button>
+        </div>
+      </div>
+      <div id="pendientesLocalBox"></div>
+    </div>
+  </section>
+
+  <footer>Desplagados · dashboard local, sin conexión a Google Sheets</footer>
+</div>
+
+<script>
+const CLP = n => n == null ? '—' : '$' + Math.round(n).toLocaleString('es-CL');
+const PCT = n => n == null ? '—' : (n*100).toFixed(1) + '%';
+const MES_NOMBRES = ['ene','feb','mar','abr','may','jun','jul','ago','sep','oct','nov','dic'];
+function mesKey(fechaStr){
+  if(!fechaStr) return null;
+  const [y,m] = fechaStr.split('-');
+  return y + '-' + m;
+}
+function mesLabel(key){
+  if(key === 'SIN_FECHA') return 'Sin fecha';
+  const [y,m] = key.split('-');
+  return MES_NOMBRES[parseInt(m,10)-1] + ' ' + y.slice(2);
+}
+function addMonths(ymKey, n){
+  let [y,m] = ymKey.split('-').map(Number);
+  m += n;
+  y += Math.floor((m-1)/12);
+  m = ((m-1)%12)+1;
+  return y + '-' + String(m).padStart(2,'0');
+}
+
+/* ============================================================
+   TABS
+   ============================================================ */
+function initCellLinks(){
+  // delegado en document porque las tablas se regeneran en cada render
+  document.addEventListener('click', (e) => {
+    const btn = e.target.closest('.cell-link');
+    if(!btn) return;
+    irAMovimientos({ mes: btn.dataset.mes, tipo: btn.dataset.tipo, categoria: btn.dataset.cat || '' });
+  });
+}
+
+function initTabs(){
+  const btns = Array.from(document.querySelectorAll('.tab-btn'));
+  function activate(tab){
+    btns.forEach(b => b.classList.toggle('active', b.dataset.tab === tab));
+    document.querySelectorAll('.tab-panel').forEach(p => p.classList.toggle('active', p.id === 'tab-'+tab));
+    location.hash = tab;
+  }
+  btns.forEach(b => b.addEventListener('click', () => activate(b.dataset.tab)));
+  activate(location.hash ? location.hash.slice(1) : 'resumen');
+}
+
+/* ============================================================
+   MOVIMIENTOS / ANALISIS / CONTRATOS (igual que antes)
+   ============================================================ */
+/* ---- movimientos agregados desde el navegador (pestaña "+ Agregar") ----
+   Se guardan en localStorage de ESTE navegador/computador solamente — no tocan
+   los archivos data/*.js. Hay que sincronizarlos con Claude cada tanto (botón
+   "Copiar pendientes") para que queden guardados de forma permanente. */
+const LS_KEY = 'desplagados_movimientos_locales';
+function cargarMovimientosLocales(){
+  try { return JSON.parse(localStorage.getItem(LS_KEY) || '[]'); }
+  catch(e){ return []; }
+}
+function guardarMovimientosLocales(lista){
+  localStorage.setItem(LS_KEY, JSON.stringify(lista));
+}
+// Se agregan al array real MOVIMIENTOS (mutando el array, no reasignando) para
+// que todo el resto del dashboard (Análisis, KPIs, gráficos, Excel) los vea
+// como un movimiento más, sin tener que tocar ninguna otra función.
+cargarMovimientosLocales().forEach(m => MOVIMIENTOS.push(m));
+
+let validos, incompletos, sinFecha, meses;
+function recomputeDerivados(){
+  validos = MOVIMIENTOS.filter(m => m.monto != null);
+  incompletos = MOVIMIENTOS.filter(m => m.monto == null);
+  sinFecha = MOVIMIENTOS.filter(m => m.monto != null && !m.fecha);
+
+  const mesesSet = new Set();
+  validos.forEach(m => mesesSet.add(m.fecha ? mesKey(m.fecha) : 'SIN_FECHA'));
+  meses = Array.from(mesesSet).filter(k => k !== 'SIN_FECHA').sort();
+  if(mesesSet.has('SIN_FECHA')) meses.push('SIN_FECHA');
+}
+recomputeDerivados();
+
+function renderWarnBox(){
+  if(incompletos.length === 0 && sinFecha.length === 0) return;
+  const total = incompletos.length + sinFecha.length;
+  let html = '<div class="warn-box"><div style="display:flex;justify-content:space-between;align-items:center;cursor:pointer" id="warnToggle">'
+    + '<span><b>' + total + ' registros necesitan completarse</b> para que los totales sean 100% exactos</span>'
+    + '<span style="text-decoration:underline;font-size:.75rem">ver detalle</span></div>'
+    + '<div class="toggle-body" id="warnBody" style="margin-top:.5rem"><ul>';
+  incompletos.forEach(m => html += '<li>' + (m.fecha||'sin fecha') + ' — ' + m.tipo + ' "' + m.descripcion + '": falta el monto</li>');
+  sinFecha.forEach(m => html += '<li>' + m.descripcion + ' (' + CLP(m.monto) + '): falta la fecha</li>');
+  html += '</ul></div></div>';
+  document.getElementById('warnBox').innerHTML = html;
+  document.getElementById('warnToggle').addEventListener('click', () => {
+    const b = document.getElementById('warnBody');
+    b.style.display = b.style.display === 'block' ? 'none' : 'block';
+  });
+}
+
+/* ============================================================
+   ESTADO DE RESULTADOS (P&L)
+   ============================================================ */
+// Costo del servicio = lo que escala con cada trabajo (decidido con el usuario 03-ago-2026).
+const CATS_COSTO_SERVICIO = ['Insumos/productos', 'Combustible', 'Instalación inicial'];
+
+function mesesConDatos(){ return meses.filter(m => m !== 'SIN_FECHA'); }
+
+function calcularPL(mkFiltro){
+  const enPeriodo = m => m.monto != null && (!mkFiltro || (m.fecha && mesKey(m.fecha) === mkFiltro));
+  const movs = MOVIMIENTOS.filter(enPeriodo);
+
+  function porCategoria(lista){
+    const g = {};
+    lista.forEach(m => { const c = m.categoria || 'Sin categoría'; g[c] = (g[c]||0) + m.monto; });
+    return Object.entries(g).sort((a,b) => b[1]-a[1]);
+  }
+
+  const ingresos = movs.filter(m => m.tipo === 'Ingreso');
+  const gastos   = movs.filter(m => m.tipo === 'Gasto');
+  const costoMovs = gastos.filter(m => CATS_COSTO_SERVICIO.includes(m.categoria));
+  const opexMovs  = gastos.filter(m => !CATS_COSTO_SERVICIO.includes(m.categoria));
+
+  const ventas = ingresos.reduce((s,m)=>s+m.monto,0);
+  const costo  = costoMovs.reduce((s,m)=>s+m.monto,0);
+  const opex   = opexMovs.reduce((s,m)=>s+m.monto,0);
+  const utilidadBruta = ventas - costo;
+  const resultado = utilidadBruta - opex;
+
+  return {
+    mk: mkFiltro,
+    ventas, costo, opex, utilidadBruta, resultado,
+    ventasPorCat: porCategoria(ingresos),
+    costoPorCat: porCategoria(costoMovs),
+    opexPorCat: porCategoria(opexMovs),
+    margenBruto: ventas ? utilidadBruta/ventas : null,
+    margenOperacional: ventas ? resultado/ventas : null,
+  };
+}
+
+function renderPLPeriodoSelector(){
+  const sel = document.getElementById('plPeriodo');
+  if(sel.options.length) return; // solo poblar una vez
+  const ms = mesesConDatos();
+  sel.innerHTML = '<option value="">Acumulado (todo)</option>'
+    + ms.slice().reverse().map(mk => '<option value="'+mk+'">'+mesLabel(mk)+'</option>').join('');
+}
+
+function filaPL(label, monto, ventas, opts){
+  opts = opts || {};
+  const pct = ventas ? monto/ventas : 0;
+  const anchoBarra = Math.min(100, Math.abs(pct)*100);
+  const link = opts.filtro
+    ? '<button class="cell-link" data-mes="'+(opts.filtro.mes||'')+'" data-tipo="'+(opts.filtro.tipo||'')+'" data-cat="'+(opts.filtro.categoria||'')+'">'+CLP(monto)+'</button>'
+    : CLP(monto);
+  return '<tr class="'+(opts.clase||'')+'">'
+    + '<td class="'+(opts.indent?'pl-cuenta':'')+'">' + label + '</td>'
+    + '<td>' + link + '</td>'
+    + '<td><div class="pl-bar-wrap"><span class="pl-bar" style="width:'+(anchoBarra*0.55)+'px;background:'+(opts.colorBarra||'var(--brand2)')+'"></span>'
+    + '<span style="min-width:52px;text-align:right">' + PCT(pct) + '</span></div></td></tr>';
+}
+
+function renderPL(){
+  renderPLPeriodoSelector();
+  const mk = document.getElementById('plPeriodo').value || null;
+  const pl = calcularPL(mk);
+  const v = pl.ventas;
+
+  document.getElementById('plTitulo').textContent =
+    'Estado de Resultados — ' + (mk ? mesLabel(mk) : 'acumulado (todos los meses)');
+
+  let html = '<table class="pl-table"><thead><tr><th>Cuenta</th><th>Monto</th><th>% Vert.</th></tr></thead><tbody>';
+
+  html += '<tr class="pl-titulo"><td colspan="3">Ingresos</td></tr>';
+  pl.ventasPorCat.forEach(([cat, monto]) => {
+    html += filaPL(cat, monto, v, {indent:true, clase:'pl-sub', filtro:{mes:mk, tipo:'Ingreso', categoria:cat}});
+  });
+  html += filaPL('VENTAS NETAS', v, v, {clase:'pl-resultado'});
+
+  html += '<tr class="pl-titulo"><td colspan="3">Costo del servicio</td></tr>';
+  pl.costoPorCat.forEach(([cat, monto]) => {
+    html += filaPL(cat, monto, v, {indent:true, clase:'pl-sub', colorBarra:'var(--c2)', filtro:{mes:mk, tipo:'Gasto', categoria:cat}});
+  });
+  html += filaPL('COSTO DE VENTAS', pl.costo, v, {clase:'pl-resultado', colorBarra:'var(--c2)'});
+  html += filaPL('UTILIDAD BRUTA', pl.utilidadBruta, v, {clase:'pl-resultado', colorBarra:'var(--brand2)'});
+
+  html += '<tr class="pl-titulo"><td colspan="3">Gastos operacionales</td></tr>';
+  pl.opexPorCat.forEach(([cat, monto]) => {
+    html += filaPL(cat, monto, v, {indent:true, clase:'pl-sub', colorBarra:'var(--c4)', filtro:{mes:mk, tipo:'Gasto', categoria:cat}});
+  });
+  html += filaPL('TOTAL GASTOS OPERACIONALES', pl.opex, v, {clase:'pl-resultado', colorBarra:'var(--c4)'});
+  html += filaPL('RESULTADO OPERACIONAL', pl.resultado, v, {clase:'pl-resultado', colorBarra: pl.resultado>=0?'var(--brand2)':'var(--c2)'});
+
+  html += '</tbody></table>';
+  document.getElementById('plTable').innerHTML = html;
+
+  // KPIs del P&L
+  const kpis = [
+    {label:'Ventas netas', value: CLP(v), cls:''},
+    {label:'Costo del servicio', value: CLP(pl.costo), cls:''},
+    {label:'Utilidad bruta', value: CLP(pl.utilidadBruta), cls: pl.utilidadBruta>=0?'pos':'neg', sub:'Margen ' + PCT(pl.margenBruto)},
+    {label:'Gastos operacionales', value: CLP(pl.opex), cls:''},
+    {label:'Resultado operacional', value: CLP(pl.resultado), cls: pl.resultado>=0?'pos':'neg', sub:'Margen ' + PCT(pl.margenOperacional)},
+  ];
+  document.getElementById('plKpis').innerHTML = kpis.map(k =>
+    '<div class="kpi ' + k.cls + '"><div class="label">' + k.label + '</div><div class="value">' + k.value + '</div>'
+    + (k.sub ? '<div class="sub">' + k.sub + '</div>' : '') + '</div>'
+  ).join('');
+
+  renderPLMargenes();
+}
+
+function renderPLMargenes(){
+  const ms = mesesConDatos();
+  const filas = ms.map(mk => ({ mk, pl: calcularPL(mk) }));
+  let html = '<table><thead><tr><th>Mes</th><th>Ventas</th><th>Utilidad bruta</th><th>Margen bruto</th><th>Resultado oper.</th><th>Margen oper.</th></tr></thead><tbody>';
+  filas.forEach(({mk, pl}) => {
+    html += '<tr><td>' + mesLabel(mk) + '</td>'
+      + '<td><button class="cell-link" data-mes="'+mk+'" data-tipo="Ingreso">' + CLP(pl.ventas) + '</button></td>'
+      + '<td class="' + (pl.utilidadBruta>=0?'pos':'neg') + '">' + CLP(pl.utilidadBruta) + '</td>'
+      + '<td>' + (pl.margenBruto==null?'—':PCT(pl.margenBruto)) + '</td>'
+      + '<td class="' + (pl.resultado>=0?'pos':'neg') + '">' + CLP(pl.resultado) + '</td>'
+      + '<td>' + (pl.margenOperacional==null?'—':PCT(pl.margenOperacional)) + '</td></tr>';
+  });
+  html += '</tbody></table>';
+  document.getElementById('plMargenTable').innerHTML = html;
+}
+
+function renderPLResumenInicio(){
+  const pl = calcularPL(null);
+  const v = pl.ventas;
+  let html = '<table class="pl-table"><thead><tr><th>Cuenta</th><th>Monto</th><th>% Vert.</th></tr></thead><tbody>';
+  html += filaPL('Ventas netas', v, v, {clase:'pl-resultado'});
+  html += filaPL('Costo del servicio', pl.costo, v, {indent:true, clase:'pl-sub', colorBarra:'var(--c2)'});
+  html += filaPL('Utilidad bruta', pl.utilidadBruta, v, {clase:'pl-resultado'});
+  html += filaPL('Gastos operacionales', pl.opex, v, {indent:true, clase:'pl-sub', colorBarra:'var(--c4)'});
+  html += filaPL('Resultado operacional', pl.resultado, v, {clase:'pl-resultado', colorBarra: pl.resultado>=0?'var(--brand2)':'var(--c2)'});
+  html += '</tbody></table>';
+  document.getElementById('plResumenInicio').innerHTML = html;
+}
+
+/* ============================================================
+   IVA (F29 estimado) Y DEUDAS
+   ============================================================ */
+function calcularIvaMes(mk){
+  // Debito: desde las facturas emitidas al SII, que traen el IVA explicito.
+  const facturasMes = FACTURAS.filter(f => mesKey(f.fecha) === mk);
+  const debito = facturasMes.reduce((s,f) => s + (f.iva||0), 0);
+
+  // Control: cuanto seria el debito si TODO el ingreso registrado estuviera facturado.
+  // Si es bastante mayor que el debito real, o faltan facturas en el respaldo o hay
+  // ingresos que no se facturaron. En ambos casos el IVA real a pagar seria mas alto.
+  const ingresosMes = validos.filter(m => m.tipo === 'Ingreso' && m.fecha && mesKey(m.fecha) === mk)
+                             .reduce((s,m) => s + m.monto, 0);
+  const debitoTeorico = ingresosMes * IVA_CONFIG.tasa;
+
+  // Credito: estimado desde los gastos de categorias con factura.
+  const gastosMes = validos.filter(m => m.tipo === 'Gasto' && m.fecha && mesKey(m.fecha) === mk
+                                     && IVA_CONFIG.categoriasConCredito.includes(m.categoria));
+  const t = IVA_CONFIG.tasa;
+  const credito = gastosMes.reduce((s,m) =>
+    s + (IVA_CONFIG.gastosIncluyenIva ? m.monto * t/(1+t) : m.monto * t), 0);
+
+  return { mk, debito, credito, aPagar: Math.max(0, debito - credito), remanente: Math.max(0, credito - debito),
+           nFacturas: facturasMes.length, ingresosMes, debitoTeorico };
+}
+
+// El F29 de un mes se paga al mes siguiente, asi que lo que hoy esta comprometido es el IVA
+// del ultimo mes con facturas emitidas, no el del mes en curso (que recien empieza).
+function ivaVigente(){
+  const ivas = mesesConIva().map(calcularIvaMes).filter(i => i.debito > 0);
+  return ivas.length ? ivas[ivas.length-1] : null;
+}
+
+function mesesConIva(){
+  const s = new Set(FACTURAS.map(f => mesKey(f.fecha)));
+  validos.filter(m => m.tipo==='Gasto' && m.fecha).forEach(m => s.add(mesKey(m.fecha)));
+  return Array.from(s).sort();
+}
+
+function calcularDeuda(d){
+  // Cuotas ya pagadas: se cuentan desde los movimientos reales, no desde el calendario,
+  // asi refleja si se atrasaron o adelantaron alguna.
+  const pagadas = d.categoriaMovimiento
+    ? validos.filter(m => m.tipo==='Gasto' && m.categoria === d.categoriaMovimiento).length
+    : 0;
+  const pagado = pagadas * d.cuotaMensual;
+
+  // Total de cuotas segun el calendario primerPago..ultimoPago
+  const [y1,m1] = d.primerPago.split('-').map(Number);
+  const [y2,m2] = d.ultimoPago.split('-').map(Number);
+  const totalCuotas = (y2-y1)*12 + (m2-m1) + 1;
+  const total = totalCuotas * d.cuotaMensual;
+
+  return { ...d, pagadas, pagado, totalCuotas, total,
+           restantes: totalCuotas - pagadas, saldo: total - pagado,
+           avance: totalCuotas ? pagadas/totalCuotas : 0 };
+}
+
+function renderObligaciones(){
+  const ms = mesesConIva();
+  const ivas = ms.map(calcularIvaMes);
+  const ultimo = ivaVigente();   // ultimo mes con facturas: es el F29 que toca pagar
+  const acumPagar = ivas.reduce((s,i) => s + i.aPagar, 0);
+
+  const deudas = DEUDAS.map(calcularDeuda);
+  const saldoDeuda = deudas.reduce((s,d) => s + d.saldo, 0);
+  const cuotaTotalMensual = deudas.reduce((s,d) => s + (d.restantes>0 ? d.cuotaMensual : 0), 0);
+
+  // Cuanto de la caja de hoy en realidad es del SII
+  const ivaPendienteUltimo = ultimo ? ultimo.aPagar : 0;
+  const pctCaja = CAJA.saldoActual ? ivaPendienteUltimo / CAJA.saldoActual : 0;
+
+  document.getElementById('oblKpis').innerHTML = [
+    {label:'IVA de ' + (ultimo ? mesLabel(ultimo.mk) : '—') + ' por pagar', value: CLP(ivaPendienteUltimo), cls:'warn',
+     sub: ultimo ? 'vence el 20 de ' + mesLabel(addMonths(ultimo.mk,1)) : ''},
+    {label:'IVA acumulado del período', value: CLP(acumPagar), cls:'', sub: ivas.length + ' meses'},
+    {label:'Deuda total restante', value: CLP(saldoDeuda), cls: saldoDeuda>0?'warn':'', sub:'Furgón'},
+    {label:'Cuotas comprometidas', value: CLP(cuotaTotalMensual) + '/mes', cls:'',
+     sub: deudas.length ? deudas[0].restantes + ' cuotas por pagar' : ''},
+    {label:'Caja realmente disponible', value: CLP(CAJA.saldoActual - ivaPendienteUltimo),
+     cls: (CAJA.saldoActual - ivaPendienteUltimo) < CAJA.colchonMinimo ? 'neg':'pos', sub:'descontando el IVA del mes'},
+  ].map(k =>
+    '<div class="kpi ' + k.cls + '"><div class="label">' + k.label + '</div><div class="value">' + k.value + '</div>'
+    + (k.sub ? '<div class="sub">' + k.sub + '</div>' : '') + '</div>').join('');
+
+  document.getElementById('ivaDesc').textContent = IVA_CONFIG.nota;
+
+  let html = '<table><thead><tr><th>Mes</th><th>Facturas</th><th>IVA débito (facturado)</th>'
+    + '<th>IVA crédito (compras)</th><th>A pagar al SII</th><th>Control: ingresos registrados</th></tr></thead><tbody>';
+  ivas.forEach(i => {
+    // Si el debito teorico supera al facturado, hay ingresos sin factura o faltan folios.
+    const brecha = i.debitoTeorico - i.debito;
+    const alerta = brecha > 1000;
+    html += '<tr><td>' + mesLabel(i.mk) + '</td>'
+      + '<td>' + (i.nFacturas || '—') + '</td>'
+      + '<td>' + CLP(i.debito) + '</td>'
+      + '<td class="muted">−' + CLP(i.credito) + '</td>'
+      + '<td class="' + (i.aPagar>0?'neg':'') + '"><b>' + (i.aPagar>0 ? CLP(i.aPagar) : (i.remanente>0 ? 'remanente ' + CLP(i.remanente) : '—')) + '</b></td>'
+      + '<td class="' + (alerta?'saldo-bajo':'muted') + '">'
+        + (i.ingresosMes ? CLP(i.ingresosMes) + (alerta ? ' → IVA teórico ' + CLP(i.debitoTeorico) : ' ✓') : '—')
+      + '</td></tr>';
+  });
+  html += '<tr class="total-row"><td>TOTAL</td><td>' + FACTURAS.length + '</td>'
+    + '<td>' + CLP(ivas.reduce((s,i)=>s+i.debito,0)) + '</td>'
+    + '<td>−' + CLP(ivas.reduce((s,i)=>s+i.credito,0)) + '</td>'
+    + '<td>' + CLP(acumPagar) + '</td>'
+    + '<td class="muted">' + CLP(ivas.reduce((s,i)=>s+i.ingresosMes,0)) + '</td></tr></tbody></table>';
+  document.getElementById('ivaTable').innerHTML = html;
+
+  // Meses donde lo facturado no alcanza a cubrir los ingresos registrados
+  const conBrecha = ivas.filter(i => i.debitoTeorico - i.debito > 1000);
+  const brechaTotal = conBrecha.reduce((s,i) => s + (i.debitoTeorico - i.debito), 0);
+
+  document.getElementById('ivaAviso').innerHTML =
+    '<div class="diag-box"><b>Por qué importa:</b> el IVA que cobrás en cada factura no es tuyo, se le devuelve al SII. '
+    + 'De los <b>' + CLP(CAJA.saldoActual) + '</b> que hay hoy en caja, <b>' + CLP(ivaPendienteUltimo) + '</b> '
+    + 'son el IVA de ' + (ultimo ? mesLabel(ultimo.mk) : 'este mes') + (ultimo ? ', que vence el 20 de ' + mesLabel(addMonths(ultimo.mk,1)) : '') + '. '
+    + 'Lo realmente disponible para operar es <b>' + CLP(CAJA.saldoActual - ivaPendienteUltimo) + '</b>.</div>'
+    + (conBrecha.length
+        ? '<div class="warn-box" style="margin:.7rem 0 0"><b>Ojo con la última columna:</b> en '
+          + conBrecha.length + ' meses los ingresos registrados son mayores que lo facturado. '
+          + 'Si todo eso debería haber ido con factura, el IVA sería <b>' + CLP(brechaTotal) + '</b> más alto de lo que muestra esta tabla. '
+          + 'Puede ser que falten los ' + FOLIOS_FALTANTES.length + ' folios que no están en el respaldo, '
+          + 'o que haya ingresos cobrados sin factura. Vale la pena revisarlo con el contador: '
+          + 'es la diferencia entre creer que debés ' + CLP(acumPagar) + ' y deber bastante más.</div>'
+        : '')
+    + '<div class="desc" style="margin:.7rem 0 0">Es una estimación para tener visibilidad, no reemplaza el F29 del contador. '
+    + 'El crédito fiscal se calcula solo sobre las categorías de compra que llevan factura; '
+    + '"Otros gastos" queda fuera a propósito para no subestimar lo que hay que pagar.</div>';
+
+  // --- Deudas ---
+  let dh = '<table><thead><tr><th>Deuda</th><th>Acreedor</th><th>Cuota</th><th>Pagadas</th>'
+    + '<th>Restantes</th><th>Saldo</th><th>Avance</th></tr></thead><tbody>';
+  deudas.forEach(d => {
+    dh += '<tr><td>' + d.nombre + '</td><td class="muted">' + d.acreedor + '</td>'
+      + '<td>' + CLP(d.cuotaMensual) + '</td>'
+      + '<td>' + d.pagadas + ' de ' + d.totalCuotas + '</td>'
+      + '<td>' + d.restantes + '</td>'
+      + '<td class="neg"><b>' + CLP(d.saldo) + '</b></td>'
+      + '<td><div class="pl-bar-wrap"><span class="pl-bar" style="width:' + (d.avance*55) + 'px"></span>'
+      + '<span style="min-width:46px;text-align:right">' + PCT(d.avance) + '</span></div></td></tr>';
+  });
+  dh += '</tbody></table>';
+  document.getElementById('deudasTable').innerHTML = dh;
+
+  document.getElementById('deudasDetalle').innerHTML = deudas.map(d =>
+    '<div class="diag-box" style="margin-bottom:.6rem"><b>' + d.nombre + ':</b> quedan <b>' + d.restantes
+    + ' cuotas</b> de ' + CLP(d.cuotaMensual) + ' (hasta ' + mesLabel(d.ultimoPago) + '), o sea <b>' + CLP(d.saldo) + '</b>. '
+    + d.obs + '</div>').join('')
+    + '<div class="warn-box" style="margin-bottom:0">Falta cargar los otros préstamos o deudas. '
+    + 'Cuando los tengas, pasámelos y los agrego a <code>data/obligaciones.js</code> para que el compromiso mensual quede completo.</div>';
+}
+
+/* ============================================================
+   DONUT DE GASTOS
+   ============================================================ */
+const PALETA_CAT = ['var(--c1)','var(--c2)','var(--c3)','var(--c4)','var(--c5)','var(--c6)'];
+const COLOR_OTROS = 'var(--c7)';
+
+function svgDonut(items, size){
+  // items: [{label, value, color}]
+  const total = items.reduce((s,i)=>s+i.value,0) || 1;
+  const R = size/2, r = R*0.60, cx = R, cy = R;
+  let ang = -Math.PI/2;
+  let svg = '<svg class="chart-svg" viewBox="0 0 '+size+' '+size+'" width="'+size+'" height="'+size+'" style="flex:0 0 auto">';
+  items.forEach(it => {
+    const frac = it.value/total;
+    const a2 = ang + frac*Math.PI*2;
+    const largeArc = frac > 0.5 ? 1 : 0;
+    const x1 = cx + R*Math.cos(ang), y1 = cy + R*Math.sin(ang);
+    const x2 = cx + R*Math.cos(a2),  y2 = cy + R*Math.sin(a2);
+    const xi2 = cx + r*Math.cos(a2), yi2 = cy + r*Math.sin(a2);
+    const xi1 = cx + r*Math.cos(ang), yi1 = cy + r*Math.sin(ang);
+    // separación de 2px entre segmentos vía stroke del color de la superficie
+    svg += '<path d="M'+x1+','+y1+' A'+R+','+R+' 0 '+largeArc+' 1 '+x2+','+y2
+         + ' L'+xi2+','+yi2+' A'+r+','+r+' 0 '+largeArc+' 0 '+xi1+','+yi1+' Z" fill="'+it.color+'" stroke="var(--card)" stroke-width="2">'
+         + '<title>'+it.label+': '+CLP(it.value)+' ('+PCT(frac)+')</title></path>';
+    ang = a2;
+  });
+  svg += '</svg>';
+  return svg;
+}
+
+function renderDonutGastos(){
+  const gastos = validos.filter(m => m.tipo === 'Gasto');
+  const total = gastos.reduce((s,m)=>s+m.monto,0);
+  const porCat = {};
+  gastos.forEach(m => { const c = m.categoria || 'Sin categoría'; porCat[c] = (porCat[c]||0)+m.monto; });
+  const orden = Object.entries(porCat).sort((a,b)=>b[1]-a[1]);
+
+  const top = orden.slice(0,6);
+  const resto = orden.slice(6);
+  const items = top.map(([label,value],i) => ({label, value, color: PALETA_CAT[i], cat: label}));
+  if(resto.length){
+    items.push({ label:'Otros ('+resto.length+' categorías)', value: resto.reduce((s,[,v])=>s+v,0), color: COLOR_OTROS, cat:null });
+  }
+
+  const legend = items.map(it =>
+    '<div class="row"' + (it.cat ? ' data-cat="'+it.cat+'"' : '') + '>'
+    + '<i style="background:'+it.color+'"></i>'
+    + '<span class="nm">'+it.label+'</span>'
+    + '<span class="vl">'+CLP(it.value)+'</span>'
+    + '<span class="pc">'+PCT(it.value/total)+'</span></div>'
+  ).join('');
+
+  document.getElementById('donutGastos').innerHTML =
+    '<div class="donut-wrap">' + svgDonut(items, 168) + '<div class="donut-legend">' + legend + '</div></div>';
+  document.getElementById('donutDesc').textContent =
+    'Gastos acumulados por categoría: ' + CLP(total) + ' en total. Clic en una categoría para ver sus movimientos.';
+
+  document.querySelectorAll('#donutGastos .donut-legend .row[data-cat]').forEach(row => {
+    row.addEventListener('click', () => irAMovimientos({ tipo:'Gasto', categoria: row.dataset.cat }));
+  });
+}
+
+/* ============================================================
+   KPIs CON VARIACIÓN MES A MES
+   ============================================================ */
+function renderKPIs(){
+  const ms = mesesConDatos();
+  const mkAct = ms[ms.length-1], mkAnt = ms[ms.length-2];
+  const act = calcularPL(mkAct), ant = mkAnt ? calcularPL(mkAnt) : null;
+
+  // Si el último mes con datos es el mes calendario en curso, todavía está incompleto:
+  // compararlo contra un mes cerrado da caídas falsas (ej. "▼94%" al día 3). Se avisa en vez
+  // de mostrar una variación engañosa.
+  const hoy = new Date();
+  const mkHoy = hoy.getFullYear() + '-' + String(hoy.getMonth()+1).padStart(2,'0');
+  const mesEnCurso = (mkAct === mkHoy);
+  const sufijoMes = mesEnCurso ? ' (en curso)' : '';
+
+  function delta(actual, anterior, invertir){
+    if(mesEnCurso) return '<div class="delta flat"><span class="ref">mes incompleto — aún no comparable</span></div>';
+    if(anterior == null || !anterior) return '<div class="delta flat">— sin mes previo</div>';
+    const dif = actual - anterior;
+    const pct = anterior ? dif/Math.abs(anterior) : 0;
+    // en gastos, subir es malo: `invertir` da vuelta el color, no el signo
+    const bueno = invertir ? dif < 0 : dif > 0;
+    const cls = dif === 0 ? 'flat' : (bueno ? 'up' : 'down');
+    const flecha = dif === 0 ? '=' : (dif > 0 ? '▲' : '▼');
+    return '<div class="delta '+cls+'">' + flecha + ' ' + PCT(Math.abs(pct))
+         + ' <span class="ref">vs ' + mesLabel(mkAnt) + '</span></div>';
+  }
+
+  const porCobrar = validos.filter(m => m.estado === 'Por cobrar').reduce((s,m) => s+m.monto, 0);
+  const contratosActivos = CONTRATOS.filter(c => c.estado === 'Activo');
+  const recurrente = contratosActivos.reduce((s,c) => s + (c.montoMensual||0), 0);
+
+  const kpis = [
+    { label:'Ventas · ' + mesLabel(mkAct) + sufijoMes, value: CLP(act.ventas), cls:'',
+      delta: delta(act.ventas, ant && ant.ventas, false), filtro:{mes:mkAct, tipo:'Ingreso'} },
+    { label:'Gastos · ' + mesLabel(mkAct) + sufijoMes, value: CLP(act.costo + act.opex), cls:'',
+      delta: delta(act.costo+act.opex, ant && (ant.costo+ant.opex), true), filtro:{mes:mkAct, tipo:'Gasto'} },
+    { label:'Resultado · ' + mesLabel(mkAct) + sufijoMes, value: CLP(act.resultado), cls: act.resultado>=0?'pos':'neg',
+      delta: delta(act.resultado, ant && ant.resultado, false), filtro:{mes:mkAct} },
+    { label:'Margen oper. · ' + (mkAnt ? mesLabel(mkAnt) : mesLabel(mkAct)), value: PCT(ant ? ant.margenOperacional : act.margenOperacional),
+      cls: (ant ? ant.resultado : act.resultado)>=0?'pos':'neg',
+      delta: '<div class="delta flat"><span class="ref">último mes cerrado</span></div>', tab:'resultados' },
+    { label:'Caja hoy', value: CLP(CAJA.saldoActual), cls: CAJA.saldoActual < CAJA.colchonMinimo ? 'warn':'', tab:'caja' },
+    { label:'Por cobrar', value: CLP(totalCxC + porCobrar), cls:'warn', tab:'caja' },
+    { label:'Contratos activos', value: contratosActivos.length, cls:'',
+      delta:'<div class="delta flat"><span class="ref">' + CLP(recurrente) + '/mes</span></div>', tab:'contratos' },
+  ];
+
+  document.getElementById('kpis').innerHTML = kpis.map((k,i) => {
+    const inner = '<div class="label">' + k.label + '</div><div class="value">' + k.value + '</div>' + (k.delta||'');
+    return '<div class="kpi ' + k.cls + '">'
+      + ((k.filtro || k.tab) ? '<button class="kpi-link" data-kpi="'+i+'">' + inner + '</button>' : inner)
+      + '</div>';
+  }).join('');
+
+  document.querySelectorAll('#kpis .kpi-link').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const k = kpis[+btn.dataset.kpi];
+      if(k.tab) document.querySelector('[data-tab="'+k.tab+'"]').click();
+      else irAMovimientos(k.filtro);
+    });
+  });
+}
+
+/* ============================================================
+   TARJETAS DE NAVEGACIÓN DE LA PORTADA
+   ============================================================ */
+const NAV_SECCIONES = [
+  {tab:'resultados',  t:'Estado de Resultados', d:'Ventas, costos y márgenes con análisis vertical, mes a mes.'},
+  {tab:'caja',        t:'Caja y flujo',         d:'Cuánta plata hay, qué está por cobrar y qué se viene.'},
+  {tab:'obligaciones',t:'Impuestos y deudas',   d:'IVA que le debes al SII y cuánto queda del furgón.'},
+  {tab:'decisiones',  t:'Decisiones',           d:'Bodega, crédito y pendientes por definir.'},
+  {tab:'analisis',    t:'Análisis mensual',     d:'Ingresos y gastos por categoría y mes.'},
+  {tab:'proyeccion',  t:'Proyección',           d:'Escenarios a 19 meses y punto de equilibrio.'},
+  {tab:'facturacion', t:'Facturación',          d:'Facturas emitidas al SII, por cliente y mes.'},
+  {tab:'contratos',   t:'Contratos',            d:'Clientes activos y pipeline en negociación.'},
+  {tab:'agregar',     t:'+ Agregar movimiento', d:'Cargar un gasto o ingreso nuevo al instante.'},
+];
+
+function renderNavGrid(){
+  document.getElementById('navGrid').innerHTML = NAV_SECCIONES.map(s =>
+    '<button class="navcard" data-nav="'+s.tab+'"><div class="t">'+s.t+'</div><div class="d">'+s.d+'</div></button>'
+  ).join('');
+  document.querySelectorAll('#navGrid .navcard').forEach(b => {
+    b.addEventListener('click', () => document.querySelector('[data-tab="'+b.dataset.nav+'"]').click());
+  });
+}
+
+function renderAnalisis(){
+  const categorias = { Ingreso: new Set(), Gasto: new Set() };
+  validos.forEach(m => categorias[m.tipo].add(m.categoria || 'Sin categoría'));
+
+  function seccion(tipo){
+    const cats = Array.from(categorias[tipo]).sort();
+    let rows = '';
+    const totalPorMes = {};
+    meses.forEach(mk => totalPorMes[mk] = 0);
+    let granTotal = 0;
+
+    cats.forEach(cat => {
+      let rowTotal = 0;
+      const cells = meses.map(mk => {
+        const suma = validos
+          .filter(m => m.tipo === tipo && (m.categoria||'Sin categoría') === cat && (m.fecha ? mesKey(m.fecha) : 'SIN_FECHA') === mk)
+          .reduce((s,m) => s+m.monto, 0);
+        rowTotal += suma;
+        totalPorMes[mk] += suma;
+        return '<td>' + (suma ? '<button class="cell-link" data-mes="'+mk+'" data-tipo="'+tipo+'" data-cat="'+cat+'">'+CLP(suma)+'</button>' : '—') + '</td>';
+      }).join('');
+      granTotal += rowTotal;
+      rows += '<tr><td>' + cat + '</td>' + cells + '<td><b>' + CLP(rowTotal) + '</b></td></tr>';
+    });
+
+    const totalCells = meses.map(mk => '<td>' + (totalPorMes[mk] ? '<button class="cell-link" data-mes="'+mk+'" data-tipo="'+tipo+'">'+CLP(totalPorMes[mk])+'</button>' : CLP(totalPorMes[mk])) + '</td>').join('');
+    rows += '<tr class="total-row"><td>TOTAL ' + (tipo==='Ingreso'?'INGRESOS':'GASTOS') + '</td>' + totalCells + '<td>' + CLP(granTotal) + '</td></tr>';
+    return { rows, header: '<tr class="section-row"><td colspan="' + (meses.length+2) + '">' + (tipo==='Ingreso'?'INGRESOS':'GASTOS') + '</td></tr>' };
+  }
+
+  const ing = seccion('Ingreso');
+  const gas = seccion('Gasto');
+
+  const head = '<tr><th>Categoría</th>' + meses.map(mk => '<th>' + mesLabel(mk) + '</th>').join('') + '<th>Total</th></tr>';
+  document.getElementById('analisisTable').innerHTML =
+    '<table><thead>' + head + '</thead><tbody>' + ing.header + ing.rows + gas.header + gas.rows + '</tbody></table>';
+}
+
+/* ============================================================
+   GRÁFICOS
+   ============================================================ */
+function compactCLP(n){
+  if(n >= 1000000) return '$' + (n/1000000).toFixed(n%1000000===0?0:1) + 'M';
+  if(n >= 1000) return '$' + Math.round(n/1000) + 'K';
+  return '$' + Math.round(n);
+}
+
+function svgBarChart(opts){
+  // opts: {width,height, groups:[{label, bars:[{value,color,title}]}], barWidth, groupGap}
+  const W = opts.width, H = opts.height;
+  const padL = 54, padB = 34, padT = 14, padR = 10;
+  const plotW = W - padL - padR, plotH = H - padT - padB;
+  const maxVal = Math.max(1, ...opts.groups.flatMap(g => g.bars.map(b => b.value)));
+  const groupW = plotW / opts.groups.length;
+  const barW = Math.min(opts.barWidth || 16, groupW / (Math.max(...opts.groups.map(g=>g.bars.length))+1) );
+
+  let svg = '<svg class="chart-svg" viewBox="0 0 ' + W + ' ' + H + '" width="100%" style="max-width:100%;height:auto">';
+  // eje base
+  svg += '<line x1="' + padL + '" y1="' + (H-padB) + '" x2="' + (W-padR) + '" y2="' + (H-padB) + '" stroke="var(--border)" stroke-width="1"/>';
+  // grid horizontal recesivo (3 líneas), etiquetas compactas (K/M)
+  for(let i=1;i<=3;i++){
+    const y = padT + plotH - (plotH*i/3);
+    svg += '<line x1="' + padL + '" y1="' + y + '" x2="' + (W-padR) + '" y2="' + y + '" stroke="var(--border2)" stroke-width="1" stroke-dasharray="2,2"/>';
+    svg += '<text x="' + (padL-8) + '" y="' + (y+3) + '" text-anchor="end">' + compactCLP(maxVal*i/3) + '</text>';
+  }
+
+  opts.groups.forEach((g, gi) => {
+    const gx = padL + gi*groupW;
+    const nBars = g.bars.length;
+    const totalBarsW = nBars*barW;
+    const startX = gx + (groupW-totalBarsW)/2;
+    g.bars.forEach((b, bi) => {
+      const h = Math.max(0, (b.value/maxVal) * plotH);
+      const x = startX + bi*barW;
+      const y = padT + plotH - h;
+      // extremo redondeado ancla a la base: radio solo arriba, sin panza en la unión con el eje
+      const dataAttrs = b.mes ? ' data-mes="'+b.mes+'" data-tipo="'+(b.tipo||'')+'"' : '';
+      svg += '<rect x="' + x + '" y="' + y + '" width="' + (barW-2) + '" height="' + Math.max(h,1.5) + '" fill="' + b.color + '" rx="2.5"' + dataAttrs + '>'
+        + '<title>' + (b.title || '') + '</title></rect>';
+    });
+    svg += '<text x="' + (gx+groupW/2) + '" y="' + (H-padB+15) + '" text-anchor="middle">' + g.label + '</text>';
+  });
+
+  svg += '</svg>';
+  return svg;
+}
+
+function renderChartIngGas(targetId){
+  const cont = document.getElementById(targetId || 'chartIngGas');
+  if(!cont) return;
+  const mesesReales = meses.filter(m => m !== 'SIN_FECHA');
+  const groups = mesesReales.map(mk => {
+    const ing = validos.filter(m => m.tipo==='Ingreso' && m.fecha && mesKey(m.fecha)===mk).reduce((s,m)=>s+m.monto,0);
+    const gas = validos.filter(m => m.tipo==='Gasto' && m.fecha && mesKey(m.fecha)===mk).reduce((s,m)=>s+m.monto,0);
+    return { label: mesLabel(mk), bars: [
+      { value: ing, color: 'var(--up-fg)', title: mesLabel(mk) + ' · Ingresos: ' + CLP(ing), mes: mk, tipo:'Ingreso' },
+      { value: gas, color: 'var(--dn-fg)', title: mesLabel(mk) + ' · Gastos: ' + CLP(gas),   mes: mk, tipo:'Gasto' },
+    ]};
+  });
+  cont.innerHTML =
+    '<div class="chart-legend"><span><i style="background:var(--up-fg)"></i>Ingresos</span><span><i style="background:var(--dn-fg)"></i>Gastos</span></div>'
+    + svgBarChart({ width:520, height:220, groups, barWidth:14 });
+  // barras clickeables -> movimientos de ese mes/tipo
+  cont.querySelectorAll('rect[data-mes]').forEach(r => {
+    r.style.cursor = 'pointer';
+    r.addEventListener('click', () => irAMovimientos({ mes: r.dataset.mes, tipo: r.dataset.tipo }));
+  });
+}
+
+// Rampa secuencial de un solo tono (azul), validada contra daltonismo con el
+// validador de paleta del skill de dataviz — pasa lightness/contraste/CVD en modo --ordinal.
+const TEMPORADA_COLOR = { baja:'#86b6ef', media:'#2a78d6', alta:'#104281' };
+const TEMPORADA_LABEL = { baja:'Temporada baja', media:'Temporada media', alta:'Temporada alta' };
+const MES_NOMBRE_LARGO = ['Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic'];
+
+function renderChartTemporada(){
+  const p = liveParams;
+  const groups = MES_NOMBRE_LARGO.map((label, i) => {
+    const mNum = i+1;
+    const temp = p.temporadaPorMes[mNum] || 'baja';
+    const val = p.servicioPuntual[temp];
+    return { label, bars: [{ value: val, color: TEMPORADA_COLOR[temp], title: label + ' · ' + TEMPORADA_LABEL[temp] + ': ' + CLP(val) }] };
+  });
+  document.getElementById('chartTemporada').innerHTML =
+    '<div class="chart-legend">'
+    + '<span><i style="background:' + TEMPORADA_COLOR.baja + '"></i>Baja</span>'
+    + '<span><i style="background:' + TEMPORADA_COLOR.media + '"></i>Media</span>'
+    + '<span><i style="background:' + TEMPORADA_COLOR.alta + '"></i>Alta</span>'
+    + '</div>'
+    + svgBarChart({ width:520, height:220, groups, barWidth:24 });
+}
+
+function renderContratos(){
+  const activos = CONTRATOS.filter(c => c.estado === 'Activo').sort((a,b) => (b.montoMensual||0)-(a.montoMensual||0));
+  const negociando = CONTRATOS.filter(c => c.estado !== 'Activo');
+
+  let html = '<table><thead><tr><th>Cliente</th><th>Servicio</th><th>Frecuencia</th><th>Monto mensual</th><th>Estado</th><th>Observaciones</th></tr></thead><tbody>';
+  activos.forEach(c => {
+    html += '<tr><td>' + c.cliente + '</td><td>' + (c.tipoServicio||'—') + '</td><td>' + (c.frecuencia||'—') + '</td><td>' + CLP(c.montoMensual) + '</td><td><span class="pill activo">Activo</span></td><td style="text-align:left">' + (c.obs||'') + '</td></tr>';
+  });
+  negociando.forEach(c => {
+    html += '<tr><td>' + c.cliente + '</td><td>' + (c.tipoServicio||'—') + '</td><td>' + (c.frecuencia||'—') + '</td><td>' + CLP(c.montoMensual) + '</td><td><span class="pill negociando">Negociando</span></td><td style="text-align:left">' + (c.obs||'') + '</td></tr>';
+  });
+  html += '</tbody></table>';
+  document.getElementById('contratosTable').innerHTML = html;
+}
+
+function poblarFiltros(){
+  const fMes = document.getElementById('fMes');
+  fMes.innerHTML = '<option value="">Todos los meses</option>' + meses.map(mk => '<option value="'+mk+'">'+mesLabel(mk)+'</option>').join('');
+  const cats = Array.from(new Set(MOVIMIENTOS.map(m => m.categoria || 'Sin categoría'))).sort();
+  document.getElementById('fCategoria').innerHTML = '<option value="">Todas las categorías</option>' + cats.map(c => '<option value="'+c+'">'+c+'</option>').join('');
+}
+
+function renderMovimientos(resaltarId){
+  const fMes = document.getElementById('fMes').value;
+  const fTipo = document.getElementById('fTipo').value;
+  const fCat = document.getElementById('fCategoria').value;
+  const fEstado = document.getElementById('fEstado').value;
+  const fBuscar = document.getElementById('fBuscar').value.toLowerCase();
+
+  let filtrados = MOVIMIENTOS.slice().sort((a,b) => (b.fecha||'0000').localeCompare(a.fecha||'0000') || b.id-a.id);
+  if(fMes) filtrados = filtrados.filter(m => (m.fecha ? mesKey(m.fecha) : 'SIN_FECHA') === fMes);
+  if(fTipo) filtrados = filtrados.filter(m => m.tipo === fTipo);
+  if(fCat) filtrados = filtrados.filter(m => (m.categoria||'Sin categoría') === fCat);
+  if(fEstado) filtrados = filtrados.filter(m => (m.monto==null ? 'Incompleto' : (m.estado||'')) === fEstado);
+  if(fBuscar) filtrados = filtrados.filter(m => (m.descripcion||'').toLowerCase().includes(fBuscar));
+
+  let html = '<table><thead><tr><th>Fecha</th><th>Tipo</th><th>Categoría</th><th>Descripción</th><th>Monto</th><th>Estado</th></tr></thead><tbody>';
+  filtrados.forEach(m => {
+    const estadoPill = m.monto == null ? '<span class="pill incompleto">Incompleto</span>'
+      : m.estado === 'Por cobrar' ? '<span class="pill porcobrar">Por cobrar</span>'
+      : m.estado === 'Pagado' ? '<span class="pill pagado">Pagado</span>' : (m.estado || '—');
+    const localPill = m.local ? ' <span class="pill" style="background:var(--flat-bg);color:var(--info)">Local</span>' : '';
+    html += '<tr id="mov-' + m.id + '"><td>' + (m.fecha || '<i>sin fecha</i>') + '</td><td>' + m.tipo + '</td><td>' + (m.categoria||'—') + '</td>'
+      + '<td style="text-align:left">' + m.descripcion + (m.obs ? ' <span style="color:var(--muted2)">— '+m.obs+'</span>' : '') + localPill + '</td>'
+      + '<td class="' + (m.tipo==='Ingreso'?'pos':'neg') + '">' + CLP(m.monto) + '</td><td>' + estadoPill + '</td></tr>';
+  });
+  html += '</tbody></table>';
+  document.getElementById('movimientosTable').innerHTML = html;
+
+  if(resaltarId){
+    const fila = document.getElementById('mov-' + resaltarId);
+    if(fila){
+      fila.scrollIntoView({block:'center'});
+      fila.style.transition = 'background-color .15s';
+      fila.style.backgroundColor = '#fef9c3';
+      setTimeout(() => { fila.style.backgroundColor = ''; }, 2200);
+    }
+  }
+}
+
+/* ---- "anexar": ir de una cifra a los movimientos que la componen ---- */
+function irAMovimientos(filtros){
+  document.querySelector('[data-tab="movimientos"]').click();
+  document.getElementById('fMes').value = filtros.mes || '';
+  document.getElementById('fTipo').value = filtros.tipo || '';
+  document.getElementById('fCategoria').value = filtros.categoria || '';
+  document.getElementById('fEstado').value = filtros.estado || '';
+  document.getElementById('fBuscar').value = filtros.buscar || '';
+  renderMovimientos();
+  const tabla = document.getElementById('tab-movimientos');
+  tabla.style.transition = 'box-shadow .3s';
+  tabla.style.boxShadow = '0 0 0 2px var(--brand2)';
+  setTimeout(() => { tabla.style.boxShadow = ''; }, 900);
+}
+
+/* ============================================================
+   AGREGAR MOVIMIENTO (localStorage, sin servidor)
+   ============================================================ */
+function poblarCategoriasDatalist(){
+  const cats = Array.from(new Set(MOVIMIENTOS.map(m => m.categoria).filter(Boolean))).sort();
+  document.getElementById('dlCategorias').innerHTML = cats.map(c => '<option value="'+c+'">').join('');
+}
+
+function agregarMovimientoManual(e){
+  e.preventDefault();
+  const nuevo = {
+    id: Date.now(),
+    fecha: document.getElementById('nFecha').value || null,
+    tipo: document.getElementById('nTipo').value,
+    categoria: document.getElementById('nCategoria').value.trim() || null,
+    descripcion: document.getElementById('nDescripcion').value.trim(),
+    fijoVariable: document.getElementById('nFijoVariable').value || null,
+    monto: parseFloat(document.getElementById('nMonto').value),
+    estado: document.getElementById('nEstado').value,
+    fechaPago: document.getElementById('nFecha').value || null,
+    medioPago: document.getElementById('nMedioPago').value || null,
+    factura: null,
+    obs: document.getElementById('nObs').value.trim() || null,
+    local: true,
+  };
+  if(isNaN(nuevo.monto) || !nuevo.descripcion){ return; }
+
+  MOVIMIENTOS.push(nuevo);
+  const locales = cargarMovimientosLocales();
+  locales.push(nuevo);
+  guardarMovimientosLocales(locales);
+
+  document.getElementById('formAgregar').reset();
+  document.getElementById('nFecha').value = new Date().toISOString().slice(0,10);
+  const ok = document.getElementById('agregarOk');
+  ok.textContent = '✓ Agregado — recuerda sincronizar con Claude cuando puedas';
+  setTimeout(() => { ok.textContent = ''; }, 4000);
+
+  rerenderAll();
+}
+
+function renderPendientesLocal(){
+  const locales = cargarMovimientosLocales();
+  if(!locales.length){
+    document.getElementById('pendientesLocalBox').innerHTML = '<div class="desc" style="margin:0">No hay movimientos pendientes de sincronizar.</div>';
+    return;
+  }
+  let html = '<table><thead><tr><th>Fecha</th><th>Tipo</th><th>Categoría</th><th>Descripción</th><th>Monto</th></tr></thead><tbody>';
+  locales.forEach(m => {
+    html += '<tr><td>' + (m.fecha||'—') + '</td><td>' + m.tipo + '</td><td>' + (m.categoria||'—') + '</td>'
+      + '<td style="text-align:left">' + m.descripcion + '</td><td>' + CLP(m.monto) + '</td></tr>';
+  });
+  html += '</tbody></table>';
+  document.getElementById('pendientesLocalBox').innerHTML = html;
+}
+
+function textoPendientesParaChat(){
+  const locales = cargarMovimientosLocales();
+  if(!locales.length) return '';
+  const lineas = locales.map(m =>
+    '- ' + (m.fecha||'sin fecha') + ' | ' + m.tipo + ' | ' + (m.categoria||'sin categoría') + ' | '
+    + m.descripcion + ' | ' + CLP(m.monto) + ' | ' + m.estado + (m.obs ? ' | ' + m.obs : '')
+  );
+  return 'Agrega estos movimientos que ya cargué desde el dashboard (después puedo vaciar la lista local):\n' + lineas.join('\n');
+}
+
+function initAgregar(){
+  document.getElementById('nFecha').value = new Date().toISOString().slice(0,10);
+  document.getElementById('formAgregar').addEventListener('submit', agregarMovimientoManual);
+  document.getElementById('btnCopiarPendientes').addEventListener('click', () => {
+    const texto = textoPendientesParaChat();
+    if(!texto) return;
+    const btn = document.getElementById('btnCopiarPendientes');
+    const orig = btn.textContent;
+    const marcarCopiado = () => { btn.textContent = '✓ Copiado'; setTimeout(() => { btn.textContent = orig; }, 2000); };
+
+    // navigator.clipboard requiere "contexto seguro" (https o localhost) — al abrir el
+    // dashboard como archivo local (file://) no está disponible, así que hay que caer
+    // al método viejo (textarea + execCommand), que sí funciona sobre file://.
+    function copiarConTextarea(){
+      const ta = document.createElement('textarea');
+      ta.value = texto;
+      ta.style.position = 'fixed';
+      ta.style.opacity = '0';
+      document.body.appendChild(ta);
+      ta.select();
+      try { document.execCommand('copy'); marcarCopiado(); }
+      catch(e){ alert('No se pudo copiar automáticamente. Copiá este texto manualmente:\n\n' + texto); }
+      document.body.removeChild(ta);
+    }
+
+    if(navigator.clipboard && navigator.clipboard.writeText){
+      navigator.clipboard.writeText(texto).then(marcarCopiado).catch(copiarConTextarea);
+    } else {
+      copiarConTextarea();
+    }
+  });
+  document.getElementById('btnVaciarPendientes').addEventListener('click', () => {
+    if(!confirm('¿Ya le pasaste estos movimientos a Claude y quedaron guardados en data/movimientos.js? Esto los saca de la lista local (no de los datos ya sincronizados).')) return;
+    const idsLocales = new Set(cargarMovimientosLocales().map(m => m.id));
+    for(let i = MOVIMIENTOS.length-1; i>=0; i--){
+      if(idsLocales.has(MOVIMIENTOS[i].id)) MOVIMIENTOS.splice(i,1);
+    }
+    guardarMovimientosLocales([]);
+    rerenderAll();
+  });
+}
+
+function rerenderAll(){
+  recomputeDerivados();
+  renderWarnBox();
+  renderKPIs();
+  renderCaja();
+  renderObligaciones();
+  renderFacturacion();
+  renderHallazgos();
+  renderAnalisis();
+  renderChartIngGas('chartIngGas');
+  renderChartIngGas('chartIngGasInicio');
+  renderDonutGastos();
+  renderPL();
+  renderPLResumenInicio();
+  renderContratos();
+  poblarFiltros();
+  poblarCategoriasDatalist();
+  renderMovimientos();
+  renderPendientesLocal();
+}
+
+/* ============================================================
+   DIAGNÓSTICO + TAMAÑOS DE REFERENCIA
+   ============================================================ */
+function renderDiagnostico(){
+  const p = PROYECCION_PARAMS;
+  const cotizacionesNecesarias = p.nuevosContratosPorMes / p.tasaCierreCotizaciones;
+  const liq = p.liquidacionReferencia;
+  const sueldoObjetivoPorSocio = p.sueldoObjetivoTotal / 2;
+  const brecha = sueldoObjetivoPorSocio - liq.liquido;
+
+  document.getElementById('diagBox').innerHTML = `
+    Cierran aproximadamente <b>${PCT(p.tasaCierreCotizaciones)}</b> de las cotizaciones — una tasa de conversión razonable.
+    El cuello de botella probablemente <b>no</b> es "cerrar mejor", sino el volumen de prospectos y cotizaciones que entran al embudo.
+    <br><br>
+    Para sostener la meta de <b>${p.nuevosContratosPorMes} contratos nuevos al mes</b> (usada en la Proyección) con esa tasa de cierre,
+    se necesitan aproximadamente <b>${cotizacionesNecesarias.toFixed(1)} cotizaciones emitidas por mes</b>.
+    Priorizar generar más inspecciones/cotizaciones y convertir clientes puntuales a planes anuales debería pesar más que optimizar el cierre.
+    <br><br>
+    <span class="muted">Referencia real: liquidación de ${liq.socio} (${liq.mes}) — líquido pagado ${CLP(liq.liquido)},
+    frente al sueldo objetivo del modelo de ${CLP(sueldoObjetivoPorSocio)}/socio (brecha de ${CLP(brecha)}/mes).</span>
+  `;
+}
+
+function renderTamanos(){
+  const rows = PROYECCION_PARAMS.tamanosReferencia.map(t =>
+    '<tr><td>' + t.tipo + '</td><td>' + t.estaciones + '</td><td style="text-align:left;font-size:.78rem;color:var(--muted)">' + (t.detalle||'') + '</td></tr>'
+  ).join('');
+  document.getElementById('tamanosTable').innerHTML =
+    '<table><thead><tr><th>Tipo de cliente</th><th>Estaciones</th><th>Detalle</th></tr></thead><tbody>' + rows + '</tbody></table>';
+}
+
+/* ============================================================
+   PROYECCIÓN — parámetros editables + tabla 19 meses
+   ============================================================ */
+const PARAM_FIELDS = [
+  { section: 'Contratos', key: 'contratosBase', label: 'Contratos base (hoy)' },
+  { section: 'Contratos', key: 'nuevosContratosPorMes', label: 'Nuevos contratos / mes' },
+  { section: 'Contratos', key: 'ticketNuevoContrato', label: 'Ticket nuevo contrato (neto)' },
+  { section: 'Contratos', key: 'ingresoBaseContratosActuales', label: 'Ingreso base contratos actuales' },
+  { section: 'Servicios puntuales (neto)', key: 'servicioPuntual.alta', label: 'Temporada alta (Dic-Ene)' },
+  { section: 'Servicios puntuales (neto)', key: 'servicioPuntual.media', label: 'Temporada media (Jun,Jul,Nov)' },
+  { section: 'Servicios puntuales (neto)', key: 'servicioPuntual.baja', label: 'Temporada baja (resto)' },
+  { section: 'Gastos fijos mensuales', key: 'gastosFijos.arriendoBodegaJunNov2026', label: 'Arriendo bodega (Jun-Nov 2026)' },
+  { section: 'Gastos fijos mensuales', key: 'gastosFijos.arriendoBodegaDic2026', label: 'Arriendo bodega (Dic 2026)' },
+  { section: 'Gastos fijos mensuales', key: 'gastosFijos.arriendoBodegaDesde2027', label: 'Arriendo bodega (desde 2027)' },
+  { section: 'Gastos fijos mensuales', key: 'gastosFijos.gastoBodegaConstruccion.monto', label: 'Bodega nueva (construcción, único)' },
+  { section: 'Gastos fijos mensuales', key: 'gastosFijos.cuotaFurgon', label: 'Cuota furgón' },
+  { section: 'Gastos fijos mensuales', key: 'gastosFijos.contabilidad', label: 'Contabilidad' },
+  { section: 'Gastos fijos mensuales', key: 'gastosFijos.honorarios', label: 'Honorarios' },
+  { section: 'Gastos variables mensuales (promedio)', key: 'gastosVariables.insumosProductos', label: 'Insumos/productos' },
+  { section: 'Gastos variables mensuales (promedio)', key: 'gastosVariables.otrosGastos', label: 'Otros gastos' },
+  { section: 'Gastos variables mensuales (promedio)', key: 'gastosVariables.marketing', label: 'Marketing' },
+  { section: 'Gastos variables mensuales (promedio)', key: 'gastosVariables.combustible', label: 'Combustible' },
+  { section: 'Gastos variables mensuales (promedio)', key: 'gastosVariables.mantencionAuto', label: 'Mantención auto' },
+  { section: 'Gastos variables mensuales (promedio)', key: 'gastosVariables.capacitacion', label: 'Capacitación' },
+  { section: 'Sueldo', key: 'sueldoObjetivoTotal', label: 'Sueldo objetivo total (2 socios)' },
+  { section: 'Comercial', key: 'tasaCierreCotizaciones', label: 'Tasa de cierre cotizaciones (0-1)' },
+];
+
+function getPath(obj, path){ return path.split('.').reduce((o,k) => o==null?o:o[k], obj); }
+function setPath(obj, path, val){
+  const parts = path.split('.');
+  let o = obj;
+  for(let i=0;i<parts.length-1;i++) o = o[parts[i]];
+  o[parts[parts.length-1]] = val;
+}
+
+let liveParams = JSON.parse(JSON.stringify(PROYECCION_PARAMS));
+
+function renderParamGrid(){
+  let html = '';
+  let lastSection = null;
+  PARAM_FIELDS.forEach(f => {
+    if(f.section !== lastSection){
+      html += '<div class="param-section-title">' + f.section + '</div>';
+      lastSection = f.section;
+    }
+    const val = getPath(liveParams, f.key);
+    html += '<div class="param"><label>' + f.label + '</label><input type="number" data-key="' + f.key + '" value="' + val + '" step="any"></div>';
+  });
+  document.getElementById('paramGrid').innerHTML = html;
+  document.querySelectorAll('#paramGrid input').forEach(inp => {
+    inp.addEventListener('input', () => {
+      setPath(liveParams, inp.dataset.key, parseFloat(inp.value) || 0);
+      renderProyeccion();
+    });
+  });
+}
+
+function calcularProyeccion(params){
+  const meses = [];
+  let mk = params.inicioProyeccion;
+  for(let i=0;i<params.mesesProyeccion;i++){
+    meses.push(mk);
+    mk = addMonths(mk, 1);
+  }
+
+  const rows = meses.map((mkStr, i) => {
+    const [y, m] = mkStr.split('-').map(Number);
+    // Prospectos grandes activos que ya entraron en vigencia este mes: se suman con su
+    // monto real en vez de diluirse en el ticket promedio de $80.000.
+    const prospectosVigentes = (params.prospectosGrandes || [])
+      .filter(pr => pr.activo && mkStr >= pr.desde);
+    const ingresoProspectos = prospectosVigentes.reduce((s,pr) => s + pr.montoMensual, 0);
+
+    const contratosActivos = params.contratosBase + params.nuevosContratosPorMes * (i+1) + prospectosVigentes.length;
+    const ingresoContrato = params.ingresoBaseContratosActuales
+      + params.nuevosContratosPorMes * (i+1) * params.ticketNuevoContrato
+      + ingresoProspectos;
+    const temporada = params.temporadaPorMes[m] || 'baja';
+    const servicioPuntual = params.servicioPuntual[temporada];
+    const totalIngresos = ingresoContrato + servicioPuntual;
+
+    const arriendo = (y === 2026 && m >= 6 && m <= 11) ? params.gastosFijos.arriendoBodegaJunNov2026
+      : (y === 2026 && m === 12) ? params.gastosFijos.arriendoBodegaDic2026
+      : params.gastosFijos.arriendoBodegaDesde2027;
+    const bodegaConstruccion = (mkStr === params.gastosFijos.gastoBodegaConstruccion.mes) ? params.gastosFijos.gastoBodegaConstruccion.monto : 0;
+    const gastosFijos = arriendo + params.gastosFijos.cuotaFurgon + params.gastosFijos.contabilidad + params.gastosFijos.honorarios + bodegaConstruccion;
+
+    const gv = params.gastosVariables;
+    const gastosVariables = gv.insumosProductos + gv.otrosGastos + gv.marketing + gv.combustible + gv.mantencionAuto + gv.capacitacion;
+
+    const totalGastos = gastosFijos + gastosVariables;
+    const resultadoOperacional = totalIngresos - totalGastos;
+    const resultadoReal = resultadoOperacional - params.sueldoObjetivoTotal;
+
+    return { mesKey: mkStr, contratosActivos, ingresoContrato, servicioPuntual, totalIngresos,
+      arriendo, bodegaConstruccion, gastosFijos, gastosVariables, totalGastos,
+      resultadoOperacional, resultadoReal };
+  });
+
+  return { meses, rows };
+}
+
+function renderProspectos(){
+  const lista = liveParams.prospectosGrandes || [];
+  if(!lista.length){ document.getElementById('prospectosBox').innerHTML = ''; return; }
+  let html = '<div style="background:var(--brand-soft);border:1px solid #cfe7db;border-radius:var(--radius-sm);padding:.85rem 1rem">'
+    + '<div style="font-size:.72rem;font-weight:700;color:var(--brand2);text-transform:uppercase;letter-spacing:.04em;margin-bottom:.6rem">Escenarios: prospectos grandes</div>';
+  lista.forEach((pr,i) => {
+    html += '<label style="display:flex;align-items:center;gap:.55rem;font-size:.83rem;cursor:pointer;padding:.15rem 0">'
+      + '<input type="checkbox" data-prospecto="'+i+'"' + (pr.activo?' checked':'') + '>'
+      + '<span><b>' + pr.nombre + '</b> — ' + CLP(pr.montoMensual) + '/mes desde ' + mesLabel(pr.desde) + '</span></label>';
+  });
+  html += '<div style="font-size:.75rem;color:var(--muted);margin-top:.5rem">Montos estimados, aún no cotizados en firme. '
+    + 'Al activarlos entran con su monto real en vez de diluirse en el promedio de ' + CLP(liveParams.ticketNuevoContrato) + ' por contrato nuevo.</div></div>';
+  document.getElementById('prospectosBox').innerHTML = html;
+  document.querySelectorAll('#prospectosBox input[data-prospecto]').forEach(cb => {
+    cb.addEventListener('change', () => {
+      liveParams.prospectosGrandes[+cb.dataset.prospecto].activo = cb.checked;
+      renderProyeccion();
+    });
+  });
+}
+
+function renderProyeccion(){
+  const { meses, rows } = calcularProyeccion(liveParams);
+  const p = liveParams;
+  renderProspectos();
+
+  document.getElementById('proyTitulo').textContent = 'Proyección ' + mesLabel(meses[0]) + ' – ' + mesLabel(meses[meses.length-1]);
+  document.getElementById('proySupuestos').textContent =
+    'Supuestos: +' + p.nuevosContratosPorMes + ' contratos nuevos/mes a ' + CLP(p.ticketNuevoContrato) + ' neto | '
+    + 'Temporada alta Dic-Ene (fumigaciones casas de veraneo) | Bodega propia desde ' + mesLabel(p.gastosFijos.gastoBodegaConstruccion.mes).replace(/^\w/, c=>c.toUpperCase());
+
+  function fila(label, campo, tipo){
+    const total = rows.reduce((s,r) => s + r[campo], 0);
+    const celdas = rows.map(r => '<td>' + (tipo==='num' ? r[campo] : CLP(r[campo])) + '</td>').join('');
+    const totalCell = campo === 'contratosActivos' ? rows[rows.length-1][campo] : (tipo==='num' ? total : CLP(total));
+    return '<tr><td>' + label + '</td>' + celdas + '<td><b>' + (tipo==='num'?totalCell:CLP(totalCell)) + '</b></td></tr>';
+  }
+
+  const head = '<tr><th>Concepto</th>' + meses.map(mk => '<th>' + mesLabel(mk) + '</th>').join('') + '<th>Total</th></tr>';
+
+  let html = '<table><thead>' + head + '</thead><tbody>';
+  html += '<tr class="section-row"><td colspan="' + (meses.length+2) + '">N° CONTRATOS ACTIVOS</td></tr>';
+  html += fila('N° contratos activos', 'contratosActivos', 'num');
+  html += '<tr class="section-row"><td colspan="' + (meses.length+2) + '">INGRESOS</td></tr>';
+  html += fila('Contrato mensual', 'ingresoContrato');
+  html += fila('Servicio puntual', 'servicioPuntual');
+  html += '<tr class="total-row"><td>TOTAL INGRESOS</td>' + rows.map(r=>'<td>'+CLP(r.totalIngresos)+'</td>').join('') + '<td>' + CLP(rows.reduce((s,r)=>s+r.totalIngresos,0)) + '</td></tr>';
+  html += '<tr class="section-row"><td colspan="' + (meses.length+2) + '">GASTOS</td></tr>';
+  html += fila('Gastos fijos', 'gastosFijos');
+  html += fila('Gastos variables', 'gastosVariables');
+  html += '<tr class="total-row"><td>TOTAL GASTOS</td>' + rows.map(r=>'<td>'+CLP(r.totalGastos)+'</td>').join('') + '<td>' + CLP(rows.reduce((s,r)=>s+r.totalGastos,0)) + '</td></tr>';
+  html += '<tr class="total-row"><td>RESULTADO OPERACIONAL (sin sueldo)</td>' + rows.map(r=>'<td class="'+(r.resultadoOperacional>=0?'pos':'neg')+'">'+CLP(r.resultadoOperacional)+'</td>').join('') + '<td>' + CLP(rows.reduce((s,r)=>s+r.resultadoOperacional,0)) + '</td></tr>';
+  html += '<tr><td>Margen operacional</td>' + rows.map(r=>'<td>'+PCT(r.resultadoOperacional/r.totalIngresos)+'</td>').join('') + '<td>—</td></tr>';
+  html += '<tr class="section-row"><td colspan="' + (meses.length+2) + '">ANÁLISIS DE SUELDOS</td></tr>';
+  html += '<tr><td>Sueldo objetivo (' + CLP(p.sueldoObjetivoTotal) + ')</td>' + rows.map(()=>'<td>'+CLP(p.sueldoObjetivoTotal)+'</td>').join('') + '<td>' + CLP(p.sueldoObjetivoTotal*rows.length) + '</td></tr>';
+  html += '<tr class="total-row"><td>RESULTADO REAL (con sueldo)</td>' + rows.map(r=>'<td class="'+(r.resultadoReal>=0?'pos':'neg')+'">'+CLP(r.resultadoReal)+'</td>').join('') + '<td>' + CLP(rows.reduce((s,r)=>s+r.resultadoReal,0)) + '</td></tr>';
+  html += '</tbody></table>';
+  document.getElementById('proyeccionTable').innerHTML = html;
+
+  renderBreakeven(rows);
+  renderMilestones(rows);
+  renderChartTemporada();
+  renderPresupuestoVsReal(rows);
+}
+
+function renderPresupuestoVsReal(rows){
+  // Solo los meses donde hay proyeccion Y datos reales, y que ya esten cerrados.
+  const hoy = new Date();
+  const mkHoy = hoy.getFullYear() + '-' + String(hoy.getMonth()+1).padStart(2,'0');
+  const reales = mesesConDatos().filter(mk => mk < mkHoy);
+  const comparables = rows.filter(r => reales.includes(r.mesKey));
+
+  if(!comparables.length){
+    document.getElementById('presupuestoTable').innerHTML =
+      '<div class="desc" style="margin:0">Todavía no hay meses cerrados que estén dentro del horizonte de la proyección.</div>';
+    document.getElementById('presupuestoNota').innerHTML = '';
+    return;
+  }
+
+  function fila(label, proy, real, invertir){
+    const dif = real - proy;
+    const pct = proy ? dif/Math.abs(proy) : 0;
+    const bueno = invertir ? dif <= 0 : dif >= 0;
+    return '<td>' + CLP(proy) + '</td><td>' + CLP(real) + '</td>'
+      + '<td class="' + (dif===0?'':(bueno?'pos':'neg')) + '">' + (dif>=0?'+':'') + CLP(dif)
+      + ' <span class="muted">(' + (dif>=0?'+':'') + PCT(pct) + ')</span></td>';
+  }
+
+  let html = '<table><thead><tr><th rowspan="2">Mes</th><th colspan="3">Ingresos</th>'
+    + '<th colspan="3">Gastos</th><th colspan="3">Resultado</th></tr>'
+    + '<tr><th>Proyectado</th><th>Real</th><th>Dif.</th>'
+    + '<th>Proyectado</th><th>Real</th><th>Dif.</th>'
+    + '<th>Proyectado</th><th>Real</th><th>Dif.</th></tr></thead><tbody>';
+
+  comparables.forEach(r => {
+    const pl = calcularPL(r.mesKey);
+    const gastoReal = pl.costo + pl.opex;
+    html += '<tr><td>' + mesLabel(r.mesKey) + '</td>'
+      + fila('Ingresos', r.totalIngresos, pl.ventas, false)
+      + fila('Gastos', r.totalGastos, gastoReal, true)
+      + fila('Resultado', r.resultadoOperacional, pl.resultado, false)
+      + '</tr>';
+  });
+  html += '</tbody></table>';
+  document.getElementById('presupuestoTable').innerHTML = html;
+
+  // Desvío promedio de ingresos: ¿el modelo va corto o largo?
+  const desvios = comparables.map(r => {
+    const pl = calcularPL(r.mesKey);
+    return r.totalIngresos ? (pl.ventas - r.totalIngresos)/r.totalIngresos : 0;
+  });
+  const prom = desvios.reduce((a,b)=>a+b,0)/desvios.length;
+  document.getElementById('presupuestoNota').innerHTML =
+    '<div class="diag-box">En promedio los ingresos reales vienen <b>' + (prom>=0?'por encima':'por debajo') + '</b> de lo proyectado '
+    + 'en <b>' + PCT(Math.abs(prom)) + '</b> sobre ' + comparables.length + ' ' + (comparables.length===1?'mes cerrado':'meses cerrados') + '. '
+    + (Math.abs(prom) > 0.15
+        ? 'Es una diferencia grande: conviene ajustar los supuestos de arriba para que la proyección sirva como guía.'
+        : 'El modelo está razonablemente calibrado.')
+    + '<br><br><span class="muted">Solo se comparan meses ya cerrados; el mes en curso se excluye porque estaría incompleto.</span></div>';
+}
+
+function renderBreakeven(rows){
+  const opBreak = rows.find(r => r.resultadoOperacional >= 0);
+  const realBreak = rows.find(r => r.resultadoReal >= 0);
+  document.getElementById('breakevenBox').innerHTML =
+    '<div><b>Operacional (sin sueldo):</b> ' + (opBreak ? mesLabel(opBreak.mesKey) + ' con ' + opBreak.contratosActivos + ' contratos activos' : 'no se alcanza en el horizonte proyectado') + '</div>'
+    + '<div style="margin-top:.4rem"><b>Real (con sueldo objetivo):</b> ' + (realBreak ? mesLabel(realBreak.mesKey) + ' con ' + realBreak.contratosActivos + ' contratos activos' : 'no se alcanza en el horizonte proyectado') + '</div>';
+}
+
+function renderMilestones(rows){
+  const targets = [
+    { label: 'Cubrir gastos operacionales (sin sueldo)', sueldo: 0 },
+    { label: 'Sueldo parcial $250k c/u → $500k total/mes', sueldo: 500000 },
+    { label: 'Sueldo parcial $500k c/u → $1M total/mes', sueldo: 1000000 },
+    { label: 'Sueldo $750k c/u → $1,5M total/mes', sueldo: 1500000 },
+    { label: 'Sueldo $1M c/u → $2M total/mes', sueldo: 2000000 },
+    { label: 'Sueldo objetivo $1,5M c/u → $3M total/mes', sueldo: liveParams.sueldoObjetivoTotal },
+  ];
+  const head = '<tr><th>Hito</th><th>Mes proyectado</th><th>Contratos necesarios</th></tr>';
+  const body = targets.map(t => {
+    const hit = rows.find(r => r.resultadoOperacional >= t.sueldo);
+    return '<tr><td>' + t.label + '</td><td>' + (hit ? mesLabel(hit.mesKey) : '—') + '</td><td>' + (hit ? hit.contratosActivos : '—') + '</td></tr>';
+  }).join('');
+  document.getElementById('milestoneTable').innerHTML = '<thead>' + head + '</thead><tbody>' + body + '</tbody>';
+}
+
+/* ============================================================
+   CAJA Y FLUJO
+   ============================================================ */
+const conIva = (monto, iva) => iva ? monto * (1 + CAJA.ivaTasa) : monto;
+
+// Días transcurridos entre la fecha de la factura y la fecha del saldo de caja.
+function diasMora(fechaFactura){
+  if(!fechaFactura) return null;
+  const ms = new Date(CAJA.fechaSaldo + 'T00:00:00') - new Date(fechaFactura + 'T00:00:00');
+  return Math.round(ms / 86400000);
+}
+
+// Combinación más chica de cuentas por cobrar que alcanza a cubrir un déficit.
+// Prueba todos los subconjuntos (son pocas facturas) y prefiere: menos facturas, y a igual
+// cantidad, la que junte menos plata de más (para no pedirle a un cliente más de lo necesario).
+function combinacionMinima(deficit){
+  const cxc = CAJA.cuentasPorCobrar;
+  let mejor = null;
+  for(let mask = 1; mask < (1 << cxc.length); mask++){
+    const sel = [];
+    let suma = 0;
+    for(let i = 0; i < cxc.length; i++){
+      if(mask & (1 << i)){ sel.push(cxc[i]); suma += conIva(cxc[i].neto, cxc[i].iva); }
+    }
+    if(suma < deficit) continue;
+    if(!mejor || sel.length < mejor.sel.length || (sel.length === mejor.sel.length && suma < mejor.suma)){
+      mejor = { sel, suma };
+    }
+  }
+  return mejor;
+}
+
+function calcularFlujo(){
+  const items = CAJA.compromisos.slice();
+  const cr = CAJA.escenarioCredito;
+  if(cr && cr.activo){
+    items.push({ fecha: cr.fechaIngreso, tipo:'Ingreso', concepto: cr.concepto + ' (escenario)', monto: cr.monto, iva:false });
+  }
+  const eventos = items.map(c => ({
+    fecha: c.fecha,
+    concepto: c.concepto,
+    tipo: c.tipo,
+    neto: c.monto,
+    iva: c.iva,
+    efectivo: (c.tipo === 'Ingreso' ? 1 : -1) * conIva(c.monto, c.iva),
+  })).sort((a,b) => a.fecha.localeCompare(b.fecha));
+
+  let saldo = CAJA.saldoActual;
+  return eventos.map(e => { saldo += e.efectivo; return Object.assign({}, e, { saldo }); });
+}
+
+const totalCxC = CAJA.cuentasPorCobrar.reduce((s,c) => s + conIva(c.neto, c.iva), 0);
+
+function renderCaja(){
+  const flujo = calcularFlujo();
+  const saldoFinal = flujo.length ? flujo[flujo.length-1].saldo : CAJA.saldoActual;
+  const peor = flujo.reduce((min,f) => f.saldo < min.saldo ? f : min, {saldo: CAJA.saldoActual, fecha: CAJA.fechaSaldo});
+  const porCobrarHist = validos.filter(m => m.estado === 'Por cobrar').reduce((s,m) => s+m.monto, 0);
+
+  document.getElementById('cajaFuente').textContent =
+    'Saldo base: ' + CLP(CAJA.saldoActual) + ' al ' + CAJA.fechaSaldo + '. Fuente: ' + CAJA.fuente
+    + '. Los montos con IVA se muestran como entran/salen realmente de la cuenta.';
+
+  const kpis = [
+    { label: 'Caja hoy', value: CLP(CAJA.saldoActual), cls: CAJA.saldoActual < CAJA.colchonMinimo ? 'warn' : '' },
+    { label: 'Saldo proyectado más bajo', value: CLP(peor.saldo), cls: peor.saldo < 0 ? 'neg' : (peor.saldo < CAJA.colchonMinimo ? 'warn' : 'pos') },
+    { label: 'Saldo tras compromisos', value: CLP(saldoFinal), cls: saldoFinal < 0 ? 'neg' : 'pos' },
+    { label: 'Por cobrar (' + CAJA.cuentasPorCobrar.length + ' facturas)', value: CLP(totalCxC), cls: 'warn' },
+    { label: 'Tarjeta de crédito (' + CAJA.tarjetaCredito.estado + ')', value: CLP(CAJA.tarjetaCredito.cupo), cls: '' },
+    { label: 'Por cobrar histórico', value: CLP(porCobrarHist), cls: porCobrarHist > 0 ? 'warn' : '' },
+  ];
+  document.getElementById('cajaKpis').innerHTML = kpis.map(k =>
+    '<div class="kpi ' + k.cls + '"><div class="label">' + k.label + '</div><div class="value">' + k.value + '</div></div>'
+  ).join('');
+
+  let html = '<table><thead><tr><th>Fecha</th><th>Concepto</th><th>Neto</th><th>Efectivo (con IVA)</th><th>Saldo caja</th></tr></thead><tbody>';
+  html += '<tr><td>' + CAJA.fechaSaldo + '</td><td><i>Saldo actual</i></td><td>—</td><td>—</td><td><b>' + CLP(CAJA.saldoActual) + '</b></td></tr>';
+  flujo.forEach(f => {
+    const cls = f.saldo < 0 ? 'saldo-neg' : (f.saldo < CAJA.colchonMinimo ? 'saldo-bajo' : '');
+    html += '<tr><td>' + f.fecha + '</td><td style="text-align:left">' + f.concepto + '</td>'
+      + '<td>' + CLP(f.neto) + (f.iva ? ' <span class="muted">+IVA</span>' : '') + '</td>'
+      + '<td class="' + (f.efectivo>=0?'pos':'neg') + '">' + (f.efectivo>=0?'+':'') + CLP(f.efectivo) + '</td>'
+      + '<td class="' + cls + '">' + CLP(f.saldo) + '</td></tr>';
+  });
+  html += '</tbody></table>';
+  document.getElementById('flujoTable').innerHTML = html;
+
+  // Alerta bajo la tabla
+  const primerNeg = flujo.find(f => f.saldo < 0);
+  if(primerNeg){
+    document.getElementById('flujoAlerta').innerHTML =
+      '<div class="warn-box" style="background:#fef2f2;border-color:#fecaca;color:#991b1b">'
+      + '<b>La caja se va a negativo el ' + primerNeg.fecha + '</b> (' + CLP(primerNeg.saldo) + '), con el pago de bodega. '
+      + 'Esa es la fecha límite real: hay que tener <b>' + CLP(Math.abs(primerNeg.saldo)) + '</b> extra en caja antes de ese día. '
+      + 'El punto más bajo llega el ' + peor.fecha + ' (' + CLP(peor.saldo) + ') tras el sueldo, así que para cubrir todo el tramo hacen falta ' + CLP(Math.abs(peor.saldo)) + '. '
+      + 'Lo pendiente de cobro suma ' + CLP(totalCxC) + '.</div>';
+  } else {
+    document.getElementById('flujoAlerta').innerHTML = '';
+  }
+
+  // Cuentas por cobrar, ordenadas de más antigua a más nueva
+  const cxcOrden = CAJA.cuentasPorCobrar.slice().sort((a,b) => (a.fechaFactura||'9999').localeCompare(b.fechaFactura||'9999'));
+  let cxc = '<table><thead><tr><th>Cliente</th><th>Factura</th><th>Días</th><th>Con IVA (a caja)</th><th>Observaciones</th></tr></thead><tbody>';
+  cxcOrden.forEach(c => {
+    const d = diasMora(c.fechaFactura);
+    const cls = d === null ? '' : (d > 30 ? 'saldo-neg' : (d > 15 ? 'saldo-bajo' : ''));
+    cxc += '<tr><td>' + c.cliente + '</td>'
+      + '<td>' + (c.folio ? 'N°'+c.folio : '—') + ' <span class="muted">' + (c.fechaFactura||'') + '</span></td>'
+      + '<td class="' + cls + '">' + (d === null ? '—' : d + ' d') + '</td>'
+      + '<td><b>' + CLP(conIva(c.neto,c.iva)) + '</b></td>'
+      + '<td style="text-align:left;font-size:.78rem;color:var(--muted)">' + (c.obs||'') + '</td></tr>';
+  });
+  cxc += '<tr class="total-row"><td>TOTAL</td><td></td><td></td><td>' + CLP(totalCxC) + '</td><td></td></tr>';
+  cxc += '</tbody></table>';
+  document.getElementById('cxcTable').innerHTML = cxc;
+
+  // Compromisos
+  let comp = '<table><thead><tr><th>Fecha</th><th>Concepto</th><th>Tipo</th><th>Efectivo</th></tr></thead><tbody>';
+  flujo.forEach(f => {
+    comp += '<tr><td>' + f.fecha + '</td><td style="text-align:left">' + f.concepto + '</td><td>' + f.tipo + '</td>'
+      + '<td class="' + (f.efectivo>=0?'pos':'neg') + '">' + (f.efectivo>=0?'+':'') + CLP(f.efectivo) + '</td></tr>';
+  });
+  comp += '</tbody></table>';
+  document.getElementById('compromisosTable').innerHTML = comp;
+}
+
+/* ============================================================
+   DECISIONES: bodega, geografía, crédito, pendientes
+   ============================================================ */
+const bodegaActual = BODEGA.opciones.find(o => o.id === 'actual');
+
+function renderBodega(){
+  const base = bodegaActual.arriendoMensual;
+  let html = '<table><thead><tr><th>Opción</th><th>Arriendo/mes</th><th>Inversión</th>'
+    + '<th>Costo año 1</th><th>Ahorro/mes vs actual</th><th>Ahorro/año</th><th>Payback inversión</th></tr></thead><tbody>';
+
+  BODEGA.opciones.forEach(o => {
+    const editable = o.id !== 'actual';
+    const inputArr = editable
+      ? '<input type="number" data-bod="' + o.id + '" value="' + o.arriendoMensual + '" step="any" style="width:105px">'
+      : '<b>' + CLP(o.arriendoMensual) + '</b>';
+
+    const pendiente = o.porCotizar && !o.arriendoMensual;
+    const costoAnio1 = o.arriendoMensual*12 + o.inversionInicial;
+    const ahorroMes = base - o.arriendoMensual;
+    const payback = (o.inversionInicial > 0 && ahorroMes > 0) ? o.inversionInicial / ahorroMes : null;
+
+    html += '<tr><td>' + o.nombre + '<div style="font-size:.74rem;color:var(--muted2);margin-top:.15rem">' + o.obs + '</div></td>'
+      + '<td>' + inputArr + '</td>'
+      + '<td>' + (o.inversionInicial ? CLP(o.inversionInicial) : '—') + '</td>'
+      + (pendiente
+          ? '<td colspan="4" class="muted" style="text-align:center"><i>completar con cotización real</i></td>'
+          : '<td>' + CLP(costoAnio1) + '</td>'
+            + '<td class="' + (ahorroMes>0?'pos':(ahorroMes<0?'neg':'')) + '">' + (o.id==='actual' ? '—' : (ahorroMes>0?'+':'') + CLP(ahorroMes)) + '</td>'
+            + '<td class="' + (ahorroMes>0?'pos':'') + '">' + (o.id==='actual' ? '—' : CLP(ahorroMes*12)) + '</td>'
+            + '<td>' + (payback ? payback.toFixed(1) + ' meses' : '—') + '</td>')
+      + '</tr>';
+  });
+  html += '</tbody></table>';
+  document.getElementById('bodegaTable').innerHTML = html;
+
+  document.querySelectorAll('#bodegaTable input[data-bod]').forEach(inp => {
+    inp.addEventListener('input', () => {
+      const o = BODEGA.opciones.find(x => x.id === inp.dataset.bod);
+      o.arriendoMensual = parseFloat(inp.value) || 0;
+      renderBodega();
+    });
+  });
+
+  const propia = BODEGA.opciones.find(o => o.id === 'propia');
+  const pbPropia = propia.inversionInicial / base;
+  document.getElementById('bodegaInsight').innerHTML =
+    '<div class="diag-box">'
+    + 'Hoy la bodega cuesta <b>' + CLP(base) + '/mes</b> = <b>' + CLP(base*12) + ' al año</b>. '
+    + 'Es más que la cuota del furgón, la contabilidad y los honorarios <i>sumados</i>.<br><br>'
+    + 'Construir la bodega propia (' + CLP(propia.inversionInicial) + ') se paga en <b>' + pbPropia.toFixed(1) + ' meses</b> '
+    + 'de arriendo ahorrado. Dicho de otra forma: cualquier arriendo sobre <b>' + CLP(propia.inversionInicial/12) + '/mes '
+    + 'ya cuesta más en un año que construir una vez</b>.<br><br>'
+    + '<b>Antes de cerrar cualquier opción:</b> ' + BODEGA.restriccionSanitaria
+    + ' Se pagaron $595.000 por la resolución sanitaria en dic-2025, así que hay un requisito formal en juego.'
+    + '</div>';
+}
+
+function renderGeo(){
+  const porComuna = {};
+  FACTURAS.forEach(f => {
+    const c = f.comuna || 'Sin dato';
+    porComuna[c] = (porComuna[c]||0) + f.neto;
+  });
+  const total = Object.values(porComuna).reduce((s,v)=>s+v,0);
+  const filas = Object.entries(porComuna).sort((a,b)=>b[1]-a[1]);
+
+  let html = '<table><thead><tr><th>Comuna</th><th>Facturado</th><th>% del total</th></tr></thead><tbody>';
+  filas.forEach(([c,v]) => {
+    html += '<tr><td>' + c + '</td><td>' + CLP(v) + '</td><td>' + PCT(v/total) + '</td></tr>';
+  });
+  html += '<tr class="total-row"><td>TOTAL</td><td>' + CLP(total) + '</td><td>100%</td></tr></tbody></table>';
+  document.getElementById('geoTable').innerHTML = html;
+
+  const top = filas[0];
+  document.getElementById('geoInsight').innerHTML =
+    '<div class="diag-box"><b>El 100% de la facturación está en Santiago</b> — no hay ni una factura emitida en el sur. '
+    + 'La comuna más fuerte es <b>' + top[0] + '</b> con ' + CLP(top[1]) + ' (' + PCT(top[1]/total) + '), '
+    + 'que es justo donde está la bodega actual.<br><br>'
+    + 'Los ingresos del sur (Panguipulli, playa) son <b>estacionales y puntuales</b>, no recurrentes. '
+    + 'Una bodega solo en Puerto Varas dejaría sin soporte al ' + PCT(1) + ' de la facturación recurrente: '
+    + 'conviene tratarla como apoyo de temporada, no como reemplazo.</div>';
+}
+
+function renderCredito(){
+  const cr = CAJA.escenarioCredito;
+  document.getElementById('credMonto').value = cr.monto;
+  document.getElementById('credFecha').value = cr.fechaIngreso;
+  document.getElementById('credActivo').checked = cr.activo;
+
+  const flujoSin = (function(){
+    const guardado = cr.activo; cr.activo = false;
+    const f = calcularFlujo(); cr.activo = guardado; return f;
+  })();
+  const flujoCon = (function(){
+    const guardado = cr.activo; cr.activo = true;
+    const f = calcularFlujo(); cr.activo = guardado; return f;
+  })();
+  const peorSin = Math.min.apply(null, flujoSin.map(f=>f.saldo));
+  const peorCon = Math.min.apply(null, flujoCon.map(f=>f.saldo));
+
+  document.getElementById('credInsight').innerHTML =
+    '<div class="diag-box">' + cr.obs + '<br><br>'
+    + 'Saldo más bajo <b>sin</b> crédito: <b class="' + (peorSin<0?'neg':'pos') + '">' + CLP(peorSin) + '</b><br>'
+    + 'Saldo más bajo <b>con</b> ' + CLP(cr.monto) + ': <b class="' + (peorCon<0?'neg':'pos') + '">' + CLP(peorCon) + '</b><br><br>'
+    + (peorCon >= 0
+        ? 'El crédito <b>cubre el bache</b> de agosto. La pregunta pasa a ser si los ingresos de verano alcanzan para pagarlo.'
+        : 'Incluso con el crédito la caja queda negativa: faltarían ' + CLP(Math.abs(peorCon)) + ' más.')
+    + '<br><br><span class="muted">Esto es solo la aritmética de caja de tu propio escenario. '
+    + 'No es una recomendación sobre tomar o no el crédito: las condiciones, tasa y plazo hay que verlas con el banco.</span></div>';
+}
+
+function renderPendientes(){
+  let html = '';
+  (CAJA.obligacionesSinFecha||[]).forEach(o => {
+    html += '<div class="hallazgo h-alerta"><div class="icon">!</div><div class="body">'
+      + '<div class="titulo">' + o.concepto + ' — ' + CLP(o.monto) + '</div>'
+      + '<div class="detalle">' + o.obs + '</div></div></div>';
+  });
+  BODEGA.opciones.filter(o => o.porCotizar && !o.arriendoMensual).forEach(o => {
+    html += '<div class="hallazgo h-info"><div class="icon">i</div><div class="body">'
+      + '<div class="titulo">Cotizar: ' + o.nombre + '</div>'
+      + '<div class="detalle">' + o.obs + '</div></div></div>';
+  });
+  html += '<div class="hallazgo h-info"><div class="icon">i</div><div class="body">'
+    + '<div class="titulo">Llamar al banco por el crédito</div>'
+    + '<div class="detalle">' + CAJA.escenarioCredito.obs + ' Ver el escenario modelado más arriba.</div></div></div>';
+  document.getElementById('pendientesBox').innerHTML = html;
+}
+
+function initDecisiones(){
+  renderBodega(); renderGeo(); renderCredito(); renderPendientes();
+  document.getElementById('credMonto').addEventListener('input', e => {
+    CAJA.escenarioCredito.monto = parseFloat(e.target.value)||0; renderCredito(); renderCaja(); renderHallazgos();
+  });
+  document.getElementById('credFecha').addEventListener('input', e => {
+    CAJA.escenarioCredito.fechaIngreso = e.target.value; renderCredito(); renderCaja(); renderHallazgos();
+  });
+  document.getElementById('credActivo').addEventListener('change', e => {
+    CAJA.escenarioCredito.activo = e.target.checked; renderCredito(); renderCaja(); renderHallazgos();
+  });
+}
+
+/* ============================================================
+   FACTURACIÓN
+   ============================================================ */
+const FOLIOS_FALTANTES = (function(){
+  const emitidos = new Set(FACTURAS.map(f => f.folio));
+  const max = Math.max.apply(null, FACTURAS.map(f => f.folio));
+  const falta = [];
+  for(let i=1;i<=max;i++) if(!emitidos.has(i)) falta.push(i);
+  return falta;
+})();
+
+const mesesFact = Array.from(new Set(FACTURAS.map(f => mesKey(f.fecha)))).sort();
+
+function renderFacturacion(){
+  const totalNeto = FACTURAS.reduce((s,f) => s+f.neto, 0);
+  const ultimoMes = mesesFact[mesesFact.length-1];
+  const netoUltimo = FACTURAS.filter(f => mesKey(f.fecha) === ultimoMes).reduce((s,f)=>s+f.neto,0);
+  const ticket = totalNeto / FACTURAS.length;
+
+  const kpis = [
+    { label:'Facturado total (neto)', value: CLP(totalNeto), cls:'' },
+    { label:'Facturado ' + mesLabel(ultimoMes), value: CLP(netoUltimo), cls:'pos' },
+    { label:'Facturas emitidas', value: FACTURAS.length, cls:'' },
+    { label:'Ticket promedio', value: CLP(ticket), cls:'' },
+    { label:'Folios sin respaldo', value: FOLIOS_FALTANTES.length, cls: FOLIOS_FALTANTES.length ? 'warn' : '' },
+  ];
+  document.getElementById('factKpis').innerHTML = kpis.map(k =>
+    '<div class="kpi ' + k.cls + '"><div class="label">' + k.label + '</div><div class="value">' + k.value + '</div></div>'
+  ).join('');
+
+  document.getElementById('factDesc').textContent =
+    FACTURAS.length + ' facturas respaldadas (folios ' + Math.min.apply(null,FACTURAS.map(f=>f.folio)) + ' a ' + Math.max.apply(null,FACTURAS.map(f=>f.folio)) + '). '
+    + (FOLIOS_FALTANTES.length ? 'Faltan los folios ' + FOLIOS_FALTANTES.join(', ') + ' en la carpeta de respaldo.' : 'Sin folios faltantes.');
+
+  // Matriz cliente x mes
+  const clientes = Array.from(new Set(FACTURAS.map(f => f.cliente)));
+  const totalPorCliente = {};
+  clientes.forEach(c => totalPorCliente[c] = FACTURAS.filter(f=>f.cliente===c).reduce((s,f)=>s+f.neto,0));
+  clientes.sort((a,b) => totalPorCliente[b] - totalPorCliente[a]);
+
+  let html = '<table><thead><tr><th>Cliente</th>' + mesesFact.map(m=>'<th>'+mesLabel(m)+'</th>').join('') + '<th>Total</th></tr></thead><tbody>';
+  clientes.forEach(c => {
+    const cells = mesesFact.map(m => {
+      const v = FACTURAS.filter(f => f.cliente===c && mesKey(f.fecha)===m).reduce((s,f)=>s+f.neto,0);
+      return '<td>' + (v ? CLP(v) : '<span class="muted">—</span>') + '</td>';
+    }).join('');
+    html += '<tr><td>' + c + '</td>' + cells + '<td><b>' + CLP(totalPorCliente[c]) + '</b></td></tr>';
+  });
+  const totCells = mesesFact.map(m => '<td>' + CLP(FACTURAS.filter(f=>mesKey(f.fecha)===m).reduce((s,f)=>s+f.neto,0)) + '</td>').join('');
+  html += '<tr class="total-row"><td>TOTAL</td>' + totCells + '<td>' + CLP(FACTURAS.reduce((s,f)=>s+f.neto,0)) + '</td></tr>';
+  html += '</tbody></table>';
+  document.getElementById('factPorClienteTable').innerHTML = html;
+
+  renderDSO();
+
+  // Detalle
+  let det = '<table><thead><tr><th>Folio</th><th>Fecha</th><th>Cliente</th><th>Razón social</th><th>Neto</th><th>IVA</th><th>Total</th></tr></thead><tbody>';
+  FACTURAS.slice().sort((a,b)=>b.folio-a.folio).forEach(f => {
+    det += '<tr><td>N°' + f.folio + '</td><td>' + f.fecha + '</td><td style="text-align:left">' + f.cliente + '</td>'
+      + '<td style="text-align:left;font-size:.75rem;color:var(--muted)">' + (f.razonSocial||'') + '</td>'
+      + '<td>' + CLP(f.neto) + '</td><td class="muted">' + CLP(f.iva) + '</td><td><b>' + CLP(f.total) + '</b></td></tr>';
+  });
+  det += '</tbody></table>';
+  document.getElementById('facturasTable').innerHTML = det;
+}
+
+/* ============================================================
+   DÍAS DE COBRO (DSO)
+   ============================================================ */
+function diasEntre(a, b){
+  return Math.round((new Date(b+'T00:00:00') - new Date(a+'T00:00:00')) / 86400000);
+}
+
+// Empareja cada factura con el movimiento de ingreso que la pagó.
+// Prioriza el folio si está anotado; si no, busca por monto (neto o bruto) y fecha posterior.
+function emparejarFacturas(){
+  const ingresos = validos.filter(m => m.tipo === 'Ingreso' && m.fecha);
+  const usados = new Set();
+  return FACTURAS.map(f => {
+    let pago = ingresos.find(m => !usados.has(m.id) && m.factura && m.factura.replace(/^N/,'') === String(f.folio));
+    if(!pago){
+      pago = ingresos.find(m => !usados.has(m.id) && m.fecha >= f.fecha
+        && (Math.abs(m.monto - f.neto) < 2 || Math.abs(m.monto - f.total) < 2));
+    }
+    if(pago) usados.add(pago.id);
+    return { factura: f, pago, dias: pago ? diasEntre(f.fecha, pago.fechaPago || pago.fecha) : null };
+  });
+}
+
+function renderDSO(){
+  const pares = emparejarFacturas();
+  const porCliente = {};
+  pares.forEach(p => {
+    const c = p.factura.cliente;
+    porCliente[c] = porCliente[c] || { cliente:c, emitidas:0, cobradas:0, dias:[], pendiente:0 };
+    porCliente[c].emitidas++;
+    if(p.dias != null){ porCliente[c].cobradas++; porCliente[c].dias.push(p.dias); }
+    else porCliente[c].pendiente += p.factura.total;
+  });
+
+  const filas = Object.values(porCliente).map(c => {
+    const prom = c.dias.length ? c.dias.reduce((a,b)=>a+b,0)/c.dias.length : null;
+    return { ...c, promedio: prom, maximo: c.dias.length ? Math.max(...c.dias) : null };
+  }).sort((a,b) => (b.promedio ?? -1) - (a.promedio ?? -1));
+
+  const todos = pares.filter(p => p.dias != null).map(p => p.dias);
+  const promGeneral = todos.length ? todos.reduce((a,b)=>a+b,0)/todos.length : null;
+
+  let html = '<table><thead><tr><th>Cliente</th><th>Facturas</th><th>Cobradas</th>'
+    + '<th>Días promedio</th><th>Peor caso</th><th>Sin cobrar</th></tr></thead><tbody>';
+  filas.forEach(c => {
+    const cls = c.promedio == null ? '' : (c.promedio > 30 ? 'saldo-neg' : (c.promedio > 15 ? 'saldo-bajo' : 'pos'));
+    html += '<tr><td>' + c.cliente + '</td><td>' + c.emitidas + '</td><td>' + c.cobradas + '</td>'
+      + '<td class="' + cls + '">' + (c.promedio == null ? '<span class="muted">sin dato</span>' : Math.round(c.promedio) + ' d') + '</td>'
+      + '<td class="muted">' + (c.maximo == null ? '—' : c.maximo + ' d') + '</td>'
+      + '<td>' + (c.pendiente ? '<span class="neg">' + CLP(c.pendiente) + '</span>' : '—') + '</td></tr>';
+  });
+  html += '</tbody></table>';
+  document.getElementById('dsoTable').innerHTML = html;
+
+  document.getElementById('dsoDesc').innerHTML =
+    'Desde la fecha de la factura hasta que entró la plata. '
+    + (promGeneral != null
+        ? 'Promedio general: <b>' + Math.round(promGeneral) + ' días</b> sobre ' + todos.length + ' facturas cobradas. '
+        : '')
+    + '<span class="muted">Las que dicen "sin dato" son facturas que todavía no logro emparejar con un pago '
+    + '(o están impagas). El emparejamiento usa el folio cuando está anotado, y si no, el monto.</span>';
+}
+
+/* ============================================================
+   MOTOR DE HALLAZGOS
+   ============================================================ */
+function generarHallazgos(){
+  const H = [];
+  const p = PROYECCION_PARAMS;
+  const flujo = calcularFlujo();
+  const peor = flujo.reduce((min,f) => f.saldo < min.saldo ? f : min, {saldo: CAJA.saldoActual, fecha: CAJA.fechaSaldo});
+
+  // --- 1. Liquidez ---
+  const primerNeg = flujo.find(f => f.saldo < 0);
+  if(primerNeg){
+    const alcanza = CAJA.saldoActual + totalCxC + flujo.filter(f=>f.fecha<=peor.fecha).reduce((s,f)=>s+f.efectivo,0) >= 0;
+    H.push({ nivel:'critico', icon:'!', titulo:'La caja se va a negativo el ' + primerNeg.fecha,
+      detalle: 'El <b>' + primerNeg.fecha + '</b> el pago de bodega de ' + CLP(primerNeg.neto) + ' deja el saldo en <b>' + CLP(primerNeg.saldo) + '</b>: '
+        + 'ese solo pago ya supera la caja actual de ' + CLP(CAJA.saldoActual) + '. '
+        + 'Después baja hasta ' + CLP(peor.saldo) + ' el ' + peor.fecha + ' con el sueldo. '
+        + (alcanza
+            ? 'Cobrar Janssen y Ferrocentro (<b>' + CLP(totalCxC) + '</b>) antes del ' + primerNeg.fecha + ' lo resuelve.'
+            : 'Ni cobrando todo lo pendiente alcanza: hay que mover la fecha del pago de bodega o conseguir financiamiento.') });
+  } else if(peor.saldo < CAJA.colchonMinimo){
+    H.push({ nivel:'alerta', icon:'!', titulo:'Caja ajustada en ' + peor.fecha,
+      detalle: 'El saldo baja a <b>' + CLP(peor.saldo) + '</b>, por debajo del colchón mínimo de ' + CLP(CAJA.colchonMinimo) + '.' });
+  }
+
+  // --- 2. Anticipación de cobros: ¿qué combinación alcanza y para cuándo? ---
+  if(primerNeg){
+    const urgente = Math.abs(primerNeg.saldo);      // lo que falta para el 6-ago
+    const total = Math.abs(peor.saldo);              // lo que falta para todo el tramo
+    const combo = combinacionMinima(urgente);
+    const comboTotal = combinacionMinima(total);
+    H.push({ nivel:'oportunidad', icon:'→', titulo:'Qué cobrar y para cuándo',
+      detalle: '<b>Fecha límite: ' + primerNeg.fecha + '</b>, hay que juntar ' + CLP(urgente) + ' antes de ese día.<br><br>'
+        + (combo
+            ? 'La combinación más chica que alcanza: <b>' + combo.sel.map(c=>c.cliente).join(' + ') + '</b> = '
+              + CLP(combo.suma) + '.'
+            : 'Ni cobrando todo lo pendiente (' + CLP(totalCxC) + ') se llega: hay que mover la fecha del pago de bodega.')
+        + '<br><br>Para cubrir además el sueldo del ' + peor.fecha + ' hacen falta ' + CLP(total) + ': '
+        + (comboTotal
+            ? '<b>' + comboTotal.sel.map(c=>c.cliente).join(' + ') + '</b> (' + CLP(comboTotal.suma) + ').'
+            : 'no alcanza con lo pendiente, que suma ' + CLP(totalCxC) + '.') });
+  }
+
+  // --- 2a. Antigüedad de las cuentas por cobrar ---
+  const conMora = CAJA.cuentasPorCobrar.filter(c => diasMora(c.fechaFactura) !== null);
+  const viejas = conMora.filter(c => diasMora(c.fechaFactura) > 30).sort((a,b)=>diasMora(b.fechaFactura)-diasMora(a.fechaFactura));
+  if(viejas.length){
+    H.push({ nivel:'alerta', icon:'!', titulo:'Facturas con más de 30 días sin pago',
+      detalle: viejas.map(c => '<b>' + c.cliente + '</b> (N°' + c.folio + ', ' + diasMora(c.fechaFactura) + ' días, ' + CLP(conIva(c.neto,c.iva)) + ')').join(', ')
+        + '. Mientras más se estira, más difícil se cobra. Conviene partir por esta antes que por las recientes, '
+        + 'aunque el monto sea chico: es la que tiene más riesgo de no llegar nunca.' });
+  }
+
+  // --- 2b. Obligaciones sin fecha que agravan el bache ---
+  const sinFechaOblig = CAJA.obligacionesSinFecha || [];
+  if(sinFechaOblig.length && primerNeg){
+    const totalOblig = sinFechaOblig.reduce((s,o) => s + conIva(o.monto, o.iva), 0);
+    H.push({ nivel:'critico', icon:'!', titulo:'La patente comercial puede profundizar el bache',
+      detalle: sinFechaOblig.map(o => '<b>' + o.concepto + ' por ' + CLP(conIva(o.monto,o.iva)) + '</b>').join(', ')
+        + ' está pendiente y <b>sin fecha confirmada</b>. Si vence antes del ' + primerNeg.fecha + ', '
+        + 'el déficit sube de ' + CLP(Math.abs(primerNeg.saldo)) + ' a <b>' + CLP(Math.abs(primerNeg.saldo) + totalOblig) + '</b>. '
+        + 'Confirmar la fecha de vencimiento en la municipalidad es lo primero que conviene hacer: cambia el tamaño del problema.' });
+  }
+
+  // --- 2c. Salir de la bodega: el ahorro mas grande disponible ---
+  if(bodegaActual){
+    const arr = bodegaActual.arriendoMensual;
+    const gfSinBodega = p.gastosFijos.cuotaFurgon + p.gastosFijos.contabilidad + p.gastosFijos.honorarios;
+    H.push({ nivel:'oportunidad', icon:'★', titulo:'Salir de la bodega ahorra ' + CLP(arr) + '/mes',
+      detalle: 'El arriendo de ' + CLP(arr) + ' es <b>más que la cuota del furgón, la contabilidad y los honorarios sumados</b> ('
+        + CLP(gfSinBodega) + '). Son ' + CLP(arr*12) + ' al año. '
+        + 'Es la única palanca que por sí sola da vuelta el problema de caja: sin ese pago, el saldo del '
+        + (primerNeg ? primerNeg.fecha : 'mes') + ' pasaría de ' + CLP(primerNeg ? primerNeg.saldo : 0)
+        + ' a <b>' + CLP((primerNeg ? primerNeg.saldo : 0) + arr) + '</b>. Ver la pestaña Decisiones.' });
+  }
+
+  // --- 2d. IVA comprometido dentro de la caja ---
+  {
+    const ivaUlt = ivaVigente();
+    const deudaTotal = DEUDAS.map(calcularDeuda).reduce((s,d)=>s+d.saldo,0);
+    if(ivaUlt && ivaUlt.aPagar > 0){
+      const disponible = CAJA.saldoActual - ivaUlt.aPagar;
+      H.push({ nivel: disponible < CAJA.colchonMinimo ? 'alerta' : 'info', icon:'!',
+        titulo:'De la caja, ' + CLP(ivaUlt.aPagar) + ' son del SII',
+        detalle: 'El IVA de ' + mesLabel(ivaUlt.mk) + ' a pagar es <b>' + CLP(ivaUlt.aPagar) + '</b> '
+          + '(débito ' + CLP(ivaUlt.debito) + ' menos crédito ' + CLP(ivaUlt.credito) + '). '
+          + 'La caja marca ' + CLP(CAJA.saldoActual) + ', pero lo realmente disponible para operar es <b>' + CLP(disponible) + '</b>. '
+          + 'Además quedan ' + CLP(deudaTotal) + ' de deuda del furgón por delante. '
+          + 'Ver la pestaña Impuestos y deudas.' });
+    }
+  }
+
+  // --- 3. Ingresos recurrentes no calendarizados ---
+  const contratosActivos = CONTRATOS.filter(c => c.estado === 'Activo');
+  const recurrente = contratosActivos.reduce((s,c) => s + (c.montoMensual||0), 0);
+  const ingresosAgo = CAJA.compromisos.filter(c => c.tipo==='Ingreso').reduce((s,c) => s+c.monto, 0);
+  if(recurrente > ingresosAgo){
+    H.push({ nivel:'info', icon:'+', titulo:'Hay ingresos de agosto que no están en el calendario',
+      detalle: 'Los contratos activos suman <b>' + CLP(recurrente) + '</b> netos al mes, pero en el calendario de caja solo hay ' + CLP(ingresosAgo) + ' comprometidos. '
+        + 'Faltan cerca de <b>' + CLP(recurrente - ingresosAgo) + '</b> de otros contratos. La proyección de caja es conservadora: si esos cobros entran antes del 6 de agosto, el problema se alivia.' });
+  }
+
+  // --- 4. Cobertura de gastos fijos con ingreso recurrente ---
+  const gf = p.gastosFijos;
+  const fijosMensuales = 416500 + gf.cuotaFurgon + gf.contabilidad + gf.honorarios;
+  const cobertura = recurrente / fijosMensuales;
+  H.push({ nivel: cobertura >= 1 ? 'oportunidad' : 'alerta', icon: cobertura >= 1 ? '✓' : '!',
+    titulo: 'Los contratos cubren ' + PCT(cobertura) + ' de los gastos fijos',
+    detalle: 'Ingreso recurrente <b>' + CLP(recurrente) + '</b>/mes contra gastos fijos de <b>' + CLP(fijosMensuales) + '</b>/mes '
+      + '(bodega ' + CLP(416500) + ' + furgón ' + CLP(gf.cuotaFurgon) + ' + contabilidad ' + CLP(gf.contabilidad) + ' + honorarios ' + CLP(gf.honorarios) + '). '
+      + (cobertura >= 1
+          ? 'Los contratos ya sostienen la estructura fija: cada servicio puntual es margen.'
+          : 'Faltan <b>' + CLP(fijosMensuales - recurrente) + '</b>/mes de ingreso recurrente para no depender de servicios puntuales. A ' + CLP(p.ticketNuevoContrato) + ' por contrato, son <b>' + Math.ceil((fijosMensuales-recurrente)/p.ticketNuevoContrato) + ' contratos nuevos</b>.') });
+
+  // --- 5. Arriendo real vs proyección ---
+  if(Math.abs(416500 - p.gastosFijos.arriendoBodegaJunNov2026) > 1000){
+    H.push({ nivel:'info', icon:'i', titulo:'La proyección subestima el arriendo de bodega',
+      detalle: 'El pago real de agosto es <b>' + CLP(416500) + '</b>, pero la proyección usa ' + CLP(p.gastosFijos.arriendoBodegaJunNov2026) + '. '
+        + 'Diferencia de ' + CLP(416500 - p.gastosFijos.arriendoBodegaJunNov2026) + '/mes. Conviene actualizar el parámetro en la pestaña Proyección.' });
+  }
+
+  // --- 6. Bodega propia: payback ---
+  const inv = p.gastosFijos.gastoBodegaConstruccion.monto;
+  const payback = inv / 416500;
+  H.push({ nivel:'oportunidad', icon:'★', titulo:'La bodega propia se paga sola en ' + payback.toFixed(1) + ' meses',
+    detalle: 'Invertir <b>' + CLP(inv) + '</b> en bodega propia elimina un arriendo de <b>' + CLP(416500) + '</b>/mes. '
+      + 'Se recupera en ' + payback.toFixed(1) + ' meses y libera ' + CLP(416500*12) + ' al año. '
+      + 'Es la palanca de rentabilidad más grande del modelo — pero requiere tener la caja resuelta primero.' });
+
+  // --- 7. Concentración de clientes ---
+  if(contratosActivos.length){
+    const top = contratosActivos.slice().sort((a,b)=>(b.montoMensual||0)-(a.montoMensual||0))[0];
+    const conc = (top.montoMensual||0) / recurrente;
+    if(conc > 0.25){
+      H.push({ nivel:'alerta', icon:'!', titulo:'Concentración: ' + top.cliente + ' es el ' + PCT(conc) + ' del ingreso recurrente',
+        detalle: 'Perder ese contrato significa perder <b>' + CLP(top.montoMensual) + '</b>/mes de golpe. '
+          + 'Con ' + contratosActivos.length + ' contratos activos, conviene diversificar antes de que crezca más.' });
+    }
+  }
+
+  // --- 8. Clientes que facturan pero no figuran como contrato activo ---
+  const nombresContratos = new Set(CONTRATOS.map(c => c.cliente.toLowerCase()));
+  const activosSet = new Set(contratosActivos.map(c => c.cliente.toLowerCase()));
+  const facturaronReciente = validos.filter(m => m.tipo==='Ingreso' && m.fecha && m.fecha >= '2026-07-01');
+  const desalineados = [];
+  facturaronReciente.forEach(m => {
+    const d = m.descripcion.toLowerCase().replace(/ julio$/,'').trim();
+    if(!activosSet.has(d)) desalineados.push(m.descripcion);
+  });
+  if(desalineados.length){
+    H.push({ nivel:'alerta', icon:'!', titulo:'Clientes facturando que no figuran como contrato activo',
+      detalle: '<b>' + Array.from(new Set(desalineados)).join(', ') + '</b> registraron ingresos en julio pero no aparecen como contrato activo en la pestaña Contratos. '
+        + 'Eso hace que el ingreso recurrente de ' + CLP(recurrente) + '/mes esté subestimado, y con él toda la proyección.' });
+  }
+
+  // --- 8b. Clientes que dejaron de facturar ---
+  const ultMesFact = mesesFact[mesesFact.length-1];
+  const penultMes = mesesFact[mesesFact.length-2];
+  if(penultMes){
+    const facturaronAntes = new Set(FACTURAS.filter(f=>mesKey(f.fecha)===penultMes).map(f=>f.cliente));
+    const facturanAhora = new Set(FACTURAS.filter(f=>mesKey(f.fecha)===ultMesFact).map(f=>f.cliente));
+    const dejaron = Array.from(facturaronAntes).filter(c => !facturanAhora.has(c));
+    // solo los que son mensuales segun contratos
+    const mensuales = new Set(CONTRATOS.filter(c=>c.frecuencia==='Mensual').map(c=>c.cliente));
+    const dejaronMensuales = dejaron.filter(c => mensuales.has(c));
+    if(dejaronMensuales.length){
+      const perdida = dejaronMensuales.reduce((s,c) => {
+        const ct = CONTRATOS.find(x=>x.cliente===c);
+        return s + (ct && ct.montoMensual ? ct.montoMensual : 0);
+      }, 0);
+      const tambienDebe = dejaronMensuales.filter(c => CAJA.cuentasPorCobrar.some(x => x.cliente === c));
+      H.push({ nivel:'alerta', icon:'!', titulo:'Clientes mensuales sin factura en ' + mesLabel(ultMesFact),
+        detalle: '<b>' + dejaronMensuales.join(', ') + '</b> facturó en ' + mesLabel(penultMes) + ' pero no en ' + mesLabel(ultMesFact) + '. '
+          + 'Son ' + CLP(perdida) + '/mes en riesgo.'
+          + (tambienDebe.length
+              ? ' <b>Doble problema con ' + tambienDebe.join(', ') + '</b>: además de no tener factura de '
+                + mesLabel(ultMesFact) + ', tampoco pagó la anterior. Antes de emitir la nueva conviene aclarar '
+                + 'si el servicio sigue vigente — si se dejó de atender, la factura pendiente puede ser justamente el motivo.'
+              : ' Confirmar si el servicio sigue vigente o si falta emitir la factura.') });
+    }
+  }
+
+  // --- 8c. Folios sin respaldo ---
+  if(FOLIOS_FALTANTES.length){
+    H.push({ nivel:'info', icon:'i', titulo: FOLIOS_FALTANTES.length + ' folios de factura sin respaldo en la carpeta',
+      detalle: 'Faltan los folios <b>' + FOLIOS_FALTANTES.join(', ') + '</b> entre las facturas guardadas. '
+        + 'Pueden ser servicios puntuales a clientes sin carpeta propia, o respaldos que no se archivaron. '
+        + 'Conviene completarlos: son la única evidencia de lo facturado ante el SII.' });
+  }
+
+  // --- 8d. Montos registrados en bruto donde deberían ir netos ---
+  const totalesFact = new Set(FACTURAS.map(f => f.total));
+  const netosFact = new Set(FACTURAS.map(f => f.neto));
+  const enBruto = validos.filter(m => m.tipo==='Ingreso' && totalesFact.has(m.monto) && !netosFact.has(m.monto));
+  if(enBruto.length){
+    const dif = enBruto.reduce((s,m) => {
+      const f = FACTURAS.find(x => x.total === m.monto);
+      return s + (f ? f.total - f.neto : 0);
+    }, 0);
+    H.push({ nivel:'alerta', icon:'!', titulo: enBruto.length + ' ingresos anotados con IVA incluido en la columna de monto neto',
+      detalle: '<b>' + Array.from(new Set(enBruto.map(m=>m.descripcion))).join(', ') + '</b> están registrados por el total de la factura, no por el neto. '
+        + 'Eso infla los ingresos en <b>' + CLP(dif) + '</b>, porque ese IVA no es tuyo: se le devuelve al SII. '
+        + 'Conviene uniformar el criterio a monto neto en todos los registros.' });
+  }
+
+  // --- 8e. Facturado vs registrado como cobrado ---
+  const facturadoUlt = FACTURAS.filter(f=>mesKey(f.fecha)===ultMesFact).reduce((s,f)=>s+f.neto,0);
+  H.push({ nivel:'info', icon:'i', titulo:'Facturado en ' + mesLabel(ultMesFact) + ': ' + CLP(facturadoUlt) + ' netos',
+    detalle: 'Son ' + FACTURAS.filter(f=>mesKey(f.fecha)===ultMesFact).length + ' facturas emitidas. '
+      + 'Facturar no es cobrar: lo que efectivamente entró a caja se ve en la pestaña Movimientos, y lo pendiente en Caja y flujo.' });
+
+  // --- 9. Resultado del último mes cerrado ---
+  const mesesReales = Array.from(new Set(validos.filter(m=>m.fecha).map(m=>mesKey(m.fecha)))).sort();
+  const ultimoMes = mesesReales[mesesReales.length-1];
+  if(ultimoMes){
+    const mIng = validos.filter(m=>m.fecha && mesKey(m.fecha)===ultimoMes && m.tipo==='Ingreso').reduce((s,m)=>s+m.monto,0);
+    const mGas = validos.filter(m=>m.fecha && mesKey(m.fecha)===ultimoMes && m.tipo==='Gasto').reduce((s,m)=>s+m.monto,0);
+    const res = mIng - mGas;
+    H.push({ nivel: res>=0 ? 'oportunidad' : 'alerta', icon: res>=0 ? '✓' : '!',
+      titulo: mesLabel(ultimoMes) + ': resultado ' + (res>=0?'positivo':'negativo') + ' de ' + CLP(Math.abs(res)),
+      detalle: 'Ingresos ' + CLP(mIng) + ' contra gastos ' + CLP(mGas) + '. '
+        + (res>=0 ? 'Es un mes en azul — la tendencia es la correcta.' : 'El mes cierra en rojo.') });
+  }
+
+  // --- 10. Registros incompletos ---
+  const sf = MOVIMIENTOS.filter(m => !m.fecha).length;
+  if(sf){
+    H.push({ nivel:'info', icon:'i', titulo: sf + ' movimientos sin fecha exacta',
+      detalle: 'Tienen monto pero no fecha, así que entran en los totales generales pero no en el análisis por mes. Completarlos afina la estacionalidad del modelo.' });
+  }
+
+  const orden = { critico:0, alerta:1, oportunidad:2, info:3 };
+  return H.sort((a,b) => orden[a.nivel] - orden[b.nivel]);
+}
+
+function renderHallazgos(){
+  const H = generarHallazgos();
+  document.getElementById('hallazgos').innerHTML = H.map(h =>
+    '<div class="hallazgo h-' + h.nivel + '">'
+    + '<div class="icon">' + h.icon + '</div>'
+    + '<div class="body"><div class="titulo">' + h.titulo + '</div><div class="detalle">' + h.detalle + '</div></div>'
+    + '</div>'
+  ).join('');
+}
+
+/* ============================================================
+   EXPORTAR A EXCEL
+   ============================================================ */
+function hojaMovimientos(){
+  const enc = ['Fecha','Tipo','Categoría','Descripción','Fijo/Variable','Monto neto','Estado','Fecha pago','Medio de pago','N° Factura','Observaciones'];
+  const filas = MOVIMIENTOS.slice().sort((a,b)=>(a.fecha||'').localeCompare(b.fecha||'')).map(m => [
+    m.fecha, m.tipo, m.categoria, m.descripcion, m.fijoVariable, m.monto, m.estado, m.fechaPago, m.medioPago, m.factura, m.obs
+  ]);
+  return { nombre:'Movimientos', encabezados: enc, filas };
+}
+
+function hojaContratos(){
+  const enc = ['Cliente','Tipo servicio','Frecuencia','Monto mensual neto','Inicio','Estado','Tipo cliente','Observaciones'];
+  const filas = CONTRATOS.map(c => [c.cliente, c.tipoServicio, c.frecuencia, c.montoMensual, c.inicio, c.estado, c.tipoCliente, c.obs]);
+  return { nombre:'Contratos', encabezados: enc, filas };
+}
+
+function hojaFacturas(){
+  const enc = ['Folio','Fecha','Cliente','Razón social','RUT','Comuna','Neto','IVA','Total'];
+  const filas = FACTURAS.slice().sort((a,b)=>a.folio-b.folio).map(f => [f.folio, f.fecha, f.cliente, f.razonSocial, f.rut, f.comuna, f.neto, f.iva, f.total]);
+  return { nombre:'Facturas', encabezados: enc, filas };
+}
+
+function hojaAnalisis(){
+  const enc = ['Tipo','Categoría'].concat(meses.map(mesLabel), ['Total']);
+  const filas = [];
+  ['Ingreso','Gasto'].forEach(tipo => {
+    const cats = Array.from(new Set(validos.filter(m=>m.tipo===tipo).map(m=>m.categoria||'Sin categoría'))).sort();
+    cats.forEach(cat => {
+      const vals = meses.map(mk => validos
+        .filter(m => m.tipo===tipo && (m.categoria||'Sin categoría')===cat && (m.fecha?mesKey(m.fecha):'SIN_FECHA')===mk)
+        .reduce((s,m)=>s+m.monto,0));
+      filas.push([tipo, cat].concat(vals, [vals.reduce((a,b)=>a+b,0)]));
+    });
+  });
+  return { nombre:'Análisis mensual', encabezados: enc, filas };
+}
+
+function hojaProyeccion(){
+  const { meses: pMeses, rows } = calcularProyeccion(liveParams);
+  const enc = ['Concepto'].concat(pMeses.map(mesLabel), ['Total']);
+  function fila(label, campo){
+    const vals = rows.map(r => r[campo]);
+    const total = campo==='contratosActivos' ? vals[vals.length-1] : vals.reduce((a,b)=>a+b,0);
+    return [label].concat(vals, [total]);
+  }
+  const filas = [
+    fila('N° contratos activos','contratosActivos'),
+    fila('Ingreso contrato mensual','ingresoContrato'),
+    fila('Ingreso servicio puntual','servicioPuntual'),
+    ['TOTAL INGRESOS'].concat(rows.map(r=>r.totalIngresos), [rows.reduce((s,r)=>s+r.totalIngresos,0)]),
+    fila('Gastos fijos','gastosFijos'),
+    fila('Gastos variables','gastosVariables'),
+    ['TOTAL GASTOS'].concat(rows.map(r=>r.totalGastos), [rows.reduce((s,r)=>s+r.totalGastos,0)]),
+    ['RESULTADO OPERACIONAL'].concat(rows.map(r=>r.resultadoOperacional), [rows.reduce((s,r)=>s+r.resultadoOperacional,0)]),
+    ['RESULTADO REAL (con sueldo)'].concat(rows.map(r=>r.resultadoReal), [rows.reduce((s,r)=>s+r.resultadoReal,0)]),
+  ];
+  return { nombre:'Proyección', encabezados: enc, filas };
+}
+
+function hojaCaja(){
+  const flujo = calcularFlujo();
+  const filas = [['Saldo actual', CAJA.fechaSaldo, '', '', CAJA.saldoActual]];
+  flujo.forEach(f => filas.push([f.concepto, f.fecha, f.tipo, f.neto, f.saldo]));
+  filas.push([]);
+  filas.push(['CUENTAS POR COBRAR']);
+  filas.push(['Cliente','Factura','Neto','Con IVA']);
+  CAJA.cuentasPorCobrar.forEach(c => filas.push([c.cliente, c.folio ? 'N°'+c.folio : '', c.neto, conIva(c.neto,c.iva)]));
+  filas.push([]);
+  filas.push(['TARJETA DE CRÉDITO']);
+  filas.push(['Cupo', CAJA.tarjetaCredito.cupo, 'Estado', CAJA.tarjetaCredito.estado]);
+  return { nombre:'Caja y flujo', encabezados:['Concepto','Fecha','Tipo','Monto','Saldo'], filas };
+}
+
+function hojaEstadoResultados(){
+  // Una columna por mes + acumulado, con las mismas cuentas del P&L en pantalla.
+  const ms = mesesConDatos();
+  const pls = ms.map(mk => calcularPL(mk));
+  const acum = calcularPL(null);
+  const enc = ['Cuenta'].concat(ms.map(mesLabel), ['Acumulado', '% Vert. acum.']);
+
+  const catsIng  = acum.ventasPorCat.map(([c]) => c);
+  const catsCost = acum.costoPorCat.map(([c]) => c);
+  const catsOpex = acum.opexPorCat.map(([c]) => c);
+  const val = (pl, lista, cat) => { const f = lista(pl).find(([c]) => c === cat); return f ? f[1] : 0; };
+  const pct = n => acum.ventas ? n/acum.ventas : 0;
+
+  const filas = [];
+  filas.push(['INGRESOS']);
+  catsIng.forEach(cat => {
+    const totalCat = val(acum, p=>p.ventasPorCat, cat);
+    filas.push(['  ' + cat].concat(pls.map(p => val(p, x=>x.ventasPorCat, cat)), [totalCat, pct(totalCat)]));
+  });
+  filas.push(['VENTAS NETAS'].concat(pls.map(p=>p.ventas), [acum.ventas, 1]));
+
+  filas.push(['COSTO DEL SERVICIO']);
+  catsCost.forEach(cat => {
+    const totalCat = val(acum, p=>p.costoPorCat, cat);
+    filas.push(['  ' + cat].concat(pls.map(p => val(p, x=>x.costoPorCat, cat)), [totalCat, pct(totalCat)]));
+  });
+  filas.push(['COSTO DE VENTAS'].concat(pls.map(p=>p.costo), [acum.costo, pct(acum.costo)]));
+  filas.push(['UTILIDAD BRUTA'].concat(pls.map(p=>p.utilidadBruta), [acum.utilidadBruta, pct(acum.utilidadBruta)]));
+
+  filas.push(['GASTOS OPERACIONALES']);
+  catsOpex.forEach(cat => {
+    const totalCat = val(acum, p=>p.opexPorCat, cat);
+    filas.push(['  ' + cat].concat(pls.map(p => val(p, x=>x.opexPorCat, cat)), [totalCat, pct(totalCat)]));
+  });
+  filas.push(['TOTAL GASTOS OPERACIONALES'].concat(pls.map(p=>p.opex), [acum.opex, pct(acum.opex)]));
+  filas.push(['RESULTADO OPERACIONAL'].concat(pls.map(p=>p.resultado), [acum.resultado, pct(acum.resultado)]));
+  filas.push([]);
+  filas.push(['Margen bruto'].concat(pls.map(p=>p.margenBruto), [acum.margenBruto]));
+  filas.push(['Margen operacional'].concat(pls.map(p=>p.margenOperacional), [acum.margenOperacional]));
+
+  return { nombre:'Estado de Resultados', encabezados: enc, filas };
+}
+
+function hojaObligaciones(){
+  const enc = ['Concepto','Detalle','IVA débito','IVA crédito','A pagar SII'];
+  const filas = [];
+  mesesConIva().map(calcularIvaMes).forEach(i => {
+    filas.push([mesLabel(i.mk), i.nFacturas + ' facturas', i.debito, -i.credito, i.aPagar]);
+  });
+  const ivas = mesesConIva().map(calcularIvaMes);
+  filas.push(['TOTAL IVA', '', ivas.reduce((s,i)=>s+i.debito,0), -ivas.reduce((s,i)=>s+i.credito,0), ivas.reduce((s,i)=>s+i.aPagar,0)]);
+  filas.push([]);
+  filas.push(['DEUDAS','Acreedor','Cuota mensual','Cuotas restantes','Saldo']);
+  DEUDAS.map(calcularDeuda).forEach(d => {
+    filas.push([d.nombre, d.acreedor, d.cuotaMensual, d.restantes, d.saldo]);
+  });
+  return { nombre:'Impuestos y deudas', encabezados: enc, filas };
+}
+
+function hojaDiasCobro(){
+  const enc = ['Folio','Fecha factura','Cliente','Neto','Total','Fecha de pago','Días de cobro'];
+  const filas = emparejarFacturas()
+    .sort((a,b) => a.factura.folio - b.factura.folio)
+    .map(p => [p.factura.folio, p.factura.fecha, p.factura.cliente, p.factura.neto, p.factura.total,
+               p.pago ? (p.pago.fechaPago || p.pago.fecha) : null, p.dias]);
+  return { nombre:'Días de cobro', encabezados: enc, filas };
+}
+
+function descargarExcel(){
+  const hojas = [hojaEstadoResultados(), hojaMovimientos(), hojaContratos(), hojaFacturas(),
+                 hojaDiasCobro(), hojaObligaciones(), hojaAnalisis(), hojaProyeccion(), hojaCaja()];
+  const blob = XlsxMin.crear(hojas);
+  const fecha = new Date().toISOString().slice(0,10);
+  XlsxMin.descargar('Finanzas_Desplagados_' + fecha + '.xlsx', blob);
+}
+
+/* ============================================================
+   INIT
+   ============================================================ */
+document.getElementById('lastUpdated').textContent = 'Última actualización de datos: ' + (MOVIMIENTOS.filter(m=>m.fecha).sort((a,b)=>b.fecha.localeCompare(a.fecha))[0]||{}).fecha;
+initTabs();
+initCellLinks();
+renderWarnBox();
+renderKPIs();
+renderCaja();
+renderObligaciones();
+renderFacturacion();
+initDecisiones();
+renderHallazgos();
+renderDiagnostico();
+renderTamanos();
+renderAnalisis();
+renderChartIngGas('chartIngGas');
+renderChartIngGas('chartIngGasInicio');
+renderDonutGastos();
+renderPL();
+renderPLResumenInicio();
+renderNavGrid();
+renderContratos();
+poblarFiltros();
+poblarCategoriasDatalist();
+renderMovimientos();
+renderPendientesLocal();
+initAgregar();
+renderParamGrid();
+renderProyeccion();
+['fMes','fTipo','fCategoria','fEstado'].forEach(id => document.getElementById(id).addEventListener('change', renderMovimientos));
+document.getElementById('fBuscar').addEventListener('input', renderMovimientos);
+document.getElementById('btnExcel').addEventListener('click', descargarExcel);
+document.getElementById('plPeriodo').addEventListener('change', renderPL);
+document.getElementById('resetParams').addEventListener('click', () => {
+  liveParams = JSON.parse(JSON.stringify(PROYECCION_PARAMS));
+  renderParamGrid();
+  renderProyeccion();
+});
+</script>
+</body>
+</html>

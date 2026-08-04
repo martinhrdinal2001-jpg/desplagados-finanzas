@@ -1,0 +1,14 @@
+# Archivos temporales de inspeccion/depuracion
+_*.txt
+_*.json
+_test_*
+*.tmp
+
+# Python
+__pycache__/
+*.pyc
+
+# Sistema
+Thumbs.db
+desktop.ini
+.DS_Store
