@@ -2332,12 +2332,12 @@ const MOVIMIENTOS = [
     "categoria": "Contrato mensual",
     "descripcion": "facil bodegas",
     "fijoVariable": "Fijo",
-    "monto": 138992.0,
+    "monto": 116800.0,
     "estado": "Pagado",
     "fechaPago": "2026-06-03",
     "medioPago": "Transferencia",
     "factura": null,
-    "obs": null
+    "obs": "Corregido 05-ago-2026: estaba guardado en $138.992 (bruto, con IVA); se detectó porque 138.992 / 1,19 = 116.800 exacto. Mismo error que Fanadego/Burgerholic/Bunsa/TGC en su momento."
   },
   {
     "id": 168,
@@ -2794,12 +2794,12 @@ const MOVIMIENTOS = [
     "categoria": "Contrato mensual",
     "descripcion": "Facil Bodegas",
     "fijoVariable": null,
-    "monto": 96600.0,
+    "monto": 95000.0,
     "estado": "Pagado",
     "fechaPago": null,
     "medioPago": null,
     "factura": null,
-    "obs": null
+    "obs": "Corregido 05-ago-2026: estaba en $96.600 (aproximado). El monto preciso de la factura, confirmado por WhatsApp (\"$113.050 con IVA\"), es $95.000 neto exacto — coincide con la tarifa mensual oficial del contrato desde junio."
   },
   {
     "id": 201,
