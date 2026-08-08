@@ -17,12 +17,22 @@ const PROYECCION_PARAMS = {
   // Prospectos grandes que NO deben diluirse en el supuesto generico de "+3 contratos a
   // $80.000". Se suman con su monto real desde su mes de inicio esperado, y solo si
   // `activo: true` — asi se puede ver la proyeccion con y sin ellos.
+  // ACTUALIZADO 07-ago-2026: el usuario dice que Club Manquehue y Aerodromo Vitacura
+  // (club de aviadores) salen "si o si" -- empiezan en ~1 mes (sep-2026) y el primer
+  // ingreso cae en ~2 meses (oct-2026). Se activan los dos en la proyeccion.
   prospectosGrandes: [
     {
       nombre: 'Club Manquehue (Vitacura)',
-      montoMensual: 800000,   // ESTIMADO, aun no cotizado en firme
+      montoMensual: 850000,   // CONFIRMADO por el usuario 07-ago-2026 (antes $800.000 estimado)
       desde: '2026-10',       // inicio esperado
-      activo: false,          // ponerlo en true para ver el escenario con este contrato
+      activo: true,           // el usuario dice que sale "si o si" (07-ago-2026)
+    },
+    {
+      nombre: 'Aerodromo Vitacura (club de aviadores)',
+      montoMensual: 465631,   // 11,4 UF/mes a UF $40.844,79 (06-ago-2026); reajustar con la UF vigente
+      desde: '2026-10',       // mismo timing que Manquehue, confirmado 07-ago-2026
+      activo: true,
+      nota: 'Cotizacion real: 11,4 UF/mes (9,12 UF los primeros 3 meses -- ese descuento inicial NO esta modelado aqui, se usa el monto full desde el primer mes por simplicidad).',
     },
   ],
 

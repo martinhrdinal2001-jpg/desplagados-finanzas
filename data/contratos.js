@@ -153,7 +153,7 @@ const CONTRATOS = [
     "inicio": null,
     "estado": "Negociando",
     "tipoCliente": "Empresa",
-    "obs": "11.4 UF (9.12 UF los primeros 3 meses). Cotizacion enviada hace tiempo; quedo pendiente el permiso de caza de conejos (en tramite, confirmado 04-ago-2026). No esta claro si se perdio el cliente por la demora."
+    "obs": "11.4 UF/mes (~$465.631 a UF del 06-ago-2026), 9.12 UF los primeros 3 meses. Cotizacion enviada hace tiempo con el permiso de caza de conejos pendiente (en tramite desde 04-ago-2026). ACTUALIZADO 07-ago-2026: el usuario dice que este cliente (\"club de aviadores\") sale \"si o si\", mismo timing que Manquehue -- empieza en ~1 mes (sep-2026), primer ingreso en ~2 meses (oct-2026). Activado en el escenario de la pestana Proyeccion."
   },
   {
     "id": 15,
@@ -226,11 +226,11 @@ const CONTRATOS = [
     "cliente": "Club Manquehue (Vitacura)",
     "tipoServicio": "Servicio Integral",
     "frecuencia": "Mensual",
-    "montoMensual": 800000,
+    "montoMensual": 850000,
     "inicio": "2026-10-01",
     "estado": "Negociando",
     "tipoCliente": "Club deportivo",
-    "obs": "Monto ~$800.000 netos/mes, CONFIRMADO por el usuario (04-ago-2026) tras cruzar con Costos.xlsx (que traia un $458.000 de plantilla sin actualizar, descartado). La empresa que hoy los atiende cobra aprox $1.100.000/mes. Inicio esperado octubre 2026. Seria por lejos el contrato mas grande: 3,8x Fanadego. Ver escenario en la pestana Proyeccion."
+    "obs": "Monto ~$850.000 netos/mes (actualizado 07-ago-2026; antes $800.000). La empresa que hoy los atiende cobra aprox $1.100.000/mes. El usuario dice que este contrato sale \"si o si\": empieza en ~1 mes (sep-2026), primer ingreso en ~2 meses (oct-2026). Seria por lejos el contrato mas grande. Activado en el escenario de la pestana Proyeccion."
   },
   {
     "cliente": "Terrazas de la Reina",
