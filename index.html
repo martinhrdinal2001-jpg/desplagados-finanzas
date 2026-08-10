@@ -1045,6 +1045,19 @@ function addMonths(ymKey, n){
   m = ((m-1)%12)+1;
   return y + '-' + String(m).padStart(2,'0');
 }
+function mesesEntre(desde, hasta){
+  // cuantos meses hay entre 'desde' y 'hasta' (ambos "YYYY-MM"); 0 = el mismo mes.
+  const [y1,m1] = desde.split('-').map(Number);
+  const [y2,m2] = hasta.split('-').map(Number);
+  return (y2-y1)*12 + (m2-m1);
+}
+function montoProspectoEnMes(pr, mkStr){
+  // Si el prospecto tiene descuento comercial inicial (montoMensualInicial + mesesDescuento),
+  // se usa ese monto durante esos meses desde su inicio; despues pasa a la tarifa normal.
+  const i = mesesEntre(pr.desde, mkStr);
+  if(pr.montoMensualInicial != null && pr.mesesDescuento && i < pr.mesesDescuento) return pr.montoMensualInicial;
+  return pr.montoMensual;
+}
 
 /* ============================================================
    TABS
@@ -2735,7 +2748,7 @@ function calcularProyeccion(params){
     // monto real en vez de diluirse en el ticket promedio de $80.000.
     const prospectosVigentes = (params.prospectosGrandes || [])
       .filter(pr => pr.activo && mkStr >= pr.desde);
-    const ingresoProspectos = prospectosVigentes.reduce((s,pr) => s + pr.montoMensual, 0);
+    const ingresoProspectos = prospectosVigentes.reduce((s,pr) => s + montoProspectoEnMes(pr, mkStr), 0);
 
     const contratosActivos = params.contratosBase + params.nuevosContratosPorMes * (i+1) + prospectosVigentes.length;
     const ingresoContrato = params.ingresoBaseContratosActuales
@@ -2772,9 +2785,13 @@ function renderProspectos(){
   let html = '<div style="background:var(--brand-soft);border:1px solid #cfe7db;border-radius:var(--radius-sm);padding:.85rem 1rem">'
     + '<div style="font-size:.72rem;font-weight:700;color:var(--brand2);text-transform:uppercase;letter-spacing:.04em;margin-bottom:.6rem">Escenarios: prospectos grandes</div>';
   lista.forEach((pr,i) => {
+    const conDescuento = pr.montoMensualInicial != null && pr.mesesDescuento;
+    const detalle = conDescuento
+      ? CLP(pr.montoMensualInicial) + '/mes los primeros ' + pr.mesesDescuento + ' meses, luego ' + CLP(pr.montoMensual) + '/mes, desde ' + mesLabel(pr.desde)
+      : CLP(pr.montoMensual) + '/mes desde ' + mesLabel(pr.desde);
     html += '<label style="display:flex;align-items:center;gap:.55rem;font-size:.83rem;cursor:pointer;padding:.15rem 0">'
       + '<input type="checkbox" data-prospecto="'+i+'"' + (pr.activo?' checked':'') + '>'
-      + '<span><b>' + pr.nombre + '</b> — ' + CLP(pr.montoMensual) + '/mes desde ' + mesLabel(pr.desde) + '</span></label>';
+      + '<span><b>' + pr.nombre + '</b> — ' + detalle + '</span></label>';
   });
   html += '<div style="font-size:.75rem;color:var(--muted);margin-top:.5rem">Montos estimados, aún no cotizados en firme. '
     + 'Al activarlos entran con su monto real en vez de diluirse en el promedio de ' + CLP(liveParams.ticketNuevoContrato) + ' por contrato nuevo.</div></div>';

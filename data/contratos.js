@@ -226,11 +226,11 @@ const CONTRATOS = [
     "cliente": "Club Manquehue (Vitacura)",
     "tipoServicio": "Servicio Integral",
     "frecuencia": "Mensual",
-    "montoMensual": 850000,
+    "montoMensual": 800000,
     "inicio": "2026-10-01",
     "estado": "Negociando",
     "tipoCliente": "Club deportivo",
-    "obs": "Monto ~$850.000 netos/mes (actualizado 07-ago-2026; antes $800.000). La empresa que hoy los atiende cobra aprox $1.100.000/mes. El usuario dice que este contrato sale \"si o si\": empieza en ~1 mes (sep-2026), primer ingreso en ~2 meses (oct-2026). Seria por lejos el contrato mas grande. Activado en el escenario de la pestana Proyeccion."
+    "obs": "COTIZACION FORMAL (PDF 10-ago-2026): $800.000 + IVA mensual normal, con 20% de descuento comercial los primeros 3 meses ($640.000 + IVA). Corrige el $850.000 dicho de palabra el 07-ago (sin la cotizacion formal a la vista) y el $458.000 de plantilla de Costos.xlsx (04-ago). La empresa que hoy los atiende cobra aprox $1.100.000/mes. Empieza en ~1 mes (sep-2026), primer ingreso en ~2 meses (oct-2026). Seria por lejos el contrato mas grande. Activado en el escenario de la pestana Proyeccion, con el descuento inicial modelado."
   },
   {
     "cliente": "Terrazas de la Reina",

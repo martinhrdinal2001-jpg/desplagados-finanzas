@@ -17,22 +17,31 @@ const PROYECCION_PARAMS = {
   // Prospectos grandes que NO deben diluirse en el supuesto generico de "+3 contratos a
   // $80.000". Se suman con su monto real desde su mes de inicio esperado, y solo si
   // `activo: true` — asi se puede ver la proyeccion con y sin ellos.
-  // ACTUALIZADO 07-ago-2026: el usuario dice que Club Manquehue y Aerodromo Vitacura
-  // (club de aviadores) salen "si o si" -- empiezan en ~1 mes (sep-2026) y el primer
-  // ingreso cae en ~2 meses (oct-2026). Se activan los dos en la proyeccion.
+  // `montoMensualInicial` + `mesesDescuento` (opcionales): si el prospecto tiene descuento
+  // comercial en los primeros meses, se usa ese monto durante esos meses y despues pasa a
+  // `montoMensual` (tarifa normal). Ver calcularProyeccion().
+  //
+  // ACTUALIZADO 10-ago-2026: cotizacion FORMAL de Club Manquehue (PDF, 10-ago-2026) dice
+  // $800.000 + IVA normal, con 20% de descuento comercial los primeros 3 meses ($640.000 + IVA).
+  // Esto corrige el $850.000 que se habia puesto el 07-ago (dicho de palabra, sin la cotizacion
+  // formal a la vista). El usuario confirma que ambos prospectos (Manquehue y Aerodromo Vitacura)
+  // salen "si o si" -- empiezan en ~1 mes (sep-2026) y el primer ingreso cae en ~2 meses (oct-2026).
   prospectosGrandes: [
     {
       nombre: 'Club Manquehue (Vitacura)',
-      montoMensual: 850000,   // CONFIRMADO por el usuario 07-ago-2026 (antes $800.000 estimado)
-      desde: '2026-10',       // inicio esperado
-      activo: true,           // el usuario dice que sale "si o si" (07-ago-2026)
+      montoMensual: 800000,          // tarifa normal desde el 4to mes -- COTIZACION FORMAL (PDF 10-ago-2026), neto (+IVA aparte)
+      montoMensualInicial: 640000,   // descuento comercial 20% los primeros 3 meses -- misma cotizacion
+      mesesDescuento: 3,
+      desde: '2026-10',              // inicio esperado
+      activo: true,                  // el usuario dice que sale "si o si"
     },
     {
       nombre: 'Aerodromo Vitacura (club de aviadores)',
-      montoMensual: 465631,   // 11,4 UF/mes a UF $40.844,79 (06-ago-2026); reajustar con la UF vigente
-      desde: '2026-10',       // mismo timing que Manquehue, confirmado 07-ago-2026
+      montoMensual: 465631,          // tarifa normal: 11,4 UF/mes a UF $40.844,79 (06-ago-2026); reajustar con la UF vigente
+      montoMensualInicial: 372504,   // 9,12 UF/mes los primeros 3 meses, misma UF de referencia
+      mesesDescuento: 3,
+      desde: '2026-10',              // mismo timing que Manquehue
       activo: true,
-      nota: 'Cotizacion real: 11,4 UF/mes (9,12 UF los primeros 3 meses -- ese descuento inicial NO esta modelado aqui, se usa el monto full desde el primer mes por simplicidad).',
     },
   ],
 

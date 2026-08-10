@@ -3060,12 +3060,12 @@ const MOVIMIENTOS = [
     "categoria": "Insumos/productos",
     "descripcion": "Cyperkill Plus",
     "fijoVariable": "Variable",
-    "monto": 38799.0,
+    "monto": 32604.0,
     "estado": "Pagado",
     "fechaPago": "2026-08-07",
-    "medioPago": null,
+    "medioPago": "Tarjeta",
     "factura": null,
-    "obs": "Reportado via WhatsApp (viernes 07-ago)."
+    "obs": "Corregido 10-ago-2026: reportado como $38.799 (bruto, tarjeta) via WhatsApp; se guarda neto ($38.799 ÷ 1,19 = $32.604)."
   },
   {
     "id": 221,
@@ -3074,12 +3074,12 @@ const MOVIMIENTOS = [
     "categoria": "Otros gastos",
     "descripcion": "Pago SAG",
     "fijoVariable": "Variable",
-    "monto": 11937.0,
+    "monto": 10031.0,
     "estado": "Pagado",
     "fechaPago": "2026-08-09",
-    "medioPago": null,
+    "medioPago": "Tarjeta",
     "factura": null,
-    "obs": "Reportado via WhatsApp (09-ago)."
+    "obs": "Corregido 10-ago-2026: reportado como $11.937 (bruto, tarjeta) via WhatsApp; se guarda neto ($11.937 ÷ 1,19 = $10.031)."
   },
   {
     "id": 222,
@@ -3088,12 +3088,12 @@ const MOVIMIENTOS = [
     "categoria": "Arriendo",
     "descripcion": "Arriendo bodega — agosto",
     "fijoVariable": "Fijo",
-    "monto": 416500.0,
+    "monto": 350000.0,
     "estado": "Pagado",
     "fechaPago": "2026-08-09",
-    "medioPago": null,
+    "medioPago": "Tarjeta",
     "factura": null,
-    "obs": "Reportado via WhatsApp (09-ago). Es el primer pago mensual fuera del prepago de 6 meses de enero."
+    "obs": "Corregido 10-ago-2026: reportado como $416.500 (bruto, tarjeta) via WhatsApp; se guarda neto ($416.500 ÷ 1,19 = $350.000 exacto). Es el primer pago mensual fuera del prepago de 6 meses de enero. Ojo: en la proyección (data/proyeccion.js) el arriendo se sigue modelando en $416.500 porque ahí representa el gasto de caja real (con IVA), no el neto contable."
   },
   {
     "id": 223,
@@ -3102,12 +3102,12 @@ const MOVIMIENTOS = [
     "categoria": "Servicio puntual",
     "descripcion": "Fumigación casa Torres",
     "fijoVariable": "Variable",
-    "monto": 75000.0,
+    "monto": 63025.0,
     "estado": "Pagado",
     "fechaPago": "2026-08-09",
-    "medioPago": null,
+    "medioPago": "Tarjeta",
     "factura": null,
-    "obs": "Reportado via WhatsApp (09-ago)."
+    "obs": "Corregido 10-ago-2026: reportado como $75.000 (bruto, lo que entró a la tarjeta) via WhatsApp; se guarda neto ($75.000 ÷ 1,19 = $63.025)."
   },
   {
     "id": 224,
@@ -3116,11 +3116,11 @@ const MOVIMIENTOS = [
     "categoria": "Insumos/productos",
     "descripcion": "Pulverizador 2LT litio",
     "fijoVariable": "Variable",
-    "monto": 29990.0,
+    "monto": 25202.0,
     "estado": "Pagado",
     "fechaPago": "2026-08-09",
-    "medioPago": null,
+    "medioPago": "Tarjeta",
     "factura": null,
-    "obs": "Reportado via WhatsApp (09-ago)."
+    "obs": "Corregido 10-ago-2026: reportado como $29.990 (bruto, tarjeta) via WhatsApp; se guarda neto ($29.990 ÷ 1,19 = $25.202)."
   }
 ];

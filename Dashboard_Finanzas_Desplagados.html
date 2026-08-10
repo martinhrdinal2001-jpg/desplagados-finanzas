@@ -3069,12 +3069,12 @@ const MOVIMIENTOS = [
     "categoria": "Insumos/productos",
     "descripcion": "Cyperkill Plus",
     "fijoVariable": "Variable",
-    "monto": 38799.0,
+    "monto": 32604.0,
     "estado": "Pagado",
     "fechaPago": "2026-08-07",
-    "medioPago": null,
+    "medioPago": "Tarjeta",
     "factura": null,
-    "obs": "Reportado via WhatsApp (viernes 07-ago)."
+    "obs": "Corregido 10-ago-2026: reportado como $38.799 (bruto, tarjeta) via WhatsApp; se guarda neto ($38.799 ÷ 1,19 = $32.604)."
   },
   {
     "id": 221,
@@ -3083,12 +3083,12 @@ const MOVIMIENTOS = [
     "categoria": "Otros gastos",
     "descripcion": "Pago SAG",
     "fijoVariable": "Variable",
-    "monto": 11937.0,
+    "monto": 10031.0,
     "estado": "Pagado",
     "fechaPago": "2026-08-09",
-    "medioPago": null,
+    "medioPago": "Tarjeta",
     "factura": null,
-    "obs": "Reportado via WhatsApp (09-ago)."
+    "obs": "Corregido 10-ago-2026: reportado como $11.937 (bruto, tarjeta) via WhatsApp; se guarda neto ($11.937 ÷ 1,19 = $10.031)."
   },
   {
     "id": 222,
@@ -3097,12 +3097,12 @@ const MOVIMIENTOS = [
     "categoria": "Arriendo",
     "descripcion": "Arriendo bodega — agosto",
     "fijoVariable": "Fijo",
-    "monto": 416500.0,
+    "monto": 350000.0,
     "estado": "Pagado",
     "fechaPago": "2026-08-09",
-    "medioPago": null,
+    "medioPago": "Tarjeta",
     "factura": null,
-    "obs": "Reportado via WhatsApp (09-ago). Es el primer pago mensual fuera del prepago de 6 meses de enero."
+    "obs": "Corregido 10-ago-2026: reportado como $416.500 (bruto, tarjeta) via WhatsApp; se guarda neto ($416.500 ÷ 1,19 = $350.000 exacto). Es el primer pago mensual fuera del prepago de 6 meses de enero. Ojo: en la proyección (data/proyeccion.js) el arriendo se sigue modelando en $416.500 porque ahí representa el gasto de caja real (con IVA), no el neto contable."
   },
   {
     "id": 223,
@@ -3111,12 +3111,12 @@ const MOVIMIENTOS = [
     "categoria": "Servicio puntual",
     "descripcion": "Fumigación casa Torres",
     "fijoVariable": "Variable",
-    "monto": 75000.0,
+    "monto": 63025.0,
     "estado": "Pagado",
     "fechaPago": "2026-08-09",
-    "medioPago": null,
+    "medioPago": "Tarjeta",
     "factura": null,
-    "obs": "Reportado via WhatsApp (09-ago)."
+    "obs": "Corregido 10-ago-2026: reportado como $75.000 (bruto, lo que entró a la tarjeta) via WhatsApp; se guarda neto ($75.000 ÷ 1,19 = $63.025)."
   },
   {
     "id": 224,
@@ -3125,12 +3125,12 @@ const MOVIMIENTOS = [
     "categoria": "Insumos/productos",
     "descripcion": "Pulverizador 2LT litio",
     "fijoVariable": "Variable",
-    "monto": 29990.0,
+    "monto": 25202.0,
     "estado": "Pagado",
     "fechaPago": "2026-08-09",
-    "medioPago": null,
+    "medioPago": "Tarjeta",
     "factura": null,
-    "obs": "Reportado via WhatsApp (09-ago)."
+    "obs": "Corregido 10-ago-2026: reportado como $29.990 (bruto, tarjeta) via WhatsApp; se guarda neto ($29.990 ÷ 1,19 = $25.202)."
   }
 ];
 
@@ -3365,11 +3365,11 @@ const CONTRATOS = [
     "cliente": "Club Manquehue (Vitacura)",
     "tipoServicio": "Servicio Integral",
     "frecuencia": "Mensual",
-    "montoMensual": 850000,
+    "montoMensual": 800000,
     "inicio": "2026-10-01",
     "estado": "Negociando",
     "tipoCliente": "Club deportivo",
-    "obs": "Monto ~$850.000 netos/mes (actualizado 07-ago-2026; antes $800.000). La empresa que hoy los atiende cobra aprox $1.100.000/mes. El usuario dice que este contrato sale \"si o si\": empieza en ~1 mes (sep-2026), primer ingreso en ~2 meses (oct-2026). Seria por lejos el contrato mas grande. Activado en el escenario de la pestana Proyeccion."
+    "obs": "COTIZACION FORMAL (PDF 10-ago-2026): $800.000 + IVA mensual normal, con 20% de descuento comercial los primeros 3 meses ($640.000 + IVA). Corrige el $850.000 dicho de palabra el 07-ago (sin la cotizacion formal a la vista) y el $458.000 de plantilla de Costos.xlsx (04-ago). La empresa que hoy los atiende cobra aprox $1.100.000/mes. Empieza en ~1 mes (sep-2026), primer ingreso en ~2 meses (oct-2026). Seria por lejos el contrato mas grande. Activado en el escenario de la pestana Proyeccion, con el descuento inicial modelado."
   },
   {
     "cliente": "Terrazas de la Reina",
@@ -3428,22 +3428,31 @@ const PROYECCION_PARAMS = {
   // Prospectos grandes que NO deben diluirse en el supuesto generico de "+3 contratos a
   // $80.000". Se suman con su monto real desde su mes de inicio esperado, y solo si
   // `activo: true` — asi se puede ver la proyeccion con y sin ellos.
-  // ACTUALIZADO 07-ago-2026: el usuario dice que Club Manquehue y Aerodromo Vitacura
-  // (club de aviadores) salen "si o si" -- empiezan en ~1 mes (sep-2026) y el primer
-  // ingreso cae en ~2 meses (oct-2026). Se activan los dos en la proyeccion.
+  // `montoMensualInicial` + `mesesDescuento` (opcionales): si el prospecto tiene descuento
+  // comercial en los primeros meses, se usa ese monto durante esos meses y despues pasa a
+  // `montoMensual` (tarifa normal). Ver calcularProyeccion().
+  //
+  // ACTUALIZADO 10-ago-2026: cotizacion FORMAL de Club Manquehue (PDF, 10-ago-2026) dice
+  // $800.000 + IVA normal, con 20% de descuento comercial los primeros 3 meses ($640.000 + IVA).
+  // Esto corrige el $850.000 que se habia puesto el 07-ago (dicho de palabra, sin la cotizacion
+  // formal a la vista). El usuario confirma que ambos prospectos (Manquehue y Aerodromo Vitacura)
+  // salen "si o si" -- empiezan en ~1 mes (sep-2026) y el primer ingreso cae en ~2 meses (oct-2026).
   prospectosGrandes: [
     {
       nombre: 'Club Manquehue (Vitacura)',
-      montoMensual: 850000,   // CONFIRMADO por el usuario 07-ago-2026 (antes $800.000 estimado)
-      desde: '2026-10',       // inicio esperado
-      activo: true,           // el usuario dice que sale "si o si" (07-ago-2026)
+      montoMensual: 800000,          // tarifa normal desde el 4to mes -- COTIZACION FORMAL (PDF 10-ago-2026), neto (+IVA aparte)
+      montoMensualInicial: 640000,   // descuento comercial 20% los primeros 3 meses -- misma cotizacion
+      mesesDescuento: 3,
+      desde: '2026-10',              // inicio esperado
+      activo: true,                  // el usuario dice que sale "si o si"
     },
     {
       nombre: 'Aerodromo Vitacura (club de aviadores)',
-      montoMensual: 465631,   // 11,4 UF/mes a UF $40.844,79 (06-ago-2026); reajustar con la UF vigente
-      desde: '2026-10',       // mismo timing que Manquehue, confirmado 07-ago-2026
+      montoMensual: 465631,          // tarifa normal: 11,4 UF/mes a UF $40.844,79 (06-ago-2026); reajustar con la UF vigente
+      montoMensualInicial: 372504,   // 9,12 UF/mes los primeros 3 meses, misma UF de referencia
+      mesesDescuento: 3,
+      desde: '2026-10',              // mismo timing que Manquehue
       activo: true,
-      nota: 'Cotizacion real: 11,4 UF/mes (9,12 UF los primeros 3 meses -- ese descuento inicial NO esta modelado aqui, se usa el monto full desde el primer mes por simplicidad).',
     },
   ],
 
@@ -6885,6 +6894,19 @@ function addMonths(ymKey, n){
   m = ((m-1)%12)+1;
   return y + '-' + String(m).padStart(2,'0');
 }
+function mesesEntre(desde, hasta){
+  // cuantos meses hay entre 'desde' y 'hasta' (ambos "YYYY-MM"); 0 = el mismo mes.
+  const [y1,m1] = desde.split('-').map(Number);
+  const [y2,m2] = hasta.split('-').map(Number);
+  return (y2-y1)*12 + (m2-m1);
+}
+function montoProspectoEnMes(pr, mkStr){
+  // Si el prospecto tiene descuento comercial inicial (montoMensualInicial + mesesDescuento),
+  // se usa ese monto durante esos meses desde su inicio; despues pasa a la tarifa normal.
+  const i = mesesEntre(pr.desde, mkStr);
+  if(pr.montoMensualInicial != null && pr.mesesDescuento && i < pr.mesesDescuento) return pr.montoMensualInicial;
+  return pr.montoMensual;
+}
 
 /* ============================================================
    TABS
@@ -8575,7 +8597,7 @@ function calcularProyeccion(params){
     // monto real en vez de diluirse en el ticket promedio de $80.000.
     const prospectosVigentes = (params.prospectosGrandes || [])
       .filter(pr => pr.activo && mkStr >= pr.desde);
-    const ingresoProspectos = prospectosVigentes.reduce((s,pr) => s + pr.montoMensual, 0);
+    const ingresoProspectos = prospectosVigentes.reduce((s,pr) => s + montoProspectoEnMes(pr, mkStr), 0);
 
     const contratosActivos = params.contratosBase + params.nuevosContratosPorMes * (i+1) + prospectosVigentes.length;
     const ingresoContrato = params.ingresoBaseContratosActuales
@@ -8612,9 +8634,13 @@ function renderProspectos(){
   let html = '<div style="background:var(--brand-soft);border:1px solid #cfe7db;border-radius:var(--radius-sm);padding:.85rem 1rem">'
     + '<div style="font-size:.72rem;font-weight:700;color:var(--brand2);text-transform:uppercase;letter-spacing:.04em;margin-bottom:.6rem">Escenarios: prospectos grandes</div>';
   lista.forEach((pr,i) => {
+    const conDescuento = pr.montoMensualInicial != null && pr.mesesDescuento;
+    const detalle = conDescuento
+      ? CLP(pr.montoMensualInicial) + '/mes los primeros ' + pr.mesesDescuento + ' meses, luego ' + CLP(pr.montoMensual) + '/mes, desde ' + mesLabel(pr.desde)
+      : CLP(pr.montoMensual) + '/mes desde ' + mesLabel(pr.desde);
     html += '<label style="display:flex;align-items:center;gap:.55rem;font-size:.83rem;cursor:pointer;padding:.15rem 0">'
       + '<input type="checkbox" data-prospecto="'+i+'"' + (pr.activo?' checked':'') + '>'
-      + '<span><b>' + pr.nombre + '</b> — ' + CLP(pr.montoMensual) + '/mes desde ' + mesLabel(pr.desde) + '</span></label>';
+      + '<span><b>' + pr.nombre + '</b> — ' + detalle + '</span></label>';
   });
   html += '<div style="font-size:.75rem;color:var(--muted);margin-top:.5rem">Montos estimados, aún no cotizados en firme. '
     + 'Al activarlos entran con su monto real en vez de diluirse en el promedio de ' + CLP(liveParams.ticketNuevoContrato) + ' por contrato nuevo.</div></div>';
