@@ -29,6 +29,17 @@ const PROYECCION_PARAMS = {
   // escenario base; activarlo manualmente en pantalla para ver el efecto si se acepta.
   prospectosGrandes: [
     {
+      // FIRMADO, no es un prospecto: el unico motivo por el que esta aca y no sumado a
+      // `ingresoBaseContratosActuales` es que todavia no empieza a facturar.
+      // CORREGIDO 12-ago-2026: antes se modelaba con inicio sep-2026 / primer cobro oct-2026.
+      // El cliente tenia un contrato anual vigente con su proveedor actual que no se puede
+      // romper antes, asi que el servicio parte el 01-ene-2027.
+      nombre: 'Estadio Italiano (firmado, parte ene-2027)',
+      montoMensual: 493000,
+      desde: '2027-01',
+      activo: true,
+    },
+    {
       nombre: 'Aerodromo Vitacura (club de aviadores)',
       montoMensual: 465631,          // tarifa normal: 11,4 UF/mes a UF $40.844,79 (06-ago-2026); reajustar con la UF vigente
       montoMensualInicial: 372504,   // 9,12 UF/mes los primeros 3 meses, misma UF de referencia

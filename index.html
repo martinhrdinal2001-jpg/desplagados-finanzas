@@ -1870,12 +1870,21 @@ function renderChartTemporada(){
 
 function renderContratos(){
   const activos = CONTRATOS.filter(c => c.estado === 'Activo').sort((a,b) => (b.montoMensual||0)-(a.montoMensual||0));
+  // "Confirmado" = firmado pero todavia no empieza a facturar (ej. Estadio Italiano desde ene-2027).
+  // Va aparte a proposito: NO debe sumar al ingreso recurrente de hoy, pero tampoco es un prospecto.
+  const confirmados = CONTRATOS.filter(c => c.estado === 'Confirmado').sort((a,b) => (a.inicio||'').localeCompare(b.inicio||''));
   const negociando = CONTRATOS.filter(c => c.estado === 'Negociando');
-  const perdidos = CONTRATOS.filter(c => c.estado !== 'Activo' && c.estado !== 'Negociando');
+  const perdidos = CONTRATOS.filter(c => !['Activo','Confirmado','Negociando'].includes(c.estado));
 
   let html = '<table><thead><tr><th>Cliente</th><th>Servicio</th><th>Frecuencia</th><th>Monto mensual</th><th>Estado</th><th>Observaciones</th></tr></thead><tbody>';
   activos.forEach(c => {
     html += '<tr><td>' + c.cliente + '</td><td>' + (c.tipoServicio||'—') + '</td><td>' + (c.frecuencia||'—') + '</td><td>' + CLP(c.montoMensual) + '</td><td><span class="pill activo">Activo</span></td><td style="text-align:left">' + (c.obs||'') + '</td></tr>';
+  });
+  confirmados.forEach(c => {
+    const desde = c.inicio ? ' desde ' + mesLabel(c.inicio.slice(0,7)) : '';
+    html += '<tr><td>' + c.cliente + '</td><td>' + (c.tipoServicio||'—') + '</td><td>' + (c.frecuencia||'—') + '</td><td>' + CLP(c.montoMensual) + '</td>'
+      + '<td><span class="pill" style="background:#dbeafe;color:#1e40af">Firmado' + desde + '</span></td>'
+      + '<td style="text-align:left">' + (c.obs||'') + '</td></tr>';
   });
   negociando.forEach(c => {
     html += '<tr><td>' + c.cliente + '</td><td>' + (c.tipoServicio||'—') + '</td><td>' + (c.frecuencia||'—') + '</td><td>' + CLP(c.montoMensual) + '</td><td><span class="pill negociando">Negociando</span></td><td style="text-align:left">' + (c.obs||'') + '</td></tr>';
@@ -3858,23 +3867,35 @@ function renderFlujo13Semanas(){
    ============================================================ */
 function renderFunnel(){
   const activos = CONTRATOS.filter(c => c.estado === 'Activo');
+  const confirmados = CONTRATOS.filter(c => c.estado === 'Confirmado');
   const negociando = CONTRATOS.filter(c => c.estado === 'Negociando');
   const valorActivos = activos.reduce((s,c)=>s+(c.montoMensual||0),0);
+  const valorConfirmados = confirmados.reduce((s,c)=>s+(c.montoMensual||0),0);
   const valorNegociando = negociando.reduce((s,c)=>s+(c.montoMensual||0),0);
   const sinMonto = negociando.filter(c=>!c.montoMensual).length;
 
-  const maxN = Math.max(negociando.length, activos.length, 1);
-  const wNeg = Math.round(40 + 55*(negociando.length/maxN));
-  const wAct = Math.round(40 + 55*(activos.length/maxN));
+  const maxN = Math.max(negociando.length, confirmados.length, activos.length, 1);
+  const ancho = n => Math.round(40 + 55*(n/maxN));
+
+  // Etapa intermedia "firmados, aun no facturan": aparece solo si existe. Es una etapa real
+  // desde que Estadio Italiano quedo cerrado pero con inicio en ene-2027.
+  const etapaConfirmados = confirmados.length
+    ? '<div class="funnel-arrow">↓ cerrados</div>'
+      + '<div class="stage" style="background:var(--c3);width:'+ancho(confirmados.length)+'%">'
+      + '<div class="n">'+confirmados.length+' firmado'+(confirmados.length>1?'s':'')+', aún sin facturar</div>'
+      + '<div class="l">'+CLP(valorConfirmados)+'/mes comprometido — empieza '
+      + confirmados.map(c=>c.inicio?mesLabel(c.inicio.slice(0,7)):'sin fecha').join(', ')+'</div></div>'
+      + '<div class="funnel-arrow">↓ al iniciar el servicio</div>'
+    : '<div class="funnel-arrow">↓ tasa de cierre informada: '+PCT(PROYECCION_PARAMS.tasaCierreCotizaciones)+'</div>';
 
   document.getElementById('funnelBox').innerHTML =
     '<div class="funnel">'
-    + '<div class="stage" style="background:var(--c5);width:'+wNeg+'%">'
+    + '<div class="stage" style="background:var(--c5);width:'+ancho(negociando.length)+'%">'
       + '<div class="n">'+negociando.length+' en negociación</div>'
       + '<div class="l">'+CLP(valorNegociando)+'/mes potencial'+(sinMonto?' ('+sinMonto+' sin monto aún)':'')+'</div></div>'
-    + '<div class="funnel-arrow">↓ tasa de cierre informada: '+PCT(PROYECCION_PARAMS.tasaCierreCotizaciones)+'</div>'
-    + '<div class="stage" style="background:var(--brand2);width:'+wAct+'%">'
-      + '<div class="n">'+activos.length+' ganados (activos)</div>'
+    + etapaConfirmados
+    + '<div class="stage" style="background:var(--brand2);width:'+ancho(activos.length)+'%">'
+      + '<div class="n">'+activos.length+' facturando (activos)</div>'
       + '<div class="l">'+CLP(valorActivos)+'/mes real</div></div>'
     + '</div>';
 

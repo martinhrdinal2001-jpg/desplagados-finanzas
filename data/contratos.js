@@ -203,12 +203,12 @@ const CONTRATOS = [
     "id": 19,
     "cliente": "Estadio Italiano",
     "tipoServicio": "Servicio Integral",
-    "frecuencia": null,
-    "montoMensual": null,
-    "inicio": null,
-    "estado": "Negociando",
+    "frecuencia": "Mensual",
+    "montoMensual": 493000,
+    "inicio": "2027-01-01",
+    "estado": "Confirmado",
     "tipoCliente": "Empresa",
-    "obs": "Cotizacion empresarial grande. Monto por confirmar. Cotizacion enviada hace tiempo; quedo pendiente el permiso de caza de conejos (en tramite, confirmado 04-ago-2026). No esta claro si se perdio el cliente por la demora."
+    "obs": "CERRADO Y FIRMADO, pero EMPIEZA EL 01-ene-2027 (confirmado por el usuario 12-ago-2026). El cliente no habia caido en cuenta de que tenia un contrato anual vigente con su proveedor actual y no se puede romper antes de tiempo. Antes se habia modelado con inicio sep-2026 y primer cobro oct-2026: eso ya no aplica y saca $1.479.000 de las ventas 2026. $493.000 netos/mes. La inversion inicial (~150 estaciones cebaderas, ~$750.000 estimados, NO cotizado en firme) se corre tambien a ene-2027."
   },
   {
     "id": 20,
