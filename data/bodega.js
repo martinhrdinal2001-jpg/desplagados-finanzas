@@ -1,17 +1,21 @@
-// DECISION YA TOMADA (10-ago-2026): la empresa se mudo a bodega propia. La ultima cuota de
-// arriendo de la bodega de Huechuraba fue en agosto 2026 (~$416.500 bruto / $350.000 neto,
-// ver movimientos.js id 222) y la bodega propia costo ~$500.000 (unico pago), mucho menos de
-// lo que se habia estimado antes ($1.500.000). Se deja este comparador como registro historico
-// de la decision, no como una opcion todavia abierta.
+// CORREGIDO 10-ago-2026 con el CONTRATO firmado a la vista (Bodegas Circulo SYSPEST,
+// Bodega N51, 5 m2, Las Bandurrias Parcela 4A, Pirque -- NO Huechuraba como decia antes).
+// El arriendo NO termino en agosto: el contrato tiene renta escalada hasta $500.000 neto/mes
+// (mes 13 en adelante, feb-2027) y RENOVACION TACITA ANUAL. Ver data/proyeccion.js ->
+// gastosFijos.arriendoBodega para el calendario completo.
+//
+// RESTRICCION CRITICA CONFIRMADA POR EL CONTRATO: ante 10 dias de atraso en el pago, se avisa
+// a la SEREMI y la bodega se ELIMINA de la Resolucion Sanitaria. La habilitacion sanitaria de
+// Desplagados depende de tener bodega registrada -> no se puede simplemente dejar de pagar.
 const BODEGA = {
   opciones: [
-    { id:'actual', nombre:'Bodega arrendada — Av. Las Torres 1277, Huechuraba (HISTORICO, ya no se paga)',
-      arriendoMensual: 416500, inversionInicial: 0, ubicacion:'Santiago', porCotizar:false,
-      obs:'Terminado. Ultima cuota pagada en agosto 2026 ($416.500 bruto). Fue el gasto fijo mas grande de la empresa mientras duro.' },
+    { id:'actual', nombre:'Bodega arrendada — Bodega N°51, Pirque (VIGENTE, renta escalada)',
+      arriendoMensual: 476000, inversionInicial: 0, ubicacion:'Santiago', porCotizar:false,
+      obs:'Contrato vigente con Bodegas Circulo SYSPEST. Renta escalada: $416.500 c/IVA hasta sep-2026, $476.000 oct-nov, $535.500 dic-ene, $595.000 desde feb-2027 (+IPC). Para salir hay que avisar por escrito 30 dias antes del vencimiento anual (~ene-2027).' },
 
-    { id:'propia', nombre:'Bodega propia (YA CONSTRUIDA, ago-2026)',
+    { id:'propia', nombre:'Bodega propia (invertida ago-2026, ~$500.000)',
       arriendoMensual: 0, inversionInicial: 500000, ubicacion:'Santiago', porCotizar:false,
-      obs:'Ya no es un supuesto: se hizo en agosto 2026 por ~$500.000 (mucho menos que el $1.500.000 que se habia estimado antes), arriendo $0 desde entonces.' },
+      obs:'La inversion ya se hizo (~$500.000). PERO el ahorro solo se materializa si (a) se avisa la salida del contrato a tiempo y (b) la bodega nueva queda inscrita en la Resolucion Sanitaria. Verificar ambas cosas antes de darla por hecha.' },
 
     { id:'stgo_chica', nombre:'Solo Santiago (bodega mas chica)',
       arriendoMensual: 0, inversionInicial: 0, ubicacion:'Santiago', porCotizar:true,

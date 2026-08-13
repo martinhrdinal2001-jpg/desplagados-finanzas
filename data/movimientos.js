@@ -568,12 +568,12 @@ const MOVIMIENTOS = [
     "categoria": "Arriendo",
     "descripcion": "Arriendo Bodega (6 meses prepago) — Francisco Ruiz Bertin",
     "fijoVariable": "Fijo",
-    "monto": 2142000.0,
+    "monto": 1800000.0,
     "estado": "Pagado",
     "fechaPago": "2026-01-27",
     "medioPago": "Transferencia",
     "factura": null,
-    "obs": null
+    "obs": "Corregido 10-ago-2026 con el contrato a la vista: estaba guardado en $2.142.000, que es el monto BRUTO. El contrato dice 'Mes 1 a 6 pago al contado ($300.000 NETO por mes x 6 = $2.142.000)' -> el neto son $1.800.000. Cubre los meses 1-6 del contrato (feb-jul 2026)."
   },
   {
     "id": 42,
@@ -3093,7 +3093,7 @@ const MOVIMIENTOS = [
     "fechaPago": "2026-08-09",
     "medioPago": "Tarjeta",
     "factura": null,
-    "obs": "Corregido 10-ago-2026: reportado como $416.500 (bruto, tarjeta) via WhatsApp; se guarda neto ($416.500 ÷ 1,19 = $350.000 exacto). Es el primer pago mensual fuera del prepago de 6 meses de enero. CONFIRMADO por el usuario el mismo 10-ago-2026: esta fue la ULTIMA cuota de la bodega arrendada -- desde este mes la empresa opera desde bodega propia, no hay mas arriendo mensual. La proyección (data/proyeccion.js) ya quedó actualizada para reflejar esto."
+    "obs": "Reportado como $416.500 (bruto, tarjeta) via WhatsApp; se guarda neto ($416.500 ÷ 1,19 = $350.000 exacto). CORREGIDO 10-ago-2026 con el contrato a la vista: NO fue la ultima cuota (asi se habia entendido en un primer momento). Es el MES 7 del contrato, cuya tarifa es justamente $350.000 neto / $416.500 con IVA. El arriendo sigue: sep-2026 $350.000, oct-nov $400.000, dic-ene $450.000, y $500.000 desde feb-2027 + reajuste IPC."
   },
   {
     "id": 223,

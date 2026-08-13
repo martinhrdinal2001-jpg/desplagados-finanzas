@@ -1051,6 +1051,16 @@ function mesesEntre(desde, hasta){
   const [y2,m2] = hasta.split('-').map(Number);
   return (y2-y1)*12 + (m2-m1);
 }
+function arriendoBodegaEnMes(mkStr, cfg){
+  // Renta escalada por tramos segun el contrato firmado. `terminaEn` (si esta puesto) es el
+  // ultimo mes que se paga: sirve para simular el escenario "logramos salir del contrato".
+  if(!cfg) return 0;
+  if(cfg.terminaEn && mkStr > cfg.terminaEn) return 0;
+  for(const t of cfg.tramos){
+    if(t.hasta === null || mkStr <= t.hasta) return t.neto;
+  }
+  return 0;
+}
 function montoProspectoEnMes(pr, mkStr){
   // Si el prospecto tiene descuento comercial inicial (montoMensualInicial + mesesDescuento),
   // se usa ese monto durante esos meses desde su inicio; despues pasa a la tarifa normal.
@@ -2691,7 +2701,8 @@ const PARAM_FIELDS = [
   { section: 'Servicios puntuales (neto)', key: 'servicioPuntual.alta', label: 'Temporada alta (Dic-Ene)' },
   { section: 'Servicios puntuales (neto)', key: 'servicioPuntual.media', label: 'Temporada media (Jun,Jul,Nov)' },
   { section: 'Servicios puntuales (neto)', key: 'servicioPuntual.baja', label: 'Temporada baja (resto)' },
-  { section: 'Gastos fijos mensuales', key: 'gastosFijos.arriendoMensual', label: 'Arriendo bodega (hasta último mes)' },
+  // El arriendo de bodega NO es un parametro libre: viene del contrato firmado (renta escalada
+  // por tramos). Se muestra en el card de "Contrato de bodega" en vez de como input editable.
   { section: 'Gastos fijos mensuales', key: 'gastosFijos.gastoBodegaConstruccion.monto', label: 'Bodega nueva (construcción, único)' },
   { section: 'Gastos fijos mensuales', key: 'gastosFijos.cuotaFurgon', label: 'Cuota furgón' },
   { section: 'Gastos fijos mensuales', key: 'gastosFijos.contabilidad', label: 'Contabilidad' },
@@ -2760,7 +2771,7 @@ function calcularProyeccion(params){
     const servicioPuntual = params.servicioPuntual[temporada];
     const totalIngresos = ingresoContrato + servicioPuntual;
 
-    const arriendo = (mkStr <= params.gastosFijos.ultimoMesArriendo) ? params.gastosFijos.arriendoMensual : 0;
+    const arriendo = arriendoBodegaEnMes(mkStr, params.gastosFijos.arriendoBodega);
     const bodegaConstruccion = (mkStr === params.gastosFijos.gastoBodegaConstruccion.mes) ? params.gastosFijos.gastoBodegaConstruccion.monto : 0;
     const gastosFijos = arriendo + params.gastosFijos.cuotaFurgon + params.gastosFijos.contabilidad + params.gastosFijos.honorarios + bodegaConstruccion;
 
@@ -2812,7 +2823,10 @@ function renderProyeccion(){
   document.getElementById('proyTitulo').textContent = 'Proyección ' + mesLabel(meses[0]) + ' – ' + mesLabel(meses[meses.length-1]);
   document.getElementById('proySupuestos').textContent =
     'Supuestos: +' + p.nuevosContratosPorMes + ' contratos nuevos/mes a ' + CLP(p.ticketNuevoContrato) + ' neto | '
-    + 'Temporada alta Dic-Ene (fumigaciones casas de veraneo) | Bodega propia desde ' + mesLabel(p.gastosFijos.gastoBodegaConstruccion.mes).replace(/^\w/, c=>c.toUpperCase());
+    + 'Temporada alta Dic-Ene (fumigaciones casas de veraneo) | '
+    + (p.gastosFijos.arriendoBodega.terminaEn
+        ? 'Arriendo de bodega hasta ' + mesLabel(p.gastosFijos.arriendoBodega.terminaEn)
+        : 'Arriendo de bodega vigente (renta escalada por contrato, hasta ' + CLP(p.gastosFijos.arriendoBodega.tramos[p.gastosFijos.arriendoBodega.tramos.length-1].neto) + ' neto/mes)');
 
   function fila(label, campo, tipo){
     const total = rows.reduce((s,r) => s + r[campo], 0);
@@ -3217,13 +3231,18 @@ function renderBodega(){
 
   const propia = BODEGA.opciones.find(o => o.id === 'propia');
   const pbPropia = propia.inversionInicial / base;
+  const ab = PROYECCION_PARAMS.gastosFijos.arriendoBodega;
+  const tarifaFinal = ab.tramos[ab.tramos.length-1].neto;
   document.getElementById('bodegaInsight').innerHTML =
-    '<div class="diag-box">'
-    + '<b>Decisión ya tomada (ago-2026):</b> la bodega arrendada costaba <b>' + CLP(base) + '/mes</b> = <b>' + CLP(base*12) + ' al año</b> '
-    + '— más que la cuota del furgón, la contabilidad y los honorarios <i>sumados</i>.<br><br>'
-    + 'La bodega propia costó <b>' + CLP(propia.inversionInicial) + '</b> (mucho menos de lo que se había estimado antes, $1.500.000) '
-    + 'y ya se pagó sola en <b>' + pbPropia.toFixed(1) + ' meses</b> de arriendo ahorrado — ese gasto fijo desapareció del modelo desde ' + mesLabel(addMonths(PROYECCION_PARAMS.gastosFijos.ultimoMesArriendo, 1)) + ' en adelante.<br><br>'
-    + (BODEGA.restriccionSanitaria ? '<b>Ojo pendiente:</b> ' + BODEGA.restriccionSanitaria + ' Se pagaron $595.000 por la resolución sanitaria en dic-2025 — conviene confirmar que la bodega propia cumple ese requisito.' : '')
+    '<div class="warn-box">'
+    + '<b>El contrato de arriendo sigue vigente.</b> La cuota de agosto no fue la última: era el <b>mes 7</b> de una renta '
+    + 'escalada que llega a <b>' + CLP(tarifaFinal) + ' netos (' + CLP(Math.round(tarifaFinal*1.19)) + ' con IVA) desde feb-2027</b>, más reajuste por IPC, '
+    + 'y que se <b>renueva sola cada año</b> si nadie avisa lo contrario.<br><br>'
+    + '<b>Fecha límite para salir:</b> hay que avisar por escrito, con 30 días de anticipación al vencimiento anual (~ene-2027) — '
+    + 'o sea a más tardar en <b>diciembre 2026</b>. Si se pasa, quedan amarrados otro año completo.<br><br>'
+    + '<b>Y antes de eso:</b> ' + BODEGA.restriccionSanitaria + ' El contrato dice explícitamente que si se deja de pagar, se avisa a la SEREMI y '
+    + 'la bodega sale de la Resolución Sanitaria. La inversión de ' + CLP(propia.inversionInicial) + ' en bodega propia solo rinde si esa bodega queda '
+    + 'inscrita — si no, no hay ahorro y se arriesga la habilitación para operar.'
     + '</div>';
 }
 
@@ -4023,17 +4042,9 @@ function generarHallazgos(){
         + 'Confirmar la fecha de vencimiento en la municipalidad es lo primero que conviene hacer: cambia el tamaño del problema.' });
   }
 
-  // --- 2c. Salir de la bodega: el ahorro mas grande disponible ---
-  if(bodegaActual){
-    const arr = bodegaActual.arriendoMensual;
-    const gfSinBodega = p.gastosFijos.cuotaFurgon + p.gastosFijos.contabilidad + p.gastosFijos.honorarios;
-    H.push({ nivel:'oportunidad', icon:'★', titulo:'Salir de la bodega ahorra ' + CLP(arr) + '/mes',
-      detalle: 'El arriendo de ' + CLP(arr) + ' es <b>más que la cuota del furgón, la contabilidad y los honorarios sumados</b> ('
-        + CLP(gfSinBodega) + '). Son ' + CLP(arr*12) + ' al año. '
-        + 'Es la única palanca que por sí sola da vuelta el problema de caja: sin ese pago, el saldo del '
-        + (primerNeg ? primerNeg.fecha : 'mes') + ' pasaría de ' + CLP(primerNeg ? primerNeg.saldo : 0)
-        + ' a <b>' + CLP((primerNeg ? primerNeg.saldo : 0) + arr) + '</b>. Ver la pestaña Decisiones.' });
-  }
+  // --- 2c. (eliminado 10-ago-2026) Antes habia un hallazgo "salir de la bodega ahorra X/mes".
+  // Se saco al leer el contrato: no se puede salir libremente (renovacion tacita anual + la
+  // bodega esta atada a la Resolucion Sanitaria). Los hallazgos 5 y 6 cuentan la historia real.
 
   // --- 2d. IVA comprometido dentro de la caja ---
   {
@@ -4062,26 +4073,41 @@ function generarHallazgos(){
   }
 
   // --- 4. Cobertura de gastos fijos con ingreso recurrente ---
-  // Actualizado 10-ago-2026: ya no hay arriendo de bodega (última cuota ago-2026, ahora bodega propia).
   const gf = p.gastosFijos;
-  const fijosMensuales = gf.cuotaFurgon + gf.contabilidad + gf.honorarios;
+  const mesActualKey = new Date().toISOString().slice(0,7);
+  const arriendoHoy = arriendoBodegaEnMes(mesActualKey, gf.arriendoBodega);
+  const fijosMensuales = arriendoHoy + gf.cuotaFurgon + gf.contabilidad + gf.honorarios;
   const cobertura = recurrente / fijosMensuales;
   H.push({ nivel: cobertura >= 1 ? 'oportunidad' : 'alerta', icon: cobertura >= 1 ? '✓' : '!',
     titulo: 'Los contratos cubren ' + PCT(cobertura) + ' de los gastos fijos',
     detalle: 'Ingreso recurrente <b>' + CLP(recurrente) + '</b>/mes contra gastos fijos de <b>' + CLP(fijosMensuales) + '</b>/mes '
-      + '(furgón ' + CLP(gf.cuotaFurgon) + ' + contabilidad ' + CLP(gf.contabilidad) + ' + honorarios ' + CLP(gf.honorarios) + '; ya no incluye arriendo de bodega, se dejó de pagar desde ' + mesLabel(gf.ultimoMesArriendo) + '). '
+      + '(bodega ' + CLP(arriendoHoy) + ' + furgón ' + CLP(gf.cuotaFurgon) + ' + contabilidad ' + CLP(gf.contabilidad) + ' + honorarios ' + CLP(gf.honorarios) + '). '
       + (cobertura >= 1
           ? 'Los contratos ya sostienen la estructura fija: cada servicio puntual es margen.'
           : 'Faltan <b>' + CLP(fijosMensuales - recurrente) + '</b>/mes de ingreso recurrente para no depender de servicios puntuales. A ' + CLP(p.ticketNuevoContrato) + ' por contrato, son <b>' + Math.ceil((fijosMensuales-recurrente)/p.ticketNuevoContrato) + ' contratos nuevos</b>.') });
 
-  // --- 5/6. Bodega propia: ya pasó, no es una opción a evaluar (actualizado 10-ago-2026) ---
-  const inv = p.gastosFijos.gastoBodegaConstruccion.monto;
-  const arriendoViejo = p.gastosFijos.arriendoMensual;
-  const paybackReal = inv / (arriendoViejo * 1.19); // en pesos de caja real (con IVA), que es como se pagaba el arriendo
-  H.push({ nivel:'oportunidad', icon:'★', titulo:'La mudanza a bodega propia se pagó sola en ' + paybackReal.toFixed(1) + ' meses',
-    detalle: 'La última cuota de arriendo fue en ' + mesLabel(p.gastosFijos.ultimoMesArriendo) + ' (' + CLP(Math.round(arriendoViejo*1.19)) + '/mes con IVA). '
-      + 'La bodega propia costó ' + CLP(inv) + ', mucho menos de lo que se había estimado antes (' + CLP(1500000) + ') — se recupera en solo ' + paybackReal.toFixed(1) + ' meses '
-      + 'y libera ' + CLP(Math.round(arriendoViejo*1.19*12)) + '/año que antes se iban en arriendo.' });
+  // --- 5. Escalada del arriendo de bodega + fecha límite para avisar la salida ---
+  const ab = gf.arriendoBodega;
+  if(ab && !ab.terminaEn){
+    const tarifaFinal = ab.tramos[ab.tramos.length-1].neto;
+    // cuánto queda por pagar de aquí a fin de 2027 si NO se sale del contrato
+    let pendiente = 0, mk = addMonths(mesActualKey, 1);
+    while(mk <= '2027-12'){ pendiente += arriendoBodegaEnMes(mk, ab); mk = addMonths(mk, 1); }
+    H.push({ nivel:'alerta', icon:'!', titulo:'El arriendo de bodega sigue vigente y sube a ' + CLP(tarifaFinal) + '/mes',
+      detalle: 'El contrato tiene renta <b>escalada</b> y <b>renovación tácita anual</b> — no terminó con el pago de agosto. '
+        + 'Hoy va en <b>' + CLP(arriendoHoy) + '</b> neto/mes y llega a <b>' + CLP(tarifaFinal) + '</b> neto (' + CLP(Math.round(tarifaFinal*1.19)) + ' con IVA) desde feb-2027, más reajuste por IPC. '
+        + 'De aquí a dic-2027 son <b>' + CLP(pendiente) + '</b> netos (' + CLP(Math.round(pendiente*1.19)) + ' con IVA) si no se sale.<br>'
+        + '<b>Fecha límite:</b> para salir en el vencimiento anual (~ene-2027) hay que avisar <b>por escrito con 30 días</b>, o sea a más tardar en <b>diciembre 2026</b>. '
+        + 'Si se pasa esa fecha, el contrato se renueva solo por otro año completo.' });
+  }
+
+  // --- 6. Riesgo sanitario: la bodega está atada a la Resolución Sanitaria ---
+  if(ab && ab.riesgoSanitario){
+    H.push({ nivel:'alerta', icon:'!', titulo:'Salir de la bodega puede costar la Resolución Sanitaria',
+      detalle: 'El contrato dice que ante 10 días de atraso en el pago, además de terminarse, <b>se avisa a la SEREMI y la bodega se elimina de la Resolución Sanitaria</b>. '
+        + 'La habilitación de Desplagados para aplicar pesticidas depende de tener una bodega registrada, así que <b>no se puede simplemente dejar de pagar</b>. '
+        + 'Antes de cerrar la mudanza hay que confirmar que la bodega nueva queda inscrita en la Resolución Sanitaria — si no, el ahorro no existe y el riesgo es perder la operación entera.' });
+  }
 
   // --- 7. Concentración de clientes ---
   if(contratosActivos.length){

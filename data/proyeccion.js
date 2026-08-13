@@ -65,16 +65,33 @@ const PROYECCION_PARAMS = {
   // mapa mes calendario (1-12) -> temporada
   temporadaPorMes: { 1:'alta', 6:'media', 7:'media', 11:'media', 12:'alta' },
 
-  // ACTUALIZADO 10-ago-2026: el usuario confirmó que el pago de agosto ($416.500 bruto /
-  // $350.000 neto, ya registrado en movimientos.js id 222) fue la ÚLTIMA cuota de la bodega
-  // arrendada -- ya se están mudando a bodega propia. Esto reemplaza el supuesto anterior
-  // (arriendo hasta nov-2026, $450.000 en dic-2026, bodega propia recién desde 2027 con un
-  // gasto de construcción de $1.500.000 en ene-2027). La bodega propia sale MUCHO más barata
-  // de lo pensado (~$500.000 vs $1.500.000) y ocurre AHORA, no en 2027.
+  // CORREGIDO 10-ago-2026 (2da vez, con el CONTRATO a la vista):
+  // El pago de agosto NO fue la ultima cuota. Segun el contrato firmado (01-dic-2025, Bodegas
+  // Circulo SYSPEST, Bodega N51, Pirque), agosto era el MES 7 de una renta ESCALADA que sube
+  // hasta $500.000 neto/mes desde el mes 13 (feb-2027), con reajuste IPC anual y RENOVACION
+  // TACITA ANUAL. Verificado: el prepago de ene-2026 ($1.800.000 neto) cubrio los meses 1-6
+  // (feb-jul) y el pago de ago-2026 ($350.000 neto) calza exacto con la tarifa del mes 7-8.
   gastosFijos: {
-    arriendoMensual: 350000,       // neto, monto real de la última cuota (ago-2026)
-    ultimoMesArriendo: '2026-08',  // desde sep-2026 ya no hay arriendo (mudanza a bodega propia)
-    gastoBodegaConstruccion: { monto: 500000, mes: '2026-08' }, // gasto único, bodega propia -- corregido de $1.500.000/ene-2027
+    arriendoBodega: {
+      // Renta por tramos segun contrato. Montos NETOS (el contrato tambien los da con IVA).
+      tramos: [
+        { hasta: '2026-07', neto: 300000 },  // meses 1-6  -- prepagados en ene-2026
+        { hasta: '2026-09', neto: 350000 },  // meses 7-8  -- ago pagado, sep pendiente
+        { hasta: '2026-11', neto: 400000 },  // meses 9-10
+        { hasta: '2027-01', neto: 450000 },  // meses 11-12
+        { hasta: null,      neto: 500000 },  // mes 13 en adelante (+ reajuste IPC)
+      ],
+      // Ultimo mes que se paga arriendo. null = el contrato sigue corriendo (renovacion tacita).
+      // Para salir hay que avisar POR ESCRITO 30 dias antes del vencimiento anual (~ene-2027),
+      // o sea el limite practico es DICIEMBRE 2026. Si se logra, poner aqui '2027-01'.
+      terminaEn: null,
+      contrato: 'Bodegas Circulo SYSPEST (Francisco Ruiz Bertin), Bodega N51, 5 m2, Pirque. Firmado 01-dic-2025.',
+      // OJO CRITICO: el contrato dice que si hay 10 dias de atraso en el pago, ademas de
+      // terminar el contrato se avisa a la SEREMI y la bodega se ELIMINA de la Resolucion
+      // Sanitaria. La habilitacion sanitaria de Desplagados depende de tener bodega registrada.
+      riesgoSanitario: true,
+    },
+    gastoBodegaConstruccion: { monto: 500000, mes: '2026-08' }, // bodega propia, inversion real
     cuotaFurgon: 250000, // hasta dic 2027
     contabilidad: 64000,
     honorarios: 120000,
