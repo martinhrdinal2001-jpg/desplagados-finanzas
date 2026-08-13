@@ -65,11 +65,16 @@ const PROYECCION_PARAMS = {
   // mapa mes calendario (1-12) -> temporada
   temporadaPorMes: { 1:'alta', 6:'media', 7:'media', 11:'media', 12:'alta' },
 
+  // ACTUALIZADO 10-ago-2026: el usuario confirmó que el pago de agosto ($416.500 bruto /
+  // $350.000 neto, ya registrado en movimientos.js id 222) fue la ÚLTIMA cuota de la bodega
+  // arrendada -- ya se están mudando a bodega propia. Esto reemplaza el supuesto anterior
+  // (arriendo hasta nov-2026, $450.000 en dic-2026, bodega propia recién desde 2027 con un
+  // gasto de construcción de $1.500.000 en ene-2027). La bodega propia sale MUCHO más barata
+  // de lo pensado (~$500.000 vs $1.500.000) y ocurre AHORA, no en 2027.
   gastosFijos: {
-    arriendoBodegaJunNov2026: 400000,
-    arriendoBodegaDic2026: 450000,
-    arriendoBodegaDesde2027: 0, // bodega propia
-    gastoBodegaConstruccion: { monto: 1500000, mes: '2027-01' }, // gasto único
+    arriendoMensual: 350000,       // neto, monto real de la última cuota (ago-2026)
+    ultimoMesArriendo: '2026-08',  // desde sep-2026 ya no hay arriendo (mudanza a bodega propia)
+    gastoBodegaConstruccion: { monto: 500000, mes: '2026-08' }, // gasto único, bodega propia -- corregido de $1.500.000/ene-2027
     cuotaFurgon: 250000, // hasta dic 2027
     contabilidad: 64000,
     honorarios: 120000,

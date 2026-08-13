@@ -1,17 +1,17 @@
-// Opciones de bodega en evaluacion. La urgencia declarada (29-jul-2026) es dejar de pagar
-// el arriendo actual lo antes posible: es el gasto fijo mas grande de la empresa.
-//
-// Los montos marcados `porCotizar: true` estan en 0 a proposito: NO son estimaciones inventadas,
-// hay que reemplazarlos con cotizaciones reales. El comparador solo calcula las opciones con monto.
+// DECISION YA TOMADA (10-ago-2026): la empresa se mudo a bodega propia. La ultima cuota de
+// arriendo de la bodega de Huechuraba fue en agosto 2026 (~$416.500 bruto / $350.000 neto,
+// ver movimientos.js id 222) y la bodega propia costo ~$500.000 (unico pago), mucho menos de
+// lo que se habia estimado antes ($1.500.000). Se deja este comparador como registro historico
+// de la decision, no como una opcion todavia abierta.
 const BODEGA = {
   opciones: [
-    { id:'actual', nombre:'Bodega actual — Av. Las Torres 1277, Huechuraba',
+    { id:'actual', nombre:'Bodega arrendada — Av. Las Torres 1277, Huechuraba (HISTORICO, ya no se paga)',
       arriendoMensual: 416500, inversionInicial: 0, ubicacion:'Santiago', porCotizar:false,
-      obs:'Situacion vigente. Pago confirmado de $416.500 el 6-ago. Es el gasto fijo mas grande de la empresa.' },
+      obs:'Terminado. Ultima cuota pagada en agosto 2026 ($416.500 bruto). Fue el gasto fijo mas grande de la empresa mientras duro.' },
 
-    { id:'propia', nombre:'Bodega propia (construir)',
-      arriendoMensual: 0, inversionInicial: 1500000, ubicacion:'Santiago', porCotizar:false,
-      obs:'Supuesto que ya estaba en el modelo de proyeccion: inversion unica de $1.500.000, arriendo $0 desde ene-2027.' },
+    { id:'propia', nombre:'Bodega propia (YA CONSTRUIDA, ago-2026)',
+      arriendoMensual: 0, inversionInicial: 500000, ubicacion:'Santiago', porCotizar:false,
+      obs:'Ya no es un supuesto: se hizo en agosto 2026 por ~$500.000 (mucho menos que el $1.500.000 que se habia estimado antes), arriendo $0 desde entonces.' },
 
     { id:'stgo_chica', nombre:'Solo Santiago (bodega mas chica)',
       arriendoMensual: 0, inversionInicial: 0, ubicacion:'Santiago', porCotizar:true,

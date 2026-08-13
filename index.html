@@ -2691,9 +2691,7 @@ const PARAM_FIELDS = [
   { section: 'Servicios puntuales (neto)', key: 'servicioPuntual.alta', label: 'Temporada alta (Dic-Ene)' },
   { section: 'Servicios puntuales (neto)', key: 'servicioPuntual.media', label: 'Temporada media (Jun,Jul,Nov)' },
   { section: 'Servicios puntuales (neto)', key: 'servicioPuntual.baja', label: 'Temporada baja (resto)' },
-  { section: 'Gastos fijos mensuales', key: 'gastosFijos.arriendoBodegaJunNov2026', label: 'Arriendo bodega (Jun-Nov 2026)' },
-  { section: 'Gastos fijos mensuales', key: 'gastosFijos.arriendoBodegaDic2026', label: 'Arriendo bodega (Dic 2026)' },
-  { section: 'Gastos fijos mensuales', key: 'gastosFijos.arriendoBodegaDesde2027', label: 'Arriendo bodega (desde 2027)' },
+  { section: 'Gastos fijos mensuales', key: 'gastosFijos.arriendoMensual', label: 'Arriendo bodega (hasta último mes)' },
   { section: 'Gastos fijos mensuales', key: 'gastosFijos.gastoBodegaConstruccion.monto', label: 'Bodega nueva (construcción, único)' },
   { section: 'Gastos fijos mensuales', key: 'gastosFijos.cuotaFurgon', label: 'Cuota furgón' },
   { section: 'Gastos fijos mensuales', key: 'gastosFijos.contabilidad', label: 'Contabilidad' },
@@ -2762,9 +2760,7 @@ function calcularProyeccion(params){
     const servicioPuntual = params.servicioPuntual[temporada];
     const totalIngresos = ingresoContrato + servicioPuntual;
 
-    const arriendo = (y === 2026 && m >= 6 && m <= 11) ? params.gastosFijos.arriendoBodegaJunNov2026
-      : (y === 2026 && m === 12) ? params.gastosFijos.arriendoBodegaDic2026
-      : params.gastosFijos.arriendoBodegaDesde2027;
+    const arriendo = (mkStr <= params.gastosFijos.ultimoMesArriendo) ? params.gastosFijos.arriendoMensual : 0;
     const bodegaConstruccion = (mkStr === params.gastosFijos.gastoBodegaConstruccion.mes) ? params.gastosFijos.gastoBodegaConstruccion.monto : 0;
     const gastosFijos = arriendo + params.gastosFijos.cuotaFurgon + params.gastosFijos.contabilidad + params.gastosFijos.honorarios + bodegaConstruccion;
 
@@ -3223,13 +3219,11 @@ function renderBodega(){
   const pbPropia = propia.inversionInicial / base;
   document.getElementById('bodegaInsight').innerHTML =
     '<div class="diag-box">'
-    + 'Hoy la bodega cuesta <b>' + CLP(base) + '/mes</b> = <b>' + CLP(base*12) + ' al año</b>. '
-    + 'Es más que la cuota del furgón, la contabilidad y los honorarios <i>sumados</i>.<br><br>'
-    + 'Construir la bodega propia (' + CLP(propia.inversionInicial) + ') se paga en <b>' + pbPropia.toFixed(1) + ' meses</b> '
-    + 'de arriendo ahorrado. Dicho de otra forma: cualquier arriendo sobre <b>' + CLP(propia.inversionInicial/12) + '/mes '
-    + 'ya cuesta más en un año que construir una vez</b>.<br><br>'
-    + '<b>Antes de cerrar cualquier opción:</b> ' + BODEGA.restriccionSanitaria
-    + ' Se pagaron $595.000 por la resolución sanitaria en dic-2025, así que hay un requisito formal en juego.'
+    + '<b>Decisión ya tomada (ago-2026):</b> la bodega arrendada costaba <b>' + CLP(base) + '/mes</b> = <b>' + CLP(base*12) + ' al año</b> '
+    + '— más que la cuota del furgón, la contabilidad y los honorarios <i>sumados</i>.<br><br>'
+    + 'La bodega propia costó <b>' + CLP(propia.inversionInicial) + '</b> (mucho menos de lo que se había estimado antes, $1.500.000) '
+    + 'y ya se pagó sola en <b>' + pbPropia.toFixed(1) + ' meses</b> de arriendo ahorrado — ese gasto fijo desapareció del modelo desde ' + mesLabel(addMonths(PROYECCION_PARAMS.gastosFijos.ultimoMesArriendo, 1)) + ' en adelante.<br><br>'
+    + (BODEGA.restriccionSanitaria ? '<b>Ojo pendiente:</b> ' + BODEGA.restriccionSanitaria + ' Se pagaron $595.000 por la resolución sanitaria en dic-2025 — conviene confirmar que la bodega propia cumple ese requisito.' : '')
     + '</div>';
 }
 
@@ -4068,31 +4062,26 @@ function generarHallazgos(){
   }
 
   // --- 4. Cobertura de gastos fijos con ingreso recurrente ---
+  // Actualizado 10-ago-2026: ya no hay arriendo de bodega (última cuota ago-2026, ahora bodega propia).
   const gf = p.gastosFijos;
-  const fijosMensuales = 416500 + gf.cuotaFurgon + gf.contabilidad + gf.honorarios;
+  const fijosMensuales = gf.cuotaFurgon + gf.contabilidad + gf.honorarios;
   const cobertura = recurrente / fijosMensuales;
   H.push({ nivel: cobertura >= 1 ? 'oportunidad' : 'alerta', icon: cobertura >= 1 ? '✓' : '!',
     titulo: 'Los contratos cubren ' + PCT(cobertura) + ' de los gastos fijos',
     detalle: 'Ingreso recurrente <b>' + CLP(recurrente) + '</b>/mes contra gastos fijos de <b>' + CLP(fijosMensuales) + '</b>/mes '
-      + '(bodega ' + CLP(416500) + ' + furgón ' + CLP(gf.cuotaFurgon) + ' + contabilidad ' + CLP(gf.contabilidad) + ' + honorarios ' + CLP(gf.honorarios) + '). '
+      + '(furgón ' + CLP(gf.cuotaFurgon) + ' + contabilidad ' + CLP(gf.contabilidad) + ' + honorarios ' + CLP(gf.honorarios) + '; ya no incluye arriendo de bodega, se dejó de pagar desde ' + mesLabel(gf.ultimoMesArriendo) + '). '
       + (cobertura >= 1
           ? 'Los contratos ya sostienen la estructura fija: cada servicio puntual es margen.'
           : 'Faltan <b>' + CLP(fijosMensuales - recurrente) + '</b>/mes de ingreso recurrente para no depender de servicios puntuales. A ' + CLP(p.ticketNuevoContrato) + ' por contrato, son <b>' + Math.ceil((fijosMensuales-recurrente)/p.ticketNuevoContrato) + ' contratos nuevos</b>.') });
 
-  // --- 5. Arriendo real vs proyección ---
-  if(Math.abs(416500 - p.gastosFijos.arriendoBodegaJunNov2026) > 1000){
-    H.push({ nivel:'info', icon:'i', titulo:'La proyección subestima el arriendo de bodega',
-      detalle: 'El pago real de agosto es <b>' + CLP(416500) + '</b>, pero la proyección usa ' + CLP(p.gastosFijos.arriendoBodegaJunNov2026) + '. '
-        + 'Diferencia de ' + CLP(416500 - p.gastosFijos.arriendoBodegaJunNov2026) + '/mes. Conviene actualizar el parámetro en la pestaña Proyección.' });
-  }
-
-  // --- 6. Bodega propia: payback ---
+  // --- 5/6. Bodega propia: ya pasó, no es una opción a evaluar (actualizado 10-ago-2026) ---
   const inv = p.gastosFijos.gastoBodegaConstruccion.monto;
-  const payback = inv / 416500;
-  H.push({ nivel:'oportunidad', icon:'★', titulo:'La bodega propia se paga sola en ' + payback.toFixed(1) + ' meses',
-    detalle: 'Invertir <b>' + CLP(inv) + '</b> en bodega propia elimina un arriendo de <b>' + CLP(416500) + '</b>/mes. '
-      + 'Se recupera en ' + payback.toFixed(1) + ' meses y libera ' + CLP(416500*12) + ' al año. '
-      + 'Es la palanca de rentabilidad más grande del modelo — pero requiere tener la caja resuelta primero.' });
+  const arriendoViejo = p.gastosFijos.arriendoMensual;
+  const paybackReal = inv / (arriendoViejo * 1.19); // en pesos de caja real (con IVA), que es como se pagaba el arriendo
+  H.push({ nivel:'oportunidad', icon:'★', titulo:'La mudanza a bodega propia se pagó sola en ' + paybackReal.toFixed(1) + ' meses',
+    detalle: 'La última cuota de arriendo fue en ' + mesLabel(p.gastosFijos.ultimoMesArriendo) + ' (' + CLP(Math.round(arriendoViejo*1.19)) + '/mes con IVA). '
+      + 'La bodega propia costó ' + CLP(inv) + ', mucho menos de lo que se había estimado antes (' + CLP(1500000) + ') — se recupera en solo ' + paybackReal.toFixed(1) + ' meses '
+      + 'y libera ' + CLP(Math.round(arriendoViejo*1.19*12)) + '/año que antes se iban en arriendo.' });
 
   // --- 7. Concentración de clientes ---
   if(contratosActivos.length){

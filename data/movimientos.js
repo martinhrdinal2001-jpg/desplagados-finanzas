@@ -3093,7 +3093,7 @@ const MOVIMIENTOS = [
     "fechaPago": "2026-08-09",
     "medioPago": "Tarjeta",
     "factura": null,
-    "obs": "Corregido 10-ago-2026: reportado como $416.500 (bruto, tarjeta) via WhatsApp; se guarda neto ($416.500 ÷ 1,19 = $350.000 exacto). Es el primer pago mensual fuera del prepago de 6 meses de enero. Ojo: en la proyección (data/proyeccion.js) el arriendo se sigue modelando en $416.500 porque ahí representa el gasto de caja real (con IVA), no el neto contable."
+    "obs": "Corregido 10-ago-2026: reportado como $416.500 (bruto, tarjeta) via WhatsApp; se guarda neto ($416.500 ÷ 1,19 = $350.000 exacto). Es el primer pago mensual fuera del prepago de 6 meses de enero. CONFIRMADO por el usuario el mismo 10-ago-2026: esta fue la ULTIMA cuota de la bodega arrendada -- desde este mes la empresa opera desde bodega propia, no hay mas arriendo mensual. La proyección (data/proyeccion.js) ya quedó actualizada para reflejar esto."
   },
   {
     "id": 223,
