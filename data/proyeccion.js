@@ -21,27 +21,26 @@ const PROYECCION_PARAMS = {
   // comercial en los primeros meses, se usa ese monto durante esos meses y despues pasa a
   // `montoMensual` (tarifa normal). Ver calcularProyeccion().
   //
-  // ACTUALIZADO 10-ago-2026: cotizacion FORMAL de Club Manquehue (PDF, 10-ago-2026) dice
-  // $800.000 + IVA normal, con 20% de descuento comercial los primeros 3 meses ($640.000 + IVA).
-  // Esto corrige el $850.000 que se habia puesto el 07-ago (dicho de palabra, sin la cotizacion
-  // formal a la vista). El usuario confirma que ambos prospectos (Manquehue y Aerodromo Vitacura)
-  // salen "si o si" -- empiezan en ~1 mes (sep-2026) y el primer ingreso cae en ~2 meses (oct-2026).
+  // ACTUALIZADO 10-ago-2026: Club Manquehue NO se cerro -- el proveedor actual les funciona
+  // bien y no se quisieron cambiar (confirmado por el usuario). Se saco del escenario.
+  // Aerodromo Vitacura sigue en pie, sin cambios.
+  // Nuevo prospecto agregado: edificio en construccion (84 deptos), $1.457.000 + IVA/mes
+  // cotizado, aun sin aceptar -- se deja `activo:false` (no confirmado) para no inflar el
+  // escenario base; activarlo manualmente en pantalla para ver el efecto si se acepta.
   prospectosGrandes: [
-    {
-      nombre: 'Club Manquehue (Vitacura)',
-      montoMensual: 800000,          // tarifa normal desde el 4to mes -- COTIZACION FORMAL (PDF 10-ago-2026), neto (+IVA aparte)
-      montoMensualInicial: 640000,   // descuento comercial 20% los primeros 3 meses -- misma cotizacion
-      mesesDescuento: 3,
-      desde: '2026-10',              // inicio esperado
-      activo: true,                  // el usuario dice que sale "si o si"
-    },
     {
       nombre: 'Aerodromo Vitacura (club de aviadores)',
       montoMensual: 465631,          // tarifa normal: 11,4 UF/mes a UF $40.844,79 (06-ago-2026); reajustar con la UF vigente
       montoMensualInicial: 372504,   // 9,12 UF/mes los primeros 3 meses, misma UF de referencia
       mesesDescuento: 3,
-      desde: '2026-10',              // mismo timing que Manquehue
+      desde: '2026-10',
       activo: true,
+    },
+    {
+      nombre: 'Edificio nuevo en construccion (84 deptos)',
+      montoMensual: 1457000,         // cotizado 10-ago-2026, $1.457.000 + IVA/mes, neto (+IVA aparte)
+      desde: '2026-11',              // estimado: edificio aun en construccion, inicio no confirmado -- ajustar cuando se sepa
+      activo: false,                 // AUN NO ACEPTADO -- no se incluye en el escenario base
     },
   ],
 

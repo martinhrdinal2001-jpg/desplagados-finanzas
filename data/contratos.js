@@ -226,11 +226,11 @@ const CONTRATOS = [
     "cliente": "Club Manquehue (Vitacura)",
     "tipoServicio": "Servicio Integral",
     "frecuencia": "Mensual",
-    "montoMensual": 800000,
-    "inicio": "2026-10-01",
-    "estado": "Negociando",
+    "montoMensual": null,
+    "inicio": null,
+    "estado": "Perdido",
     "tipoCliente": "Club deportivo",
-    "obs": "COTIZACION FORMAL (PDF 10-ago-2026): $800.000 + IVA mensual normal, con 20% de descuento comercial los primeros 3 meses ($640.000 + IVA). Corrige el $850.000 dicho de palabra el 07-ago (sin la cotizacion formal a la vista) y el $458.000 de plantilla de Costos.xlsx (04-ago). La empresa que hoy los atiende cobra aprox $1.100.000/mes. Empieza en ~1 mes (sep-2026), primer ingreso en ~2 meses (oct-2026). Seria por lejos el contrato mas grande. Activado en el escenario de la pestana Proyeccion, con el descuento inicial modelado."
+    "obs": "PERDIDO (confirmado por el usuario 10-ago-2026): el proveedor actual (~$1.100.000/mes) les funciona bien y no se quisieron cambiar. Se llego a tener cotizacion formal en firme ($800.000 + IVA, PDF 10-ago-2026) pero no se cerro. Desactivado del escenario de Proyeccion."
   },
   {
     "cliente": "Terrazas de la Reina",
@@ -264,5 +264,16 @@ const CONTRATOS = [
     "tipoCliente": "Empresa",
     "obs": "Nuevo, encontrado en Costos.xlsx (04-ago-2026). Costo directo modelado ~$40.434/mes. Sin ingreso cotizado registrado. Cotizacion enviada hace tiempo; quedo pendiente el permiso de caza de conejos (en tramite, confirmado 04-ago-2026). No esta claro si se perdio el cliente por la demora.",
     "id": 24
+  },
+  {
+    "cliente": "Edificio nuevo en construccion (84 deptos)",
+    "tipoServicio": "Servicio Integral",
+    "frecuencia": "Mensual",
+    "montoMensual": 1457000,
+    "inicio": null,
+    "estado": "Negociando",
+    "tipoCliente": "Edificio",
+    "obs": "Nuevo prospecto (10-ago-2026): edificio en construccion, 84 departamentos. Cotizacion enviada por el edificio completo: $1.457.000 + IVA/mes. Aun sin aceptar, pero el usuario lo ve muy probable. Pendiente: nombre/direccion del edificio y la cotizacion formal en PDF para verificar detalle (posible descuento inicial, fecha de entrega del edificio, etc. -- no confirmado todavia). Seria el segundo contrato mas grande despues de Fanadego.",
+    "id": 25
   }
 ];

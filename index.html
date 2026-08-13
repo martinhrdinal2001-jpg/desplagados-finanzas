@@ -1860,7 +1860,8 @@ function renderChartTemporada(){
 
 function renderContratos(){
   const activos = CONTRATOS.filter(c => c.estado === 'Activo').sort((a,b) => (b.montoMensual||0)-(a.montoMensual||0));
-  const negociando = CONTRATOS.filter(c => c.estado !== 'Activo');
+  const negociando = CONTRATOS.filter(c => c.estado === 'Negociando');
+  const perdidos = CONTRATOS.filter(c => c.estado !== 'Activo' && c.estado !== 'Negociando');
 
   let html = '<table><thead><tr><th>Cliente</th><th>Servicio</th><th>Frecuencia</th><th>Monto mensual</th><th>Estado</th><th>Observaciones</th></tr></thead><tbody>';
   activos.forEach(c => {
@@ -1868,6 +1869,9 @@ function renderContratos(){
   });
   negociando.forEach(c => {
     html += '<tr><td>' + c.cliente + '</td><td>' + (c.tipoServicio||'—') + '</td><td>' + (c.frecuencia||'—') + '</td><td>' + CLP(c.montoMensual) + '</td><td><span class="pill negociando">Negociando</span></td><td style="text-align:left">' + (c.obs||'') + '</td></tr>';
+  });
+  perdidos.forEach(c => {
+    html += '<tr style="opacity:.55"><td>' + c.cliente + '</td><td>' + (c.tipoServicio||'—') + '</td><td>' + (c.frecuencia||'—') + '</td><td>' + CLP(c.montoMensual) + '</td><td><span class="pill" style="background:#e5e5e5;color:#666">' + (c.estado||'—') + '</span></td><td style="text-align:left">' + (c.obs||'') + '</td></tr>';
   });
   html += '</tbody></table>';
   document.getElementById('contratosTable').innerHTML = html;
