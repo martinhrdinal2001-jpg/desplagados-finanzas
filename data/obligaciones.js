@@ -48,6 +48,35 @@ const DEUDAS = [
        + 'Al ser deuda familiar probablemente no tiene interes, pero conviene confirmar '
        + 'si hay un documento con el total y el plazo exacto.',
   },
+  {
+    id: 'credito_hrdina',
+    nombre: 'Crédito de consumo (vía Martín Hrdina)',
+    acreedor: 'Banco → Martín Hrdina (socio) → Desplagados',
+    cuotaMensual: 128387,
+    primerPago: '2026-09',
+    ultimoPago: '2027-03',
+    categoriaMovimiento: 'Cuota crédito', // para contar cuotas ya pagadas desde movimientos.js
+    montoOriginal: 800000,
+    tasaMensual: 0.03,          // 3,0% mensual efectiva -> ~42,5% anual
+    interesTotal: 98846,
+    obs: 'Tomado el 17-ago-2026. Martin Hrdina saco el credito a su nombre personal y presto los '
+       + '$800.000 a la empresa, que los recibio en caja (ver movimientos.js id 231). La EMPRESA paga '
+       + 'las 7 cuotas. Es caro: 3,0% mensual, ~42,5% anual, $98.846 de interes total. '
+       + 'OJO: el titular ante el banco es Martin Hrdina, no Desplagados — si la empresa no puede pagar '
+       + 'una cuota, el que queda en DICOM es el. Conviene priorizar esta cuota por sobre otros pagos.',
+    // Tabla de amortizacion (3,0% mensual sobre saldo insoluto). El INTERES es gasto financiero;
+    // el CAPITAL es amortizacion de deuda (bajo la linea, no es gasto). Sirve para el EERR del banco,
+    // donde la linea "Gastos Financieros" ya no puede ir en 0.
+    amortizacion: [
+      { mes: '2026-09', cuota: 128387, interes: 24000, capital: 104387, saldo: 695613 },
+      { mes: '2026-10', cuota: 128387, interes: 20868, capital: 107519, saldo: 588094 },
+      { mes: '2026-11', cuota: 128387, interes: 17643, capital: 110744, saldo: 477350 },
+      { mes: '2026-12', cuota: 128387, interes: 14320, capital: 114067, saldo: 363283 },
+      { mes: '2027-01', cuota: 128387, interes: 10898, capital: 117489, saldo: 245794 },
+      { mes: '2027-02', cuota: 128387, interes:  7374, capital: 121013, saldo: 124781 },
+      { mes: '2027-03', cuota: 128387, interes:  3743, capital: 124781, saldo:      0 },
+    ],
+  },
   // Agregar aca cualquier otro credito o deuda cuando el usuario pase los datos:
   // { id:'...', nombre:'...', acreedor:'...', cuotaMensual:0, primerPago:'AAAA-MM',
   //   ultimoPago:'AAAA-MM', categoriaMovimiento:null, obs:'...' },

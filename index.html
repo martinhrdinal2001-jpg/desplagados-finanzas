@@ -1148,6 +1148,14 @@ function renderWarnBox(){
 // Costo del servicio = lo que escala con cada trabajo (decidido con el usuario 03-ago-2026).
 const CATS_COSTO_SERVICIO = ['Insumos/productos', 'Combustible', 'Instalación inicial'];
 
+// Movimientos que entran o salen de la caja pero NO son venta ni gasto del negocio:
+// prestamos, aportes de socios, reembolsos. Cuentan para la liquidez pero no para el
+// Estado de Resultados, ni para el IVA, ni para los graficos de ingresos.
+// Agregado 17-ago-2026 con el credito de $800.000 de Martin Hrdina; de paso corrige que
+// el reembolso "debia Hrdina a caja" ($80.000, jun-2026) venia contandose como venta.
+const CATS_NO_OPERACIONAL = ['Préstamo de socio', 'debía Hrdina a caja'];
+const esOperacional = m => !CATS_NO_OPERACIONAL.includes(m.categoria);
+
 function mesesConDatos(){ return meses.filter(m => m !== 'SIN_FECHA'); }
 
 function calcularPL(mkFiltro){
@@ -1160,8 +1168,8 @@ function calcularPL(mkFiltro){
     return Object.entries(g).sort((a,b) => b[1]-a[1]);
   }
 
-  const ingresos = movs.filter(m => m.tipo === 'Ingreso');
-  const gastos   = movs.filter(m => m.tipo === 'Gasto');
+  const ingresos = movs.filter(m => m.tipo === 'Ingreso' && esOperacional(m));
+  const gastos   = movs.filter(m => m.tipo === 'Gasto' && esOperacional(m));
   const costoMovs = gastos.filter(m => CATS_COSTO_SERVICIO.includes(m.categoria));
   const opexMovs  = gastos.filter(m => !CATS_COSTO_SERVICIO.includes(m.categoria));
 
@@ -1294,7 +1302,7 @@ function calcularIvaMes(mk){
   // Control: cuanto seria el debito si TODO el ingreso registrado estuviera facturado.
   // Si es bastante mayor que el debito real, o faltan facturas en el respaldo o hay
   // ingresos que no se facturaron. En ambos casos el IVA real a pagar seria mas alto.
-  const ingresosMes = validos.filter(m => m.tipo === 'Ingreso' && m.fecha && mesKey(m.fecha) === mk)
+  const ingresosMes = validos.filter(m => m.tipo === 'Ingreso' && esOperacional(m) && m.fecha && mesKey(m.fecha) === mk)
                              .reduce((s,m) => s + m.monto, 0);
   const debitoTeorico = ingresosMes * IVA_CONFIG.tasa;
 
@@ -1791,7 +1799,7 @@ function renderChartVentasMargen(){
 function renderChartRecurrentePuntual(){
   const ms = mesesConDatos();
   const groups = ms.map(mk => {
-    const ingresosMes = validos.filter(m => m.tipo==='Ingreso' && m.fecha && mesKey(m.fecha)===mk);
+    const ingresosMes = validos.filter(m => m.tipo==='Ingreso' && esOperacional(m) && m.fecha && mesKey(m.fecha)===mk);
     const recurrente = ingresosMes.filter(m => m.categoria==='Contrato mensual').reduce((s,m)=>s+m.monto,0);
     const puntual = ingresosMes.filter(m => m.categoria!=='Contrato mensual').reduce((s,m)=>s+m.monto,0);
     return { label: mesLabel(mk), bars: [
@@ -1828,8 +1836,8 @@ function renderChartIngGas(targetId){
   if(!cont) return;
   const mesesReales = meses.filter(m => m !== 'SIN_FECHA');
   const groups = mesesReales.map(mk => {
-    const ing = validos.filter(m => m.tipo==='Ingreso' && m.fecha && mesKey(m.fecha)===mk).reduce((s,m)=>s+m.monto,0);
-    const gas = validos.filter(m => m.tipo==='Gasto' && m.fecha && mesKey(m.fecha)===mk).reduce((s,m)=>s+m.monto,0);
+    const ing = validos.filter(m => m.tipo==='Ingreso' && esOperacional(m) && m.fecha && mesKey(m.fecha)===mk).reduce((s,m)=>s+m.monto,0);
+    const gas = validos.filter(m => m.tipo==='Gasto' && esOperacional(m) && m.fecha && mesKey(m.fecha)===mk).reduce((s,m)=>s+m.monto,0);
     return { label: mesLabel(mk), bars: [
       { value: ing, color: 'var(--up-fg)', title: mesLabel(mk) + ' · Ingresos: ' + CLP(ing), mes: mk, tipo:'Ingreso' },
       { value: gas, color: 'var(--dn-fg)', title: mesLabel(mk) + ' · Gastos: ' + CLP(gas),   mes: mk, tipo:'Gasto' },

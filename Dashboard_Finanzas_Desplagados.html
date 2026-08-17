@@ -3131,6 +3131,104 @@ const MOVIMIENTOS = [
     "medioPago": "Tarjeta",
     "factura": null,
     "obs": "Corregido 10-ago-2026: reportado como $29.990 (bruto, tarjeta) via WhatsApp; se guarda neto ($29.990 ÷ 1,19 = $25.202)."
+  },
+  {
+    "id": 225,
+    "fecha": "2026-08-10",
+    "tipo": "Gasto",
+    "categoria": "Insumos/productos",
+    "descripcion": "Stickers",
+    "fijoVariable": "Variable",
+    "monto": 96000.0,
+    "estado": "Pagado",
+    "fechaPago": "2026-08-10",
+    "medioPago": null,
+    "factura": null,
+    "obs": "Reportado como $114.240 (bruto) via WhatsApp el 10-ago; neto $114.240 / 1,19 = $96.000 exacto. Misma categoria que los stickers de feb y may-2026."
+  },
+  {
+    "id": 226,
+    "fecha": "2026-08-10",
+    "tipo": "Gasto",
+    "categoria": "Mantención auto",
+    "descripcion": "TAG Autopistas",
+    "fijoVariable": "Variable",
+    "monto": 11508.0,
+    "estado": "Pagado",
+    "fechaPago": "2026-08-10",
+    "medioPago": null,
+    "factura": null,
+    "obs": "Reportado como $13.694 (bruto) via WhatsApp el 10-ago; neto $11.508. Misma categoria que los TAG de feb y may-2026."
+  },
+  {
+    "id": 227,
+    "fecha": "2026-08-10",
+    "tipo": "Gasto",
+    "categoria": "Sueldo",
+    "descripcion": "Pago imposiciones",
+    "fijoVariable": "Fijo",
+    "monto": 78848.0,
+    "estado": "Pagado",
+    "fechaPago": "2026-08-10",
+    "medioPago": null,
+    "factura": null,
+    "obs": "Reportado como $78.848 via WhatsApp el 10-ago. NO se le saco IVA: las cotizaciones previsionales (AFP/salud) no son una compra afecta a IVA. Va en Sueldo por ser costo de remuneraciones."
+  },
+  {
+    "id": 228,
+    "fecha": "2026-08-11",
+    "tipo": "Gasto",
+    "categoria": "Insumos/productos",
+    "descripcion": "Optigard gel",
+    "fijoVariable": "Variable",
+    "monto": 13361.0,
+    "estado": "Pagado",
+    "fechaPago": "2026-08-11",
+    "medioPago": null,
+    "factura": null,
+    "obs": "Reportado como $15.900 (bruto) via WhatsApp el martes 11-ago; neto $13.361."
+  },
+  {
+    "id": 229,
+    "fecha": "2026-08-11",
+    "tipo": "Gasto",
+    "categoria": "Insumos/productos",
+    "descripcion": "Cebo hormigas",
+    "fijoVariable": "Variable",
+    "monto": 5874.0,
+    "estado": "Pagado",
+    "fechaPago": "2026-08-11",
+    "medioPago": null,
+    "factura": null,
+    "obs": "Reportado como $6.990 (bruto) via WhatsApp el martes 11-ago; neto $5.874."
+  },
+  {
+    "id": 230,
+    "fecha": "2026-08-17",
+    "tipo": "Gasto",
+    "categoria": "Combustible",
+    "descripcion": "Diesel",
+    "fijoVariable": "Variable",
+    "monto": 31941.0,
+    "estado": "Pagado",
+    "fechaPago": "2026-08-17",
+    "medioPago": null,
+    "factura": null,
+    "obs": "Reportado como $38.010 (bruto) via WhatsApp hoy 17-ago; neto $31.941."
+  },
+  {
+    "id": 231,
+    "fecha": "2026-08-17",
+    "tipo": "Ingreso",
+    "categoria": "Préstamo de socio",
+    "descripcion": "Crédito personal de Martín Hrdina prestado a la empresa",
+    "fijoVariable": null,
+    "monto": 800000.0,
+    "estado": "Pagado",
+    "fechaPago": "2026-08-17",
+    "medioPago": "Transferencia",
+    "factura": null,
+    "obs": "NO ES UNA VENTA. Martin Hrdina saco un credito de consumo a su nombre ($800.000, 7 cuotas de $128.387, 3,0% mensual / ~42,5% anual) y presto el dinero a Desplagados, que lo recibio en caja. La empresa paga las cuotas. Va con categoria 'Prestamo de socio', que esta en CATS_NO_OPERACIONAL: entra a la caja pero no cuenta como ingreso del negocio ni genera IVA. La deuda esta en data/obligaciones.js -> DEUDAS."
   }
 ];
 
@@ -4034,6 +4132,35 @@ const DEUDAS = [
     obs: 'Cuotas de $250.000 mensuales. Las primeras venian numeradas (N°1 a N°5). '
        + 'Al ser deuda familiar probablemente no tiene interes, pero conviene confirmar '
        + 'si hay un documento con el total y el plazo exacto.',
+  },
+  {
+    id: 'credito_hrdina',
+    nombre: 'Crédito de consumo (vía Martín Hrdina)',
+    acreedor: 'Banco → Martín Hrdina (socio) → Desplagados',
+    cuotaMensual: 128387,
+    primerPago: '2026-09',
+    ultimoPago: '2027-03',
+    categoriaMovimiento: 'Cuota crédito', // para contar cuotas ya pagadas desde movimientos.js
+    montoOriginal: 800000,
+    tasaMensual: 0.03,          // 3,0% mensual efectiva -> ~42,5% anual
+    interesTotal: 98846,
+    obs: 'Tomado el 17-ago-2026. Martin Hrdina saco el credito a su nombre personal y presto los '
+       + '$800.000 a la empresa, que los recibio en caja (ver movimientos.js id 231). La EMPRESA paga '
+       + 'las 7 cuotas. Es caro: 3,0% mensual, ~42,5% anual, $98.846 de interes total. '
+       + 'OJO: el titular ante el banco es Martin Hrdina, no Desplagados — si la empresa no puede pagar '
+       + 'una cuota, el que queda en DICOM es el. Conviene priorizar esta cuota por sobre otros pagos.',
+    // Tabla de amortizacion (3,0% mensual sobre saldo insoluto). El INTERES es gasto financiero;
+    // el CAPITAL es amortizacion de deuda (bajo la linea, no es gasto). Sirve para el EERR del banco,
+    // donde la linea "Gastos Financieros" ya no puede ir en 0.
+    amortizacion: [
+      { mes: '2026-09', cuota: 128387, interes: 24000, capital: 104387, saldo: 695613 },
+      { mes: '2026-10', cuota: 128387, interes: 20868, capital: 107519, saldo: 588094 },
+      { mes: '2026-11', cuota: 128387, interes: 17643, capital: 110744, saldo: 477350 },
+      { mes: '2026-12', cuota: 128387, interes: 14320, capital: 114067, saldo: 363283 },
+      { mes: '2027-01', cuota: 128387, interes: 10898, capital: 117489, saldo: 245794 },
+      { mes: '2027-02', cuota: 128387, interes:  7374, capital: 121013, saldo: 124781 },
+      { mes: '2027-03', cuota: 128387, interes:  3743, capital: 124781, saldo:      0 },
+    ],
   },
   // Agregar aca cualquier otro credito o deuda cuando el usuario pase los datos:
   // { id:'...', nombre:'...', acreedor:'...', cuotaMensual:0, primerPago:'AAAA-MM',
@@ -7044,6 +7171,14 @@ function renderWarnBox(){
 // Costo del servicio = lo que escala con cada trabajo (decidido con el usuario 03-ago-2026).
 const CATS_COSTO_SERVICIO = ['Insumos/productos', 'Combustible', 'Instalación inicial'];
 
+// Movimientos que entran o salen de la caja pero NO son venta ni gasto del negocio:
+// prestamos, aportes de socios, reembolsos. Cuentan para la liquidez pero no para el
+// Estado de Resultados, ni para el IVA, ni para los graficos de ingresos.
+// Agregado 17-ago-2026 con el credito de $800.000 de Martin Hrdina; de paso corrige que
+// el reembolso "debia Hrdina a caja" ($80.000, jun-2026) venia contandose como venta.
+const CATS_NO_OPERACIONAL = ['Préstamo de socio', 'debía Hrdina a caja'];
+const esOperacional = m => !CATS_NO_OPERACIONAL.includes(m.categoria);
+
 function mesesConDatos(){ return meses.filter(m => m !== 'SIN_FECHA'); }
 
 function calcularPL(mkFiltro){
@@ -7056,8 +7191,8 @@ function calcularPL(mkFiltro){
     return Object.entries(g).sort((a,b) => b[1]-a[1]);
   }
 
-  const ingresos = movs.filter(m => m.tipo === 'Ingreso');
-  const gastos   = movs.filter(m => m.tipo === 'Gasto');
+  const ingresos = movs.filter(m => m.tipo === 'Ingreso' && esOperacional(m));
+  const gastos   = movs.filter(m => m.tipo === 'Gasto' && esOperacional(m));
   const costoMovs = gastos.filter(m => CATS_COSTO_SERVICIO.includes(m.categoria));
   const opexMovs  = gastos.filter(m => !CATS_COSTO_SERVICIO.includes(m.categoria));
 
@@ -7190,7 +7325,7 @@ function calcularIvaMes(mk){
   // Control: cuanto seria el debito si TODO el ingreso registrado estuviera facturado.
   // Si es bastante mayor que el debito real, o faltan facturas en el respaldo o hay
   // ingresos que no se facturaron. En ambos casos el IVA real a pagar seria mas alto.
-  const ingresosMes = validos.filter(m => m.tipo === 'Ingreso' && m.fecha && mesKey(m.fecha) === mk)
+  const ingresosMes = validos.filter(m => m.tipo === 'Ingreso' && esOperacional(m) && m.fecha && mesKey(m.fecha) === mk)
                              .reduce((s,m) => s + m.monto, 0);
   const debitoTeorico = ingresosMes * IVA_CONFIG.tasa;
 
@@ -7687,7 +7822,7 @@ function renderChartVentasMargen(){
 function renderChartRecurrentePuntual(){
   const ms = mesesConDatos();
   const groups = ms.map(mk => {
-    const ingresosMes = validos.filter(m => m.tipo==='Ingreso' && m.fecha && mesKey(m.fecha)===mk);
+    const ingresosMes = validos.filter(m => m.tipo==='Ingreso' && esOperacional(m) && m.fecha && mesKey(m.fecha)===mk);
     const recurrente = ingresosMes.filter(m => m.categoria==='Contrato mensual').reduce((s,m)=>s+m.monto,0);
     const puntual = ingresosMes.filter(m => m.categoria!=='Contrato mensual').reduce((s,m)=>s+m.monto,0);
     return { label: mesLabel(mk), bars: [
@@ -7724,8 +7859,8 @@ function renderChartIngGas(targetId){
   if(!cont) return;
   const mesesReales = meses.filter(m => m !== 'SIN_FECHA');
   const groups = mesesReales.map(mk => {
-    const ing = validos.filter(m => m.tipo==='Ingreso' && m.fecha && mesKey(m.fecha)===mk).reduce((s,m)=>s+m.monto,0);
-    const gas = validos.filter(m => m.tipo==='Gasto' && m.fecha && mesKey(m.fecha)===mk).reduce((s,m)=>s+m.monto,0);
+    const ing = validos.filter(m => m.tipo==='Ingreso' && esOperacional(m) && m.fecha && mesKey(m.fecha)===mk).reduce((s,m)=>s+m.monto,0);
+    const gas = validos.filter(m => m.tipo==='Gasto' && esOperacional(m) && m.fecha && mesKey(m.fecha)===mk).reduce((s,m)=>s+m.monto,0);
     return { label: mesLabel(mk), bars: [
       { value: ing, color: 'var(--up-fg)', title: mesLabel(mk) + ' · Ingresos: ' + CLP(ing), mes: mk, tipo:'Ingreso' },
       { value: gas, color: 'var(--dn-fg)', title: mesLabel(mk) + ' · Gastos: ' + CLP(gas),   mes: mk, tipo:'Gasto' },
