@@ -1,20 +1,29 @@
 // Estado de caja, cuentas por cobrar y compromisos futuros conocidos.
 // Actualizar cada vez que el socio informe el saldo o se sepa de un pago/cobro con fecha.
 const CAJA = {
-  // Saldo REAL informado por el usuario el 03-ago-2026.
+  // Saldo REAL informado por el usuario el 17-ago-2026: $903.000, ya incluyendo los $800.000
+  // del credito que entro ese mismo dia.
   //
-  // CUADRADO al 03-ago-2026. Partiendo de los $190.000 del 29-jul y sumando lo registrado
-  // (Ferrocentro 299.880 + Janssen 193.970 + TGC 124.534 - Regalo Franca 17.800 - Patrol 49.937,
-  // todo a valor de cuenta o sea con IVA en los ingresos) da $740.646 contra $753.743 reales.
-  // Los $13.096 de diferencia se explican solos: los "190 lucas" del 29-jul eran una cifra
-  // redondeada del socio; el saldo exacto de ese dia habria sido $203.096. No falta ningun
-  // movimiento por registrar.
+  // NO CUADRA DEL TODO — hay $39.166 MAS en la cuenta de lo que explican los movimientos.
+  // Partiendo de los $753.743 del 03-ago y aplicando todo lo registrado desde entonces a valor
+  // de cuenta (con IVA en lo afecto): -38.799 Cyperkill, -11.937 SAG, -416.500 arriendo,
+  // +75.000 Torres, -29.990 pulverizador, -114.240 stickers, -13.695 TAG, -78.848 imposiciones,
+  // -15.900 Optigard, -6.990 cebo, -38.010 diesel, +800.000 credito => $863.834.
+  // Contra los $903.000 reales quedan $39.166 sin explicar, y la diferencia es POSITIVA, o sea
+  // entro plata que no esta registrada. No calza exacto con ningun contrato activo: lo mas
+  // cercano es Mar del Sur + Irma Dupont ($37.684) o Burgerholic ($41.674). PREGUNTADO AL
+  // USUARIO el 17-ago-2026, pendiente de respuesta. No inventar el movimiento: cuando se sepa
+  // cual es, se registra y esto deberia cuadrar solo.
+  //
+  // Contexto: que en agosto solo figure TGC como pago de contrato es normal — con un DSO real de
+  // 28-49 dias, la mayoria de los contratos de agosto se cobran a fines de agosto o en septiembre.
   //
   // OJO al cuadrar: la cuenta bancaria se mueve por montos CON IVA, mientras que movimientos.js
   // guarda NETOS. Comparar netos contra el saldo del banco da diferencias falsas.
-  saldoActual: 753743,
-  fechaSaldo: '2026-08-03',
-  fuente: 'Saldo real informado por el usuario el 03-ago-2026',
+  saldoActual: 903000,
+  fechaSaldo: '2026-08-17',
+  fuente: 'Saldo real informado por el usuario el 17-ago-2026 (incluye los $800.000 del credito)',
+  descuadreSinExplicar: 39166, // ver comentario de arriba; resolver cuando el usuario confirme
 
   ivaTasa: 0.19,
   // Umbral de caja bajo el cual se considera riesgo de liquidez (colchón mínimo deseado).
