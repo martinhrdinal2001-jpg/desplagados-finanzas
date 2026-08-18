@@ -33,9 +33,30 @@ const CAJA = {
   //   - Ferrocentro: junio+julio juntos el 30-jul ($299.880)
   //   - Janssen Maquinaria: factura N29 el viernes 31-jul ($193.970)
   //   - Bunsa (Grupo Janssen)
+  // ACTUALIZADO 17-ago-2026 con la lista de pendientes que paso el socio por WhatsApp.
+  // Criterio de IVA usado: el socio escribio "200.000 + IVA" SOLO para Edificio Bicentenario,
+  // asi que ese monto es neto; los demas los reporto sin aclaracion, o sea brutos (regla
+  // acordada con el usuario). Calza con la logica del negocio: a empresa se cotiza neto+IVA,
+  // a cliente residencial se le da el precio final. CONFIRMAR con el usuario si algun caso
+  // esta al reves.
   cuentasPorCobrar: [
+    { cliente: 'Janssen Maquinaria (sede San Bernardo)', neto: 163000, iva: true, folio: null, fechaFactura: null,
+      obs: 'Servicio de julio, pendiente de pago. La factura N29 (09-jul) ya se cobro el 31-jul; esta es la siguiente, '
+         + 'que no esta en el respaldo de facturas — probablemente es uno de los 8 folios que faltan.' },
+    { cliente: 'Bunsa (sede Cerrillos)', neto: 155000, iva: true, folio: 32, fechaFactura: '2026-07-19',
+      obs: 'Factura N32 del 19-jul sin pagar. La N27 (02-jul) si se cobro el 18-jul.' },
     { cliente: 'De Costa a Costa', neto: 30000, iva: true, folio: 21, fechaFactura: '2026-06-25',
-      obs: 'Factura N21 del 25-jun sin pagar. Ademas NO se ha emitido la factura de julio.' },
+      obs: 'Factura N21 del 25-jun sin pagar. Es la mas antigua de todas las cuentas por cobrar.' },
+    { cliente: 'De Costa a Costa', neto: 30000, iva: true, folio: null, fechaFactura: null,
+      obs: 'Servicio de julio. OJO: la factura todavia NO se ha emitido — no se puede cobrar lo que no se factura.' },
+    { cliente: 'Aplicación hormigas', neto: 105042, iva: true, folio: null, fechaFactura: null,
+      obs: 'Servicio puntual. Reportado como $125.000 (bruto) por WhatsApp; neto $105.042. Cliente no identificado todavia.' },
+    { cliente: 'Edificio Bicentenario', neto: 200000, iva: true, folio: null, fechaFactura: null,
+      obs: 'Servicio puntual. Reportado como "200.000 + IVA", o sea el neto es $200.000. Cliente NUEVO, no esta en contratos. '
+         + 'Confirmar si es puntual o si va a ser recurrente: a $200.000/mes seria el 4to contrato mas grande.' },
+    { cliente: 'Ale Navarro (departamento)', neto: 55882, iva: true, folio: null, fechaFactura: null,
+      obs: 'Fumigacion de departamento hecha el 17-ago. Reportado como $66.500 (bruto); neto $55.882. '
+         + 'El socio menciono ademas otra casa para el 18-ago y otra el jueves 20-ago, ambas sin monto todavia.' },
   ],
 
   // Obligaciones que se sabe que existen pero sin fecha confirmada todavia.
