@@ -3743,30 +3743,30 @@ const PROYECCION_PARAMS = {
 // Estado de caja, cuentas por cobrar y compromisos futuros conocidos.
 // Actualizar cada vez que el socio informe el saldo o se sepa de un pago/cobro con fecha.
 const CAJA = {
-  // Saldo REAL informado por el usuario el 17-ago-2026: $903.000, ya incluyendo los $800.000
-  // del credito que entro ese mismo dia.
+  // Saldo REAL informado por el usuario el 19-ago-2026: $874.000.
   //
-  // NO CUADRA DEL TODO — hay $39.166 MAS en la cuenta de lo que explican los movimientos.
-  // Partiendo de los $753.743 del 03-ago y aplicando todo lo registrado desde entonces a valor
-  // de cuenta (con IVA en lo afecto): -38.799 Cyperkill, -11.937 SAG, -416.500 arriendo,
-  // +75.000 Torres, -29.990 pulverizador, -114.240 stickers, -13.695 TAG, -78.848 imposiciones,
-  // -15.900 Optigard, -6.990 cebo, -38.010 diesel, +800.000 credito => $863.834.
-  // Contra los $903.000 reales quedan $39.166 sin explicar, y la diferencia es POSITIVA, o sea
-  // entro plata que no esta registrada. DESCARTADO 18-ago: el diesel ($38.010, id 230) YA estaba
-  // incluido en esta cuenta, no es la causa. No calza exacto con ningun contrato activo: lo mas
-  // cercano es Mar del Sur + Irma Dupont ($37.684) o Burgerholic ($41.674). PREGUNTADO AL
-  // USUARIO el 17-ago-2026, pendiente de respuesta. No inventar el movimiento: cuando se sepa
-  // cual es, se registra y esto deberia cuadrar solo.
+  // EL DESCUADRE CRECIO, no se resolvio. Partiendo de los $753.743 del 03-ago (ultimo punto
+  // 100% confirmado) y aplicando TODOS los movimientos registrados hasta el 19-ago a valor de
+  // cuenta (con IVA en lo afecto; las 4 "casa" sin factura -- Torres, Carolina Carrera, Sole
+  // Algorta, Ale Navarro -- entran tal cual, sin IVA) da $714.622.
+  // Contra los $874.000 reales quedan $159.378 sin explicar (positivo: entro plata no registrada).
+  //
+  // Es MAS que el descuadre anterior de $39.166 (17-ago) -- crecio $120.212 en solo 2 dias.
+  // Osea el $39.166 de antes probablemente SIGUE sin registrarse, y ademas hay algo nuevo entre
+  // el 17 y el 19-ago que tampoco esta registrado. No calza con ninguna combinacion de contratos
+  // activos (se probo hasta con 3 combinados). PREGUNTADO AL USUARIO el 19-ago-2026: que cobros
+  // entraron esos dos dias que no se hayan pasado. No inventar el movimiento.
   //
   // Contexto: que en agosto solo figure TGC como pago de contrato es normal — con un DSO real de
   // 28-49 dias, la mayoria de los contratos de agosto se cobran a fines de agosto o en septiembre.
   //
-  // OJO al cuadrar: la cuenta bancaria se mueve por montos CON IVA, mientras que movimientos.js
-  // guarda NETOS. Comparar netos contra el saldo del banco da diferencias falsas.
-  saldoActual: 903000,
-  fechaSaldo: '2026-08-17',
-  fuente: 'Saldo real informado por el usuario el 17-ago-2026 (incluye los $800.000 del credito)',
-  descuadreSinExplicar: 39166, // ver comentario de arriba; resolver cuando el usuario confirme
+  // OJO al cuadrar: la cuenta bancaria se mueve por montos CON IVA (salvo las casas sin factura,
+  // que van tal cual), mientras que movimientos.js guarda NETOS. Comparar netos contra el saldo
+  // del banco da diferencias falsas.
+  saldoActual: 874000,
+  fechaSaldo: '2026-08-19',
+  fuente: 'Saldo real informado por el usuario el 19-ago-2026',
+  descuadreSinExplicar: 159378, // ver comentario de arriba; CRECIENTE, resolver cuando el usuario confirme
 
   ivaTasa: 0.19,
   // Umbral de caja bajo el cual se considera riesgo de liquidez (colchón mínimo deseado).
