@@ -237,6 +237,34 @@ select:focus,input:focus{outline:2px solid var(--brand2);outline-offset:1px}
 .reset-btn{font-size:.74rem;color:var(--info);background:none;border:none;cursor:pointer;text-decoration:underline;font-family:inherit;text-underline-offset:2px}
 
 footer{text-align:center;color:var(--muted2);font-size:.74rem;padding:1.5rem 0 .5rem}
+
+/* ============================================================
+   IMPRESION / PDF — se activa con window.print() desde el boton
+   "Descargar PDF". Muestra TODAS las pestanas apiladas, una atras
+   de otra, en vez de solo la activa (que es como se ve en pantalla).
+   ============================================================ */
+@media print{
+  @page{ size: A4; margin: 14mm 12mm; }
+  body{ background:#fff; font-size:9.5pt; }
+  .shell{ display:block }
+  .sidebar, .topbar > button, .side-btn, #btnExcel, #btnPDF, .cell-link, .kpi-link,
+  .reset-btn, input[type="checkbox"]:not(:checked) + label, .print-exclude{ display:none !important }
+  .topbar{ position:static; border-bottom:2px solid #000; box-shadow:none }
+  .main{ display:block }
+  .wrap{ max-width:none; padding:0; margin:0 }
+  .card{ box-shadow:none !important; border:1px solid #ccc !important; break-inside:avoid }
+  .tab-panel{ display:block !important; break-before:page }
+  .tab-panel:first-of-type{ break-before:auto }
+  /* Titulo de seccion impreso, tomado de data-print-title (no depende del sidebar, que se oculta) */
+  .tab-panel::before{
+    content: attr(data-print-title);
+    display:block; font-size:16pt; font-weight:800; margin:0 0 .6rem;
+    border-bottom:2px solid #000; padding-bottom:.3rem;
+  }
+  table{ font-size:8.5pt }
+  svg{ max-width:100% !important; height:auto !important }
+  a[href]::after{ content:"" }
+}
 </style>
 </head>
 <body>
@@ -277,13 +305,14 @@ footer{text-align:center;color:var(--muted2);font-size:.74rem;padding:1.5rem 0 .
         <div class="updated" id="lastUpdated"></div>
       </div>
       <button id="btnExcel" style="text-decoration:none;background:var(--ink);color:#fff;padding:.55rem 1rem;border:none;border-radius:var(--radius-sm);font-weight:600;font-size:.82rem;font-family:inherit;cursor:pointer;box-shadow:var(--shadow-sm)">⬇ Descargar Excel</button>
+      <button id="btnPDF" style="text-decoration:none;background:var(--brand);color:#fff;padding:.55rem 1rem;border:none;border-radius:var(--radius-sm);font-weight:600;font-size:.82rem;font-family:inherit;cursor:pointer;box-shadow:var(--shadow-sm)">📄 Descargar PDF</button>
     </div>
 
 <div class="wrap">
   <div id="warnBox"></div>
 
   <!-- ===== INICIO ===== -->
-  <section class="tab-panel" id="tab-resumen">
+  <section class="tab-panel" id="tab-resumen" data-print-title="🏠 Inicio">
     <div class="kpis" id="kpis"></div>
 
     <div class="grid2" style="grid-template-columns:2fr 1fr">
@@ -381,7 +410,7 @@ footer{text-align:center;color:var(--muted2);font-size:.74rem;padding:1.5rem 0 .
   </section>
 
   <!-- ===== ESTADO DE RESULTADOS ===== -->
-  <section class="tab-panel" id="tab-resultados">
+  <section class="tab-panel" id="tab-resultados" data-print-title="📊 Estado de Resultados">
     <div class="kpis" id="plKpis"></div>
 
     <div class="card">
@@ -414,7 +443,7 @@ footer{text-align:center;color:var(--muted2);font-size:.74rem;padding:1.5rem 0 .
   </section>
 
   <!-- ===== RENTABILIDAD POR CLIENTE ===== -->
-  <section class="tab-panel" id="tab-rentabilidad">
+  <section class="tab-panel" id="tab-rentabilidad" data-print-title="🧮 Rentabilidad">
     <div class="warn-box">
       <b>③ Rentabilidad por cliente y contrato — metodología:</b> el ingreso por cliente es un dato real
       (facturas y movimientos). El <b>costo no se registra por cliente</b> — los insumos se compran en
@@ -475,7 +504,7 @@ footer{text-align:center;color:var(--muted2);font-size:.74rem;padding:1.5rem 0 .
   </section>
 
   <!-- ===== CAJA Y FLUJO ===== -->
-  <section class="tab-panel" id="tab-caja">
+  <section class="tab-panel" id="tab-caja" data-print-title="💰 Caja y flujo">
     <div class="kpis" id="cajaKpis"></div>
 
     <div class="card">
@@ -515,7 +544,7 @@ footer{text-align:center;color:var(--muted2);font-size:.74rem;padding:1.5rem 0 .
   </section>
 
   <!-- ===== IMPUESTOS Y DEUDAS ===== -->
-  <section class="tab-panel" id="tab-obligaciones">
+  <section class="tab-panel" id="tab-obligaciones" data-print-title="🧾 Impuestos y deudas">
     <div class="kpis" id="oblKpis"></div>
 
     <div class="card">
@@ -542,7 +571,7 @@ footer{text-align:center;color:var(--muted2);font-size:.74rem;padding:1.5rem 0 .
   </section>
 
   <!-- ===== DECISIONES ===== -->
-  <section class="tab-panel" id="tab-decisiones">
+  <section class="tab-panel" id="tab-decisiones" data-print-title="🎯 Decisiones">
     <div class="card">
       <div class="card-head">
         <div>
@@ -587,7 +616,7 @@ footer{text-align:center;color:var(--muted2);font-size:.74rem;padding:1.5rem 0 .
   </section>
 
   <!-- ===== ANALISIS ===== -->
-  <section class="tab-panel" id="tab-analisis">
+  <section class="tab-panel" id="tab-analisis" data-print-title="📈 Análisis mensual">
     <div class="grid2">
       <div class="card">
         <h2>Ingresos vs gastos por mes</h2>
@@ -613,7 +642,7 @@ footer{text-align:center;color:var(--muted2);font-size:.74rem;padding:1.5rem 0 .
   </section>
 
   <!-- ===== PROYECCION ===== -->
-  <section class="tab-panel" id="tab-proyeccion">
+  <section class="tab-panel" id="tab-proyeccion" data-print-title="🔮 Proyección">
     <div class="card">
       <div class="card-head">
         <div>
@@ -679,7 +708,7 @@ footer{text-align:center;color:var(--muted2);font-size:.74rem;padding:1.5rem 0 .
   </section>
 
   <!-- ===== FACTURACION ===== -->
-  <section class="tab-panel" id="tab-facturacion">
+  <section class="tab-panel" id="tab-facturacion" data-print-title="📄 Facturación">
     <div class="kpis" id="factKpis"></div>
 
     <div class="card">
@@ -714,7 +743,7 @@ footer{text-align:center;color:var(--muted2);font-size:.74rem;padding:1.5rem 0 .
   </section>
 
   <!-- ===== CONTRATOS ===== -->
-  <section class="tab-panel" id="tab-contratos">
+  <section class="tab-panel" id="tab-contratos" data-print-title="🤝 Comercial">
     <div class="warn-box">
       <b>⑤ Embudo de cotizaciones — con lo que hay hoy.</b> Los <code>Contratos</code> solo registran
       dos estados: <i>Negociando</i> y <i>Activo</i>. No hay un registro de cuántos prospectos o
@@ -772,7 +801,7 @@ footer{text-align:center;color:var(--muted2);font-size:.74rem;padding:1.5rem 0 .
   </section>
 
   <!-- ===== VISITAS ===== -->
-  <section class="tab-panel" id="tab-visitas">
+  <section class="tab-panel" id="tab-visitas" data-print-title="🧰 Visitas">
     <div class="kpis" id="visitasKpis"></div>
 
     <div class="card">
@@ -873,7 +902,7 @@ footer{text-align:center;color:var(--muted2);font-size:.74rem;padding:1.5rem 0 .
   </section>
 
   <!-- ===== INVENTARIO ===== -->
-  <section class="tab-panel" id="tab-inventario">
+  <section class="tab-panel" id="tab-inventario" data-print-title="📦 Inventario">
     <div class="kpis" id="invKpis"></div>
 
     <div class="grid2">
@@ -948,7 +977,7 @@ footer{text-align:center;color:var(--muted2);font-size:.74rem;padding:1.5rem 0 .
     </div>
   </section>
 
-  <section class="tab-panel" id="tab-movimientos">
+  <section class="tab-panel" id="tab-movimientos" data-print-title="📋 Movimientos">
     <div class="card">
       <div class="card-head">
         <div>
@@ -968,7 +997,7 @@ footer{text-align:center;color:var(--muted2);font-size:.74rem;padding:1.5rem 0 .
   </section>
 
   <!-- ===== AGREGAR ===== -->
-  <section class="tab-panel" id="tab-agregar">
+  <section class="tab-panel print-exclude" id="tab-agregar">
     <div class="card">
       <h2>Registrar nuevo movimiento</h2>
       <div class="desc">
@@ -4463,6 +4492,18 @@ renderProyeccion();
 ['fMes','fTipo','fCategoria','fEstado'].forEach(id => document.getElementById(id).addEventListener('change', renderMovimientos));
 document.getElementById('fBuscar').addEventListener('input', renderMovimientos);
 document.getElementById('btnExcel').addEventListener('click', descargarExcel);
+
+// PDF: usa la funcion nativa de imprimir del navegador (Guardar como PDF), sin depender de
+// ninguna libreria externa -- asi funciona offline igual que el resto del dashboard.
+// El CSS @media print (mas arriba) fuerza a que se vean TODAS las pestanas apiladas, no solo
+// la activa, y agrega un titulo por seccion via data-print-title.
+document.getElementById('btnPDF').addEventListener('click', () => {
+  rerenderAll(); // asegura que cada pestana tenga su contenido mas reciente en el DOM
+  const tituloOriginal = document.title;
+  document.title = 'Finanzas Desplagados - ' + new Date().toISOString().slice(0,10);
+  window.print();
+  document.title = tituloOriginal;
+});
 document.getElementById('plPeriodo').addEventListener('change', renderPL);
 document.getElementById('resetParams').addEventListener('click', () => {
   liveParams = JSON.parse(JSON.stringify(PROYECCION_PARAMS));
