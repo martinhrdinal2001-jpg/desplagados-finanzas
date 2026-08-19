@@ -3256,12 +3256,12 @@ const MOVIMIENTOS = [
     "categoria": "Sueldo",
     "descripcion": "Sueldo Martín del Río",
     "fijoVariable": "Fijo",
-    "monto": null,
-    "estado": "Incompleto",
+    "monto": 280000.0,
+    "estado": "Pagado",
     "fechaPago": "2026-08-18",
     "medioPago": null,
     "factura": null,
-    "obs": "FALTA EL MONTO: el usuario informo el pago el 18-ago-2026 pero sin cifra. No se invento. Referencia: el unico sueldo registrado antes es de $280.000 (12-may-2026). Queda en la lista de incompletos del dashboard hasta que se confirme."
+    "obs": "Confirmado por el usuario el 18-ago-2026: $280.000 bruto, el mismo monto que la vez anterior (12-may-2026). Sigue sin subirsele el sueldo. Es el sueldo BASE bruto (antes de AFP/salud), igual convencion que 'liquidacionReferencia' en proyeccion.js (sueldoBase 280.000 -> liquido 230.776 tras 49.224 de descuentos)."
   },
   {
     "id": 235,
