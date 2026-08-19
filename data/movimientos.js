@@ -3276,5 +3276,19 @@ const MOVIMIENTOS = [
     "medioPago": null,
     "factura": null,
     "obs": "Reportado como $160.712 (bruto) via WhatsApp el 18-ago; neto $135.052. Es parte de la construccion de la bodega propia. Falta pagar al maestro $395.000 cuando termine la pega (ver CAJA.obligacionesSinFecha) y despues sacar la resolucion sanitaria del nuevo recinto."
+  },
+  {
+    "id": 236,
+    "fecha": "2026-08-19",
+    "tipo": "Ingreso",
+    "categoria": "Servicio puntual",
+    "descripcion": "Fumigación departamento — Ale Navarro",
+    "fijoVariable": "Variable",
+    "monto": 55882.0,
+    "estado": "Pagado",
+    "fechaPago": "2026-08-19",
+    "medioPago": null,
+    "factura": null,
+    "obs": "Reportado como $66.500 (bruto) via WhatsApp el 19-ago; neto $55.882. Es el cobro del trabajo hecho el 17-ago que estaba pendiente en CAJA.cuentasPorCobrar — se saca de ahi para no contarlo dos veces."
   }
 ];

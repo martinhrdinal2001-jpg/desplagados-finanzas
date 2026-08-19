@@ -53,9 +53,6 @@ const CAJA = {
     { cliente: 'Edificio Bicentenario', neto: 200000, iva: true, folio: null, fechaFactura: null,
       obs: 'Servicio puntual. Reportado como "200.000 + IVA", o sea el neto es $200.000. Cliente NUEVO, no esta en contratos. '
          + 'Confirmar si es puntual o si va a ser recurrente: a $200.000/mes seria el 4to contrato mas grande.' },
-    { cliente: 'Ale Navarro (departamento)', neto: 55882, iva: true, folio: null, fechaFactura: null,
-      obs: 'Fumigacion de departamento hecha el 17-ago. Reportado como $66.500 (bruto); neto $55.882. '
-         + 'El socio menciono ademas otra casa para el 18-ago y otra el jueves 20-ago, ambas sin monto todavia.' },
   ],
 
   // Obligaciones que se sabe que existen pero sin fecha confirmada todavia.
