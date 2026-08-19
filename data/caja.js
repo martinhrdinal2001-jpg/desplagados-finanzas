@@ -10,7 +10,8 @@ const CAJA = {
   // +75.000 Torres, -29.990 pulverizador, -114.240 stickers, -13.695 TAG, -78.848 imposiciones,
   // -15.900 Optigard, -6.990 cebo, -38.010 diesel, +800.000 credito => $863.834.
   // Contra los $903.000 reales quedan $39.166 sin explicar, y la diferencia es POSITIVA, o sea
-  // entro plata que no esta registrada. No calza exacto con ningun contrato activo: lo mas
+  // entro plata que no esta registrada. DESCARTADO 18-ago: el diesel ($38.010, id 230) YA estaba
+  // incluido en esta cuenta, no es la causa. No calza exacto con ningun contrato activo: lo mas
   // cercano es Mar del Sur + Irma Dupont ($37.684) o Burgerholic ($41.674). PREGUNTADO AL
   // USUARIO el 17-ago-2026, pendiente de respuesta. No inventar el movimiento: cuando se sepa
   // cual es, se registra y esto deberia cuadrar solo.
@@ -49,8 +50,6 @@ const CAJA = {
       obs: 'Factura N21 del 25-jun sin pagar. Es la mas antigua de todas las cuentas por cobrar.' },
     { cliente: 'De Costa a Costa', neto: 30000, iva: true, folio: null, fechaFactura: null,
       obs: 'Servicio de julio. OJO: la factura todavia NO se ha emitido — no se puede cobrar lo que no se factura.' },
-    { cliente: 'Aplicación hormigas', neto: 105042, iva: true, folio: null, fechaFactura: null,
-      obs: 'Servicio puntual. Reportado como $125.000 (bruto) por WhatsApp; neto $105.042. Cliente no identificado todavia.' },
     { cliente: 'Edificio Bicentenario', neto: 200000, iva: true, folio: null, fechaFactura: null,
       obs: 'Servicio puntual. Reportado como "200.000 + IVA", o sea el neto es $200.000. Cliente NUEVO, no esta en contratos. '
          + 'Confirmar si es puntual o si va a ser recurrente: a $200.000/mes seria el 4to contrato mas grande.' },

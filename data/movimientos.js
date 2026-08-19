@@ -3233,7 +3233,7 @@ const MOVIMIENTOS = [
     "fechaPago": "2026-08-18",
     "medioPago": null,
     "factura": null,
-    "obs": "Reportado como $125.000 (bruto) via WhatsApp el 18-ago; neto $105.042. OJO: coincide EXACTO con la 'Aplicacion hormigas $125.000' que el socio habia listado el 17-ago como pendiente de cobro. Confirmar si es el mismo trabajo (y entonces hay que sacar esa cuenta por cobrar) o si son dos distintos."
+    "obs": "Reportado como $125.000 (bruto) via WhatsApp el 18-ago; neto $105.042. CONFIRMADO por el usuario (18-ago): es la aplicacion de gel para hormigas que el socio habia listado el 17-ago como pendiente de cobro. Esa cuenta por cobrar se saco de CAJA.cuentasPorCobrar para no contarla dos veces."
   },
   {
     "id": 233,
