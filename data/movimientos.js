@@ -3220,5 +3220,61 @@ const MOVIMIENTOS = [
     "medioPago": "Transferencia",
     "factura": null,
     "obs": "NO ES UNA VENTA. Martin Hrdina saco un credito de consumo a su nombre ($800.000, 7 cuotas de $128.387, 3,0% mensual / ~42,5% anual) y presto el dinero a Desplagados, que lo recibio en caja. La empresa paga las cuotas. Va con categoria 'Prestamo de socio', que esta en CATS_NO_OPERACIONAL: entra a la caja pero no cuenta como ingreso del negocio ni genera IVA. La deuda esta en data/obligaciones.js -> DEUDAS."
+  },
+  {
+    "id": 232,
+    "fecha": "2026-08-18",
+    "tipo": "Ingreso",
+    "categoria": "Servicio puntual",
+    "descripcion": "Fumigación casa — Carolina Carrera",
+    "fijoVariable": "Variable",
+    "monto": 105042.0,
+    "estado": "Pagado",
+    "fechaPago": "2026-08-18",
+    "medioPago": null,
+    "factura": null,
+    "obs": "Reportado como $125.000 (bruto) via WhatsApp el 18-ago; neto $105.042. OJO: coincide EXACTO con la 'Aplicacion hormigas $125.000' que el socio habia listado el 17-ago como pendiente de cobro. Confirmar si es el mismo trabajo (y entonces hay que sacar esa cuenta por cobrar) o si son dos distintos."
+  },
+  {
+    "id": 233,
+    "fecha": "2026-08-18",
+    "tipo": "Ingreso",
+    "categoria": "Servicio puntual",
+    "descripcion": "Fumigación casa — Sole Algorta",
+    "fijoVariable": "Variable",
+    "monto": 84034.0,
+    "estado": "Pagado",
+    "fechaPago": "2026-08-18",
+    "medioPago": null,
+    "factura": null,
+    "obs": "Reportado como $100.000 (bruto) via WhatsApp el 18-ago; neto $84.034. Clienta que repite: ya habia pagado $100.000 por desinsectacion el 05-mar-2026, mismo precio."
+  },
+  {
+    "id": 234,
+    "fecha": "2026-08-18",
+    "tipo": "Gasto",
+    "categoria": "Sueldo",
+    "descripcion": "Sueldo Martín del Río",
+    "fijoVariable": "Fijo",
+    "monto": null,
+    "estado": "Incompleto",
+    "fechaPago": "2026-08-18",
+    "medioPago": null,
+    "factura": null,
+    "obs": "FALTA EL MONTO: el usuario informo el pago el 18-ago-2026 pero sin cifra. No se invento. Referencia: el unico sueldo registrado antes es de $280.000 (12-may-2026). Queda en la lista de incompletos del dashboard hasta que se confirme."
+  },
+  {
+    "id": 235,
+    "fecha": "2026-08-18",
+    "tipo": "Gasto",
+    "categoria": "Equipamiento",
+    "descripcion": "Materiales bodega propia — Ferretería San Francisco de Asís",
+    "fijoVariable": "Variable",
+    "monto": 135052.0,
+    "estado": "Pagado",
+    "fechaPago": "2026-08-18",
+    "medioPago": null,
+    "factura": null,
+    "obs": "Reportado como $160.712 (bruto) via WhatsApp el 18-ago; neto $135.052. Es parte de la construccion de la bodega propia. Falta pagar al maestro $395.000 cuando termine la pega (ver CAJA.obligacionesSinFecha) y despues sacar la resolucion sanitaria del nuevo recinto."
   }
 ];

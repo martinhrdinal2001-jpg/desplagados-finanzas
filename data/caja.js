@@ -62,6 +62,14 @@ const CAJA = {
   // Obligaciones que se sabe que existen pero sin fecha confirmada todavia.
   // Se muestran aparte porque no se pueden ubicar en el calendario, pero SI afectan la liquidez.
   obligacionesSinFecha: [
+    { concepto: 'Maestro — construcción bodega propia', monto: 395000, iva: false,
+      obs: 'Informado por el usuario el 18-ago-2026: se le paga al maestro cuando termine la pega. '
+         + 'La bodega estaria lista en ~1 mes (mediados de sep-2026). El monto se guarda tal cual se informo '
+         + '($395.000); si viene con boleta de honorarios no lleva IVA, si es con factura habria que netearlo — confirmar.' },
+    { concepto: 'Resolución sanitaria bodega nueva', monto: 0, iva: false,
+      obs: 'POR COTIZAR, monto en 0 a proposito (no inventar). Una vez lista la bodega hay que inscribirla en la '
+         + 'Resolucion Sanitaria; sin eso el ahorro del arriendo no se materializa y se arriesga la habilitacion '
+         + 'para operar. Referencia: el "Servicio Resolucion Sanitaria" de dic-2025 costo $595.000.' },
     { concepto: 'Patente comercial', monto: 240000, iva: false,
       obs: 'Monto aproximado informado por el socio. Confirmar fecha de vencimiento en la municipalidad: si cae antes del 6-ago, agrava el deficit.' },
   ],

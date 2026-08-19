@@ -3229,6 +3229,62 @@ const MOVIMIENTOS = [
     "medioPago": "Transferencia",
     "factura": null,
     "obs": "NO ES UNA VENTA. Martin Hrdina saco un credito de consumo a su nombre ($800.000, 7 cuotas de $128.387, 3,0% mensual / ~42,5% anual) y presto el dinero a Desplagados, que lo recibio en caja. La empresa paga las cuotas. Va con categoria 'Prestamo de socio', que esta en CATS_NO_OPERACIONAL: entra a la caja pero no cuenta como ingreso del negocio ni genera IVA. La deuda esta en data/obligaciones.js -> DEUDAS."
+  },
+  {
+    "id": 232,
+    "fecha": "2026-08-18",
+    "tipo": "Ingreso",
+    "categoria": "Servicio puntual",
+    "descripcion": "Fumigación casa — Carolina Carrera",
+    "fijoVariable": "Variable",
+    "monto": 105042.0,
+    "estado": "Pagado",
+    "fechaPago": "2026-08-18",
+    "medioPago": null,
+    "factura": null,
+    "obs": "Reportado como $125.000 (bruto) via WhatsApp el 18-ago; neto $105.042. OJO: coincide EXACTO con la 'Aplicacion hormigas $125.000' que el socio habia listado el 17-ago como pendiente de cobro. Confirmar si es el mismo trabajo (y entonces hay que sacar esa cuenta por cobrar) o si son dos distintos."
+  },
+  {
+    "id": 233,
+    "fecha": "2026-08-18",
+    "tipo": "Ingreso",
+    "categoria": "Servicio puntual",
+    "descripcion": "Fumigación casa — Sole Algorta",
+    "fijoVariable": "Variable",
+    "monto": 84034.0,
+    "estado": "Pagado",
+    "fechaPago": "2026-08-18",
+    "medioPago": null,
+    "factura": null,
+    "obs": "Reportado como $100.000 (bruto) via WhatsApp el 18-ago; neto $84.034. Clienta que repite: ya habia pagado $100.000 por desinsectacion el 05-mar-2026, mismo precio."
+  },
+  {
+    "id": 234,
+    "fecha": "2026-08-18",
+    "tipo": "Gasto",
+    "categoria": "Sueldo",
+    "descripcion": "Sueldo Martín del Río",
+    "fijoVariable": "Fijo",
+    "monto": null,
+    "estado": "Incompleto",
+    "fechaPago": "2026-08-18",
+    "medioPago": null,
+    "factura": null,
+    "obs": "FALTA EL MONTO: el usuario informo el pago el 18-ago-2026 pero sin cifra. No se invento. Referencia: el unico sueldo registrado antes es de $280.000 (12-may-2026). Queda en la lista de incompletos del dashboard hasta que se confirme."
+  },
+  {
+    "id": 235,
+    "fecha": "2026-08-18",
+    "tipo": "Gasto",
+    "categoria": "Equipamiento",
+    "descripcion": "Materiales bodega propia — Ferretería San Francisco de Asís",
+    "fijoVariable": "Variable",
+    "monto": 135052.0,
+    "estado": "Pagado",
+    "fechaPago": "2026-08-18",
+    "medioPago": null,
+    "factura": null,
+    "obs": "Reportado como $160.712 (bruto) via WhatsApp el 18-ago; neto $135.052. Es parte de la construccion de la bodega propia. Falta pagar al maestro $395.000 cuando termine la pega (ver CAJA.obligacionesSinFecha) y despues sacar la resolucion sanitaria del nuevo recinto."
   }
 ];
 
@@ -3622,7 +3678,13 @@ const PROYECCION_PARAMS = {
       // Sanitaria. La habilitacion sanitaria de Desplagados depende de tener bodega registrada.
       riesgoSanitario: true,
     },
-    gastoBodegaConstruccion: { monto: 500000, mes: '2026-08' }, // bodega propia, inversion real
+    // ACTUALIZADO 18-ago-2026 con costos REALES, no estimados. La estimacion previa de
+    // $500.000 se quedo corta: solo materiales + maestro ya suman $555.712 brutos, y todavia
+    // falta la resolucion sanitaria del recinto nuevo (por cotizar; la de dic-2025 costo $595.000).
+    //   - Materiales (Ferreteria San Francisco de Asis, pagado 18-ago): $160.712 bruto / $135.052 neto
+    //   - Maestro (se paga al terminar la pega, ~mediados de sep-2026):  $395.000
+    // La bodega estaria lista aprox. a mediados de sep-2026 segun el usuario.
+    gastoBodegaConstruccion: { monto: 466985, mes: '2026-09' }, // neto de materiales + maestro
     cuotaFurgon: 250000, // hasta dic 2027
     contabilidad: 64000,
     honorarios: 120000,
@@ -3728,6 +3790,14 @@ const CAJA = {
   // Obligaciones que se sabe que existen pero sin fecha confirmada todavia.
   // Se muestran aparte porque no se pueden ubicar en el calendario, pero SI afectan la liquidez.
   obligacionesSinFecha: [
+    { concepto: 'Maestro — construcción bodega propia', monto: 395000, iva: false,
+      obs: 'Informado por el usuario el 18-ago-2026: se le paga al maestro cuando termine la pega. '
+         + 'La bodega estaria lista en ~1 mes (mediados de sep-2026). El monto se guarda tal cual se informo '
+         + '($395.000); si viene con boleta de honorarios no lleva IVA, si es con factura habria que netearlo — confirmar.' },
+    { concepto: 'Resolución sanitaria bodega nueva', monto: 0, iva: false,
+      obs: 'POR COTIZAR, monto en 0 a proposito (no inventar). Una vez lista la bodega hay que inscribirla en la '
+         + 'Resolucion Sanitaria; sin eso el ahorro del arriendo no se materializa y se arriesga la habilitacion '
+         + 'para operar. Referencia: el "Servicio Resolucion Sanitaria" de dic-2025 costo $595.000.' },
     { concepto: 'Patente comercial', monto: 240000, iva: false,
       obs: 'Monto aproximado informado por el socio. Confirmar fecha de vencimiento en la municipalidad: si cae antes del 6-ago, agrava el deficit.' },
   ],

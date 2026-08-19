@@ -102,7 +102,13 @@ const PROYECCION_PARAMS = {
       // Sanitaria. La habilitacion sanitaria de Desplagados depende de tener bodega registrada.
       riesgoSanitario: true,
     },
-    gastoBodegaConstruccion: { monto: 500000, mes: '2026-08' }, // bodega propia, inversion real
+    // ACTUALIZADO 18-ago-2026 con costos REALES, no estimados. La estimacion previa de
+    // $500.000 se quedo corta: solo materiales + maestro ya suman $555.712 brutos, y todavia
+    // falta la resolucion sanitaria del recinto nuevo (por cotizar; la de dic-2025 costo $595.000).
+    //   - Materiales (Ferreteria San Francisco de Asis, pagado 18-ago): $160.712 bruto / $135.052 neto
+    //   - Maestro (se paga al terminar la pega, ~mediados de sep-2026):  $395.000
+    // La bodega estaria lista aprox. a mediados de sep-2026 segun el usuario.
+    gastoBodegaConstruccion: { monto: 466985, mes: '2026-09' }, // neto de materiales + maestro
     cuotaFurgon: 250000, // hasta dic 2027
     contabilidad: 64000,
     honorarios: 120000,
