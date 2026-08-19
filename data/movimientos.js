@@ -3102,12 +3102,12 @@ const MOVIMIENTOS = [
     "categoria": "Servicio puntual",
     "descripcion": "Fumigación casa Torres",
     "fijoVariable": "Variable",
-    "monto": 63025.0,
+    "monto": 75000.0,
     "estado": "Pagado",
     "fechaPago": "2026-08-09",
     "medioPago": "Tarjeta",
     "factura": null,
-    "obs": "Corregido 10-ago-2026: reportado como $75.000 (bruto, lo que entró a la tarjeta) via WhatsApp; se guarda neto ($75.000 ÷ 1,19 = $63.025)."
+    "obs": "Es un trabajo de CASA, sin factura -- no se le saca IVA (corregido 19-ago-2026). El monto es el que entra tal cual, $75.000. (Se le habia sacado IVA por error el 10-ago tratandola como si fuera empresa con factura; ahora se revierte)."
   },
   {
     "id": 224,
@@ -3228,12 +3228,12 @@ const MOVIMIENTOS = [
     "categoria": "Servicio puntual",
     "descripcion": "Fumigación casa — Carolina Carrera",
     "fijoVariable": "Variable",
-    "monto": 105042.0,
+    "monto": 125000.0,
     "estado": "Pagado",
     "fechaPago": "2026-08-18",
     "medioPago": null,
     "factura": null,
-    "obs": "Reportado como $125.000 (bruto) via WhatsApp el 18-ago; neto $105.042. CONFIRMADO por el usuario (18-ago): es la aplicacion de gel para hormigas que el socio habia listado el 17-ago como pendiente de cobro. Esa cuenta por cobrar se saco de CAJA.cuentasPorCobrar para no contarla dos veces."
+    "obs": "Es un trabajo de CASA, sin factura -- no se le saca IVA (corregido 19-ago-2026). El monto es el que entra tal cual, $125.000. Es la aplicacion de gel para hormigas que el socio habia listado el 17-ago como pendiente de cobro; esa cuenta por cobrar se saco de CAJA.cuentasPorCobrar para no contarla dos veces."
   },
   {
     "id": 233,
@@ -3242,12 +3242,12 @@ const MOVIMIENTOS = [
     "categoria": "Servicio puntual",
     "descripcion": "Fumigación casa — Sole Algorta",
     "fijoVariable": "Variable",
-    "monto": 84034.0,
+    "monto": 100000.0,
     "estado": "Pagado",
     "fechaPago": "2026-08-18",
     "medioPago": null,
     "factura": null,
-    "obs": "Reportado como $100.000 (bruto) via WhatsApp el 18-ago; neto $84.034. Clienta que repite: ya habia pagado $100.000 por desinsectacion el 05-mar-2026, mismo precio."
+    "obs": "Es un trabajo de CASA, sin factura -- no se le saca IVA (corregido 19-ago-2026). El monto es el que entra tal cual, $100.000. Clienta que repite: ya habia pagado $100.000 por desinsectacion el 05-mar-2026, mismo precio -- y esa vez ya se habia guardado bien, sin sacarle IVA."
   },
   {
     "id": 234,
@@ -3284,11 +3284,11 @@ const MOVIMIENTOS = [
     "categoria": "Servicio puntual",
     "descripcion": "Fumigación departamento — Ale Navarro",
     "fijoVariable": "Variable",
-    "monto": 55882.0,
+    "monto": 66500.0,
     "estado": "Pagado",
     "fechaPago": "2026-08-19",
     "medioPago": null,
     "factura": null,
-    "obs": "Reportado como $66.500 (bruto) via WhatsApp el 19-ago; neto $55.882. Es el cobro del trabajo hecho el 17-ago que estaba pendiente en CAJA.cuentasPorCobrar — se saca de ahi para no contarlo dos veces."
+    "obs": "Es un trabajo de CASA, sin factura -- no se le saca IVA (corregido 19-ago-2026). El monto es el que entra tal cual, $66.500. Es el cobro del trabajo hecho el 17-ago que estaba pendiente en CAJA.cuentasPorCobrar -- se saca de ahi para no contarlo dos veces."
   }
 ];
