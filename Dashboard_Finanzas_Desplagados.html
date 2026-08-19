@@ -6380,8 +6380,11 @@ footer{text-align:center;color:var(--muted2);font-size:.74rem;padding:1.5rem 0 .
   @page{ size: A4; margin: 14mm 12mm; }
   body{ background:#fff; font-size:9.5pt; }
   .shell{ display:block }
-  .sidebar, .topbar > button, .side-btn, #btnExcel, #btnPDF, .cell-link, .kpi-link,
+  .sidebar, .topbar > button, .side-btn, #btnExcel, #btnPDF,
   .reset-btn, input[type="checkbox"]:not(:checked) + label, .print-exclude{ display:none !important }
+  /* cell-link/kpi-link son <button> que ENVUELVEN el numero (no son solo decoracion) --
+     no se pueden ocultar, solo se les saca la pinta de link clickeable */
+  .cell-link, .kpi-link{ cursor:default !important; text-decoration:none !important; color:inherit !important }
   .topbar{ position:static; border-bottom:2px solid #000; box-shadow:none }
   .main{ display:block }
   .wrap{ max-width:none; padding:0; margin:0 }
